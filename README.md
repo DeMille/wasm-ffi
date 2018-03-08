@@ -120,7 +120,7 @@ npm install wasm-ffi
 Or, if you don't want to mess with webpack yet:
 
 ```html
-<script src="https://unpkg.in/wasm-ffi"></script>
+<script src="https://unpkg.com/wasm-ffi"></script>
 ```
 
 **Usage:**
