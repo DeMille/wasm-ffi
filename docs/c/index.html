@@ -45,15 +45,15 @@
             </div>
 
             <div class="UnderlineNav-body">
-                <a href="../whatlang" class="UnderlineNav-item">
+                <a href="../whatlang/" class="UnderlineNav-item">
                     <span class="d-none d-sm-block">whatlang-rs</span>
                     <span class="d-sm-none">whatlang</span>
                 </a>
-                <a href="../c" class="UnderlineNav-item selected">
+                <a href="../c/" class="UnderlineNav-item selected">
                     <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
                     <span class="d-sm-none">C</span>
                 </a>
-                <a href="../rust" class="UnderlineNav-item">
+                <a href="../rust/" class="UnderlineNav-item">
                     <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
                     <span class="d-sm-none">Rust</span>
                 </a>
@@ -97,76 +97,7 @@
                 </div>
                 <div class="src">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt2 { background: #b31d28; }
-.paint .pt10 { color: #242930; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt11 { color: #586069; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt9 { color: #22863a; }
-.paint .pt15 { color: #959da5; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt8 { color: #032f62; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt18 { color: #e36209; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt6 { background: #ffeef0; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>#include</span> <span class='pt8'>&lt;webassembly.h&gt;</span></td></tr>
 <tr><td>&#10;</td></tr>
@@ -201,7 +132,7 @@
                         </p>
                         <p>
                             Read more about how wasm-ffi handles memory in the
-                            <a href="https://github.com/demille/wasm-ffi#memory-management">readme</a>.
+                            <a href="https://github.com/demille/wasm-ffi#memory-management-recycle">readme</a>.
                         </p>
                     </div>
                 </div>
@@ -242,76 +173,7 @@
                 </div>
                 <div class="src">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt20 { color: #fafbfc; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt15 { color: #959da5; }
-.paint .pt11 { color: #586069; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt10 { color: #242930; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt8 { color: #032f62; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt18 { color: #e36209; }
-.paint .pt9 { color: #22863a; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>import</span> { <span class='pt10'>Wrapper</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
 <tr><td>&#10;</td></tr>
@@ -369,76 +231,7 @@
 
                 <div class="src">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt16 { color: #b31d28; }
-.paint .pt8 { color: #032f62; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt10 { color: #242930; }
-.paint .pt11 { color: #586069; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt9 { color: #22863a; }
-.paint .pt18 { color: #e36209; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt15 { color: #959da5; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td>export <span class='pt17'>void</span> <span class='pt17'>*</span><span class='pt13'>allocate</span>(<span class='pt17'>int</span> <span class='pt13'>size</span>) {</td></tr>
 <tr><td>    <span class='pt17'>return</span> <span class='pt13'>malloc</span>(size);</td></tr>
@@ -487,76 +280,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt9 { color: #22863a; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt15 { color: #959da5; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt18 { color: #e36209; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt11 { color: #586069; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt10 { color: #242930; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt8 { color: #032f62; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt13 { color: #6f42c1; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt12'>// wrap our exported C function `say`:</span></td></tr>
 <tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
@@ -576,76 +300,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt11 { color: #586069; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt18 { color: #e36209; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt9 { color: #22863a; }
-.paint .pt15 { color: #959da5; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt8 { color: #032f62; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt10 { color: #242930; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt4 { background: #f0fff4; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td>export <span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>say</span>(<span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>hello</span>) {</td></tr>
 <tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>phrase <span class='pt17'>=</span> <span class='pt13'>calloc</span>(<span class='pt13'>strlen</span>(hello) <span class='pt17'>+</span> <span class='pt7'>9</span>, <span class='pt7'>1</span>);</td></tr>
@@ -698,76 +353,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt5 { background: #ffebda; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt8 { color: #032f62; }
-.paint .pt15 { color: #959da5; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt9 { color: #22863a; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt10 { color: #242930; }
-.paint .pt18 { color: #e36209; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt11 { color: #586069; }
-.paint .pt4 { background: #f0fff4; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt12'>// wrap `get_sum` function: 2 arguments, array pointer &amp; array length</span></td></tr>
 <tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
@@ -789,76 +375,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt9 { color: #22863a; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt8 { color: #032f62; }
-.paint .pt15 { color: #959da5; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt18 { color: #e36209; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt10 { color: #242930; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt11 { color: #586069; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt17 { color: #d73a49; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td>export <span class='pt17'>int</span> <span class='pt13'>get_sum</span>(<span class='pt17'>int</span> <span class='pt13'>arr</span>[], <span class='pt17'>size_t</span> <span class='pt13'>length</span>) {</td></tr>
 <tr><td>  <span class='pt17'>int</span> i;</td></tr>
@@ -921,76 +438,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt3 { background: #d73a49; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt15 { color: #959da5; }
-.paint .pt9 { color: #22863a; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt11 { color: #586069; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt10 { color: #242930; }
-.paint .pt8 { color: #032f62; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt18 { color: #e36209; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt1 { background: #005cc5; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>import</span> { <span class='pt10'>types</span>, <span class='pt10'>Pointer</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
 <tr><td>&#10;</td></tr>
@@ -1019,76 +467,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt12 { color: #6a737d; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt10 { color: #242930; }
-.paint .pt11 { color: #586069; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt8 { color: #032f62; }
-.paint .pt9 { color: #22863a; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt18 { color: #e36209; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt15 { color: #959da5; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td>export <span class='pt17'>int</span> <span class='pt17'>*</span><span class='pt13'>get_pointer</span>() {</td></tr>
 <tr><td>  <span class='pt17'>int</span> <span class='pt17'>*</span>ptr <span class='pt17'>=</span> <span class='pt13'>malloc</span>(<span class='pt17'>sizeof</span> <span class='pt17'>*</span>ptr);</td></tr>
@@ -1153,76 +532,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt13 { color: #6f42c1; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt9 { color: #22863a; }
-.paint .pt8 { color: #032f62; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt18 { color: #e36209; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt11 { color: #586069; }
-.paint .pt10 { color: #242930; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt15 { color: #959da5; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt19 { color: #f6f8fa; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>import</span> { <span class='pt10'>Struct</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
 <tr><td>&#10;</td></tr>
@@ -1264,76 +574,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt4 { background: #f0fff4; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt9 { color: #22863a; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt8 { color: #032f62; }
-.paint .pt10 { color: #242930; }
-.paint .pt15 { color: #959da5; }
-.paint .pt18 { color: #e36209; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt11 { color: #586069; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
 <tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>name;</td></tr>
@@ -1418,76 +659,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt17 { color: #d73a49; }
-.paint .pt10 { color: #242930; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt9 { color: #22863a; }
-.paint .pt11 { color: #586069; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt15 { color: #959da5; }
-.paint .pt18 { color: #e36209; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt8 { color: #032f62; }
-.paint .pt16 { color: #b31d28; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
 <tr><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
@@ -1517,76 +689,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt1 { background: #005cc5; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt9 { color: #22863a; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt18 { color: #e36209; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt11 { color: #586069; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt10 { color: #242930; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt8 { color: #032f62; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt15 { color: #959da5; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt20 { color: #fafbfc; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
 <tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>name;</td></tr>
@@ -1647,76 +750,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt14 { color: #735c0f; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt8 { color: #032f62; }
-.paint .pt11 { color: #586069; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt15 { color: #959da5; }
-.paint .pt10 { color: #242930; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt9 { color: #22863a; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt18 { color: #e36209; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt12'>// `barrel_roll` will call the `rotate` function below</span></td></tr>
 <tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
@@ -1746,76 +780,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt18 { color: #e36209; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt11 { color: #586069; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt15 { color: #959da5; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt8 { color: #032f62; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt10 { color: #242930; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt9 { color: #22863a; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt17'>extern</span> <span class='pt17'>void</span> <span class='pt13'>rotate</span>();</td></tr>
 <tr><td>&#10;</td></tr>
@@ -1870,76 +835,7 @@
 
                 <div class="src" data-tab="js">
                     <span class="tag right">index.js</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt6 { background: #ffeef0; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt9 { color: #22863a; }
-.paint .pt10 { color: #242930; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt15 { color: #959da5; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt11 { color: #586069; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt18 { color: #e36209; }
-.paint .pt8 { color: #032f62; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt20 { color: #fafbfc; }
-.paint .pt5 { background: #ffebda; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt12'>// `multiply_input` will call `get_input_value` below:</span></td></tr>
 <tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
@@ -1974,76 +870,7 @@
 
                 <div class="src hidden" data-tab="c">
                     <span class="tag right">main.c</span>
-                    <style scoped>
-.paint {
-    display: block;
-    width: 100%;
-    padding: 10px 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    color: #24292e;
-    background-color: #ffffff;
-}
-.paint table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 12px;
-    line-height: 20px;
-    tab-size: 4;
-    color: inherit;
-    -webkit-text-size-adjust: 100%;
-    -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-
-}
-.paint td {
-    padding: 0 13px; white-space: pre;
-}
-.paint .ln {
-    width: 1px;
-    min-width: 25px;
-    box-sizing: content-box;
-    text-align: right;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #bebfbf; 
-}
-.paint .ln::after {
-    content: attr(data-ln);
-}
-.paint .hi {
-    background-color: #fffbdd;
-}
-.paint .un { text-decoration: underline; }
-.paint .bo { font-weight: bold; }
-.paint .it { font-style: italic; }
-        .paint .pt20 { color: #fafbfc; }
-.paint .pt9 { color: #22863a; }
-.paint .pt12 { color: #6a737d; }
-.paint .pt1 { background: #005cc5; }
-.paint .pt10 { color: #242930; }
-.paint .pt15 { color: #959da5; }
-.paint .pt7 { color: #005cc5; }
-.paint .pt18 { color: #e36209; }
-.paint .pt6 { background: #ffeef0; }
-.paint .pt16 { color: #b31d28; }
-.paint .pt13 { color: #6f42c1; }
-.paint .pt11 { color: #586069; }
-.paint .pt5 { background: #ffebda; }
-.paint .pt19 { color: #f6f8fa; }
-.paint .pt2 { background: #b31d28; }
-.paint .pt17 { color: #d73a49; }
-.paint .pt14 { color: #735c0f; }
-.paint .pt3 { background: #d73a49; }
-.paint .pt4 { background: #f0fff4; }
-.paint .pt8 { color: #032f62; }
-</style>
-<div class='paint'>
+                    <div class='paint'>
 <table>
 <tr><td><span class='pt12'>// does `document.querySelector()` and parses the `.value` of the element:</span></td></tr>
 <tr><td><span class='pt17'>extern</span> <span class='pt17'>int</span> <span class='pt13'>get_input_value</span>(<span class='pt17'>char</span> <span class='pt17'>*</span>);</td></tr>

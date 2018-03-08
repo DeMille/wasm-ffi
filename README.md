@@ -12,21 +12,21 @@
 - [x] some Rust types (option, vector, string, enum, etc.)
 - [x] combinations of the above
 
-Heavily based on the ideas & syntax of [node-ffi](https://github.com/node-ffi/node-ffi) and [emscripten][1] (`cwrap`/`ccall`)
+Heavily based on the ideas & syntax of [node-ffi](https://github.com/node-ffi/node-ffi) and [emscripten][1] (`cwrap`/`ccall`)  
 <br/>
 
-##### Contents
+#### Contents
 - [Why](#why)
 - [Examples](#example)
 - [Install](#install)
 - [Requirements](#requirements)
-- [Memory Management](#memory-management)
+- [Memory Management](#memory-management-recycle)
 - [Documentation](#documentation)
 - [Tests](#tests)
 - [License (MIT)](#license)
 
-[demo]: https://demille.github.io/wasm-ffi/whatlang
-[tests]: https://demille.github.io/wasm-ffi/tests
+[demo]: https://demille.github.io/wasm-ffi/whatlang/
+[tests]: https://demille.github.io/wasm-ffi/tests/
 [1]: https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html#interacting-with-code-ccall-cwrap
 
 
@@ -148,7 +148,7 @@ you need **two exported functions** from your WebAssembly module:
 - `allocate(size) → pointer`
 - `deallocate(pointer, size /* optional */)`
 
-([implementation in rust](...))
+([implementation in rust](...))  
 ([in C](...))
 
 `wasm-ffi` also expects to find WebAssembly memory at `instance.exports.memory` or `imports.env.memory`. If your module imports WebAssembly memory from a different namespace, you'll need to add it as an option in `new Wrapper()`.
@@ -157,7 +157,7 @@ you need **two exported functions** from your WebAssembly module:
 ## Memory management :recycle:
 WebAssembly has no garbage collection so you need to clean up after yourself. If you allocate anything in JS you need to free it when you're done. Here are two things you should know:
 
-#### Strings & ArrayBuffers
+### Strings & ArrayBuffers
 
 `wasm-ffi` does some memory management for you. In wrapped functions, strings and arrays are allocated before the function call and **automatically deallocated** afterwards:
 
@@ -199,7 +199,7 @@ library.utils.free(strPtr);
 library.utils.free(arrPtr);
 ```
 
-#### Structs & Pointers
+### Structs & Pointers
 
 Struct and pointers created from JS are allocated and written when they are first used by a WebAssembly function.
 
@@ -242,7 +242,7 @@ foo.free();
 
 
 ## Documentation
-- Class: [Wrapper](#user-content-wrapper)
+- Class: [Wrapper](#user-content-new-wrapper)
   + [new Wrapper(functions [, options])](#user-content-new-wrapper)
   + [.imports(fn | obj)](#user-content-wrapper-imports)
   + [.fetch(url)](#user-content-wrapper-fetch)
@@ -304,7 +304,7 @@ foo.free();
 <br/>
 
 
-#### <a name="new-wrapper"></a> new Wrapper(functions [, options])
+### <a name="new-wrapper"></a> new Wrapper(functions [, options])
 - `functions` - _<object\>_ Type signatures for WebAssembly functions you want to wrap
 - `options` - _<object\>_
   + `options.memory` - _<WebAssembly.Memory\>_ (if not at `instance.exports.memory`)
@@ -349,7 +349,7 @@ const library = new Wrapper({
 Also, you can substitue a number type string (like `'uint32'`) for `'number'` if you want it to more closely match your interface. This is purely cosmetic though--there aren't any checks to see if your inputs are in bounds.
 
 
-#### <a name="wrapper-imports"></a> .imports(fn|obj)
+### <a name="wrapper-imports"></a> .imports(fn|obj)
 Add imports to your module. These are JS values that you can access from WebAssembly. You can provide a plain object or you can wrap functions like you would in the `Wrapper` constructor. This has to be called before fetching your
 wasm module.
 
@@ -407,7 +407,7 @@ library.imports((wrap) => ({
 ```
 
 
-##### <a name="wrapper-fetch"></a> .fetch(url)
+### <a name="wrapper-fetch"></a> .fetch(url)
 A helper method to fetch a `.wasm` module at a url and instantiate it.  
 Tries to use instantiateStreaming if supported.
 
@@ -418,7 +418,7 @@ library.fetch('my.wasm').then(() => {
 ```
 
 
-##### <a name="wrapper-use"></a> .use(instance)
+### <a name="wrapper-use"></a> .use(instance)
 If you don't want to use `.fetch` you can instantiate the module yourself and tell your wrapped library to use it.
 
 ```js
@@ -427,11 +427,12 @@ library.doThing();
 ```
 
 
-##### <a name="wrapper-exports"></a> .exports
+### <a name="wrapper-exports"></a> .exports
 Access to _all_ WebAssembly instance exports, not just your wrapped functions. Same thing as `instance.exports`.
 
 
-##### <a name="wrapper-utils"></a> .utils
+
+### <a name="wrapper-utils"></a> .utils
 Some utility functions:
 
 - `.readString(addr)` → `string`
@@ -447,7 +448,7 @@ Some utility functions:
 <br/>
 
 
-#### <a name="cwrap"></a> cwrap(instance, fnName, returnType, argTypes)
+### <a name="cwrap"></a> cwrap(instance, fnName, returnType, argTypes)
 Wraps a single function in a `WebAssembly.Instance`.
 Just like the emscripten `cwrap`. An alternative to using `Wrapper`.
 
@@ -457,7 +458,7 @@ const value = doStuff('one', true);
 ```
 
 
-#### <a name="ccall"></a>ccall(instance, fnName, returnType, argTypes, ...args)
+### <a name="ccall"></a>ccall(instance, fnName, returnType, argTypes, ...args)
 Wraps and calls a single function in a `WebAssembly.Instance`.
 Just like the emscripten `ccall`. An alternative to using `Wrapper`.
 
@@ -468,8 +469,7 @@ const value = ccall(wasmInstance, 'doStuff', 'number', ['string', 'bool'], 'one'
 <br/>
 
 
-#### <a name="struct"></a> Struct
-##### <a name="new-struct"></a> new Struct(fields [, options])
+### <a name="new-struct"></a> new Struct(fields [, options])
 Defines a new struct type and returns a new constructor.
 
 Constructor can be used to create struct instances, or it can be used as an argument type / return type for functions. Struct fields should be **specified in order**. Structs can be composed of any of the primitive types like `'uint8'`, or they can be composed of other sub-structs, pointers, or arrays of types. Struct fields will be padded according to the usual C rules.
@@ -494,7 +494,7 @@ const Coords = new Struct({
 ```
 
 
-##### <a name="new-structtype"></a> new StructType(values)
+#### <a name="new-structtype"></a> new StructType(values)
 Creates a new instance from that struct type
 ```js
 const p1 = new Point({
@@ -527,7 +527,7 @@ p1.y = 100;
 <br/>
 
 
-#### <a name="types"></a> types
+### <a name="types"></a> types
 Types have string aliases to make things more concise, so instead of using `types.uint32` you can just put the string `'uint32'` or `'u32'`.
 
 | types           | aliases                                 |
@@ -547,7 +547,7 @@ Types have string aliases to make things more concise, so instead of using `type
 \* note: JS doesn't have 64 bit integers. These types will return a 8 byte `DataView`. You can use decide if you want to down cast it to a `u32` or use some other BigInt solution.
 
 
-##### <a name="types-string"></a> .string
+### <a name="types-string"></a> types.string
 A pointer to a null-terminated string.  
 `string` fields in structs will hold `CString` objects.
 
@@ -577,7 +577,7 @@ foo.str = str;
 ```
 
 
-##### <a name="types-pointer"></a> .pointer(type)
+### <a name="types-pointer"></a> types.pointer(type)
 A type that represents a pointer to another type.
 _Note_: pointers in WebAssembly are uint32's.
 
@@ -608,16 +608,15 @@ const other = new HasPointer({
 <br/>
 
 
-#### <a name="customtype"></a> CustomType
-Types with customizable sizes, alignments, and read/write methods.  
-Could be useful if you only care about part of a struct, and not the other fields.
-
-##### <a name="new-customtype"></a> new CustomType(size [, options])
+### <a name="new-customtype"></a> new CustomType(size [, options])
 - `size` - _<integer\>_ Size in bytes
 - `options` - _<object\>_
   + `options.alignment` - _<integer\>_ defaults to `size`
   + `options.read` - _<function(`DataView`)\>_ returns a `DataView` of lengths `size` by default
   + `options.write` - _<function(`DataView`, value)\>_ write value to `DataView`
+
+Types with customizable sizes, alignments, and read/write methods.  
+Could be useful if you only care about part of a struct, and not the other fields.
 
 ```js
 // hack to down cast u64 -> u32
@@ -646,8 +645,7 @@ struct.num = 99;
 <br/>
 
 
-#### <a name="pointer"></a> Pointer
-##### <a name="new-pointer"></a> new Pointer(type [, value])
+### <a name="new-pointer"></a> new Pointer(type [, value])
 
 Creates a new pointer to `type`, with optional value.
 If you don't give it an initial value you can set it later with `.set()`.
@@ -679,8 +677,7 @@ library.utils.allocate(pointer);
 <br/>
 
 
-#### <a name="cstring"></a> CString
-##### <a name="new-cstring"></a> new CString(str)
+### <a name="new-cstring"></a> new CString(str)
 
 Used to write null-terminated strings to wasm memory. Like a `Pointer`, but specifically for strings. `CStrings` are automatically allocated and written when they are used in a WebAssembly function. Can also be manually allocated.
 
@@ -697,7 +694,7 @@ library.utils.allocate(str);
 <br/>
 
 
-#### <a name="rust"></a> rust :warning:
+### <a name="rust"></a> Rust Types :warning:
 Experimental & implementation dependent types based on [this cheat sheet][chart] of container types.
 
 Be warned, they may not work in future versions of Rust!
@@ -706,7 +703,7 @@ These are sub classes of `StuctType` with pre-defined fields and maybe some meth
 
 [chart]: https://docs.google.com/presentation/d/1q-c7UAyrUlM-eZyTo1pd8SZ0qwA_wYxmPZVOQkoDmH4/pub?start=false&loop=false&delayms=3000&slide=id.p
 
-##### <a name="rust-string"></a> .string
+### <a name="rust-string"></a> rust.string
 A Rust `String` container type. Basically: `struct { ptr, cap, len }`
 Read the underlying string data by accessing the `.value` field or coercing to a string.
 
@@ -723,8 +720,8 @@ str == 'Hello from Rust';
 ```
 
 
-##### <a name="rust-string-class"></a> .String(value)
-Like String::new()
+### <a name="rust-string-class"></a> new rust.String(value)
+Like `String::new()`
 
 ```js
 const library = new Wrapper({
@@ -736,7 +733,7 @@ library.give_rust_string(str);
 ```
 
 
-##### <a name="rust-str"></a> .str
+### <a name="rust-str"></a> rust.str
 A Rust `str` container type. Like `String`, but without cap: `struct { ptr, len }`
 Read the underlying string data by accessing the `.value` field or coercing to a string.
 
@@ -757,7 +754,7 @@ foo.str == 'Hello from Rust';
 ```
 
 
-##### <a name="rust-str-class"></a> .Str(value)
+### <a name="rust-str-class"></a> new rust.Str(value)
 Creates a new rust str.
 
 ```js
@@ -777,7 +774,7 @@ library.give_foo(foo);
 ```
 
 
-##### <a name="rust-vector"></a> .vector(type)
+### <a name="rust-vector"></a> rust.vector(type)
 A Rust `Vector` container type. Like a `String`: `struct { ptr, cap, len }`, but based on a given `type`
 Read the underlying array data by accessing the `.values` field.
 
@@ -791,7 +788,7 @@ Read the underlying array data by accessing the `.values` field.
   ```
 
 
-##### <a name="rust-vector-class"></a> .Vector(type, values)
+### <a name="rust-vector-class"></a> new rust.Vector(type, values)
 Create a new Vector of `type` with `values`
 
   ```js
@@ -804,7 +801,7 @@ Create a new Vector of `type` with `values`
   ```
 
 
-##### <a name="rust-slice"></a> .slice(type)
+### <a name="rust-slice"></a> rust.slice(type)
 A Rust slice container type. Like a `Vector` but with no cap: `struct { ptr, len }`
 Read the underlying array data by accessing the `.values` field.
 
@@ -822,7 +819,7 @@ foo.slice.values === [1, 2, 3];
 ```
 
 
-##### <a name="rust-slice-class"></a> .Slice(type, values)
+### <a name="rust-slice-class"></a> new rust.Slice(type, values)
 Create a new Slice of `type` with `values`
 
 ```js
@@ -839,7 +836,7 @@ library.give_foo(foo);
 ```
 
 
-##### <a name="rust-tuple"></a> .tuple(...types)
+### <a name="rust-tuple"></a> rust.tuple(...types)
 
 ```js
 const library = new Wrapper({
@@ -852,7 +849,7 @@ tup[1] === 288;
 ```
 
 
-##### <a name="rust-tuple-class"></a> .Tuple(types, values)
+### <a name="rust-tuple-class"></a> new rust.Tuple(types, values)
 Create a new Tuple of given types with matching values
 
 ```js
@@ -870,7 +867,7 @@ library.give_rust_tuple(tup);
 ```
 
 
-##### <a name="rust-enum"></a> .enum(variants [, tagSize])
+### <a name="rust-enum"></a> rust.enum(variants [, tagSize])
 A Rust enum is combination of a discriminant tag and a type. If you use `#[repr(C)]` on your enum the discriminant will be 4 bytes. Without `#[repr(C)]` it varies. `rust.enum` defaults to a tagSize of 4.
 
 Read the data by accessing the `.value` property.
@@ -928,7 +925,7 @@ const value = version.match({
 ```
 
 
-##### <a name="rust-option"></a> .option(type [, isNonNullable[, tagSize]])
+### <a name="rust-option"></a> rust.option(type [, isNonNullable[, tagSize]])
 A Rust `Option` is like an enum, but with only two variants: some `type`, or none.  If the given `type` is non-nullable, an optimization is applied and the discriminant tag is left out completely (a value of 0 means none in this case).
 
 If your type is non-nullable, like a pointer, set `isNonNullable` to true.
@@ -955,7 +952,7 @@ console.log(foo.opt.value);
 - <a name="rustoption-unwraporelse"></a> **.unwrapOrElse(fn)**
 &nbsp;
 
-##### <a name="rust-option-class"></a> .Option(type, value, [, isNonNullable[, tagSize]])
+### <a name="rust-option-class"></a> new rust.Option(type, value, [, isNonNullable[, tagSize]])
 Create a new option of `type` with a `value`. Value can be an actual value or it can be undefined for none. You can use `rust.Some(type, value)` and `rust.None(type)` for this purpose too.
 
 ```js
