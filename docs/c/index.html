@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wasm-ffi examples | C</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="../hybrid.min.css" rel="stylesheet" />
+    <link href="../main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="warning-header" class="py-2 hidden">
+        <div class="capped-container-fluid">
+            <p class="m-0">
+                <b>Uh-oh: </b> It looks like this browser doesn't support WebAssembly. Sorry :(
+            </p>
+        </div>
+    </div>
+
+    <div class="header pt-6 pb-6">
+        <div class="capped-container-fluid">
+            <h1>wasm-ffi examples</h1>
+            <p style="font-size: 16px;">
+                C examples using
+                <a href="https://github.com/dcodeIO/webassembly" style="color: white; text-decoration: underline; font-style: italic;">
+                    <b>dcodeIO/webassembly</b>
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="capped-container-fluid mb-7">
+
+        <nav class="UnderlineNav UnderlineNav--right">
+            <div class="UnderlineNav-actions">
+                <a href="https://github.com/demille/wasm-ffi" style="color: #333;">
+                        &larr;
+                        <img height="16" width="16"
+                             style="position: relative; top: 2px; left: 2px;"
+                             src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/github.svg" />
+                </a>
+            </div>
+
+            <div class="UnderlineNav-body">
+                <a href="../whatlang" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">whatlang-rs</span>
+                    <span class="d-sm-none">whatlang</span>
+                </a>
+                <a href="../c" class="UnderlineNav-item selected">
+                    <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-sm-none">C</span>
+                </a>
+                <a href="../rust" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-sm-none">Rust</span>
+                </a>
+            </div>
+        </nav>
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading" style="font-size: 26px;">
+                        Compiling C to WebAssembly
+                    </div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        There are multiple ways to do this, but @dcodeIO's
+                        <a href="https://github.com/dcodeIO/webassembly">webassembly</a>
+                        package is an easy way to get started. It uses a single header to expose a
+                        minimal standard library based on musl and dlmalloc.
+                    </p>
+                    <p>
+                        You can download the whole toolchain &amp;
+                        prebuilt binaries with:
+                        <br/>
+                        <code>npm install -g webassembly</code>.
+                    </p>
+                    <p>
+                        The basic build command:
+                        <br/>
+                        <code>wa compile -o main.wasm main.c</code>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav" style="margin-top: 9px;">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">C &amp; &lt;webassembly.h&gt;</a>
+                    </nav>
+                </div>
+                <div class="src">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt2 { background: #b31d28; }
+.paint .pt10 { color: #242930; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt11 { color: #586069; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt9 { color: #22863a; }
+.paint .pt15 { color: #959da5; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt8 { color: #032f62; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt18 { color: #e36209; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt6 { background: #ffeef0; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>#include</span> <span class='pt8'>&lt;webassembly.h&gt;</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// macro used to export functions to WebAssembly</span></td></tr>
+<tr><td>export <span class='pt17'>int</span> <span class='pt13'>add</span>(<span class='pt17'>int</span> <span class='pt13'>a</span>, <span class='pt17'>int</span> <span class='pt13'>b</span>) {</td></tr>
+<tr><td>  <span class='pt17'>return</span> a <span class='pt17'>+</span> b;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div>
+        </div> <!-- row -->
+
+
+        <div class="row mt-8 warning-block">
+            <div class="col d-none d-md-block pt-4">
+                <div class="zap"></div>
+            </div>
+            <div class="col-md-6">
+                <div class="Box">
+                    <div class="Box-header flash-warn">
+                        <h3 class="Box-title">
+                            <i class="icon-alert"></i>
+                            Warning: Memory Leaks
+                        </h3>
+                    </div>
+                    <div class="Box-body">
+                        <p>
+                            The examples below aren't even
+                            <i>trying</i> to be memory safe, so when you actually go to implement something, be careful!
+                        </p>
+                        <p>
+                            Read more about how wasm-ffi handles memory in the
+                            <a href="https://github.com/demille/wasm-ffi#memory-management">readme</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-none d-md-block pt-4">
+                <div class="zap" style="transform: scaleX(-1);"></div>
+            </div>
+        </div>
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Loading <code>.wasm</code> modules</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To load a <code>.wasm</code> module, you need to fetch it from
+                        the server and then load it with
+                        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/instantiateStreaming">
+                            WebAssembly.instantiateStreaming
+                        </a>.
+                        You can do that yourself or <code>wasm-ffi</code> will do it with
+                        <code>.fetch(url)</code>.
+                    </p>
+                    <p>
+                        Also, the default configuration of dcodeIO/webassembly requires memory to
+                        be imported at the <code>env.memory</code> namespace.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">JavaScript</a>
+                    </nav>
+                </div>
+                <div class="src">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt20 { color: #fafbfc; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt15 { color: #959da5; }
+.paint .pt11 { color: #586069; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt10 { color: #242930; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt8 { color: #032f62; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt18 { color: #e36209; }
+.paint .pt9 { color: #22863a; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>import</span> { <span class='pt10'>Wrapper</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// WebAssembly function you want to wrap will go here</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt12'>// do_thing: [return_type, [arg_type_1. arg_type_2]]</span></td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// the dcodeIO/webassembly package needs to import WebAssembly memory before</span></td></tr>
+<tr><td><span class='pt12'>// instantiating the module. It looks for it at the `env.memory` namespace:</span></td></tr>
+<tr><td><span class='pt10'>library.</span><span class='pt13'>imports</span>({</td></tr>
+<tr><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
+<tr><td>    <span class='pt8'>memory</span><span class='pt17'>:</span> <span class='pt17'>new</span> <span class='pt7'>WebAssembly</span><span class='pt10'>.</span><span class='pt13'>Memory</span>({ <span class='pt8'>initial</span><span class='pt17'>:</span> <span class='pt7'>10</span> }),</td></tr>
+<tr><td>  },</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>    <span class='pt12'>// library is now loaded and you can call your wrapped WebAssembly functions:</span></td></tr>
+<tr><td>    <span class='pt12'>// library.do_thing()</span></td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+            </div>
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading"><code>.wasm</code> Requirements</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> can read data from WebAssembly memory without
+                        any changes to your module. You can read strings, read struct fields,
+                        modify existing struct fields, etc.
+                    </p>
+                    <p>
+                        If your JavaSript needs to allocate any memory, though, you need to
+                        expose <code>malloc</code> / <code>free</code>. If you want to pass
+                        a string to WebAssembly, or create a new struct you'll need this.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">C</a>
+                    </nav>
+                </div>
+
+                <div class="src">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt16 { color: #b31d28; }
+.paint .pt8 { color: #032f62; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt10 { color: #242930; }
+.paint .pt11 { color: #586069; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt9 { color: #22863a; }
+.paint .pt18 { color: #e36209; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt15 { color: #959da5; }
+</style>
+<div class='paint'>
+<table>
+<tr><td>export <span class='pt17'>void</span> <span class='pt17'>*</span><span class='pt13'>allocate</span>(<span class='pt17'>int</span> <span class='pt13'>size</span>) {</td></tr>
+<tr><td>    <span class='pt17'>return</span> <span class='pt13'>malloc</span>(size);</td></tr>
+<tr><td>}</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>void</span> <span class='pt13'>deallocate</span>(<span class='pt17'>void</span> <span class='pt17'>*</span><span class='pt13'>ptr</span>) {</td></tr>
+<tr><td>    <span class='pt13'>free</span>(ptr);</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Strings</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        The format for wrapping functions is: <br/>
+                        <code>functionName: [returnType, [...argTypes]]</code>
+                    </p>
+                    <p>
+                        <code>say</code> takes a string pointer and returns a string pointer: <br/>
+                        <code>say: ['string', ['string']]</code>
+                    </p>
+                    <p>
+                        <button id="say-hello" class="btn btn-sm mt-2">
+                            say_hello<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt9 { color: #22863a; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt15 { color: #959da5; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt18 { color: #e36209; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt11 { color: #586069; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt10 { color: #242930; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt8 { color: #032f62; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt13 { color: #6f42c1; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt12'>// wrap our exported C function `say`:</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>say</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>    <span class='pt12'>// call `say` on btn click:</span></td></tr>
+<tr><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#say-hello&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>      <span class='pt13'>alert</span>(<span class='pt10'>library.</span><span class='pt13'>say</span>(<span class='pt8'>&#39;Hello&#39;</span>));</td></tr>
+<tr><td>    });</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt11 { color: #586069; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt18 { color: #e36209; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt9 { color: #22863a; }
+.paint .pt15 { color: #959da5; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt8 { color: #032f62; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt10 { color: #242930; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt4 { background: #f0fff4; }
+</style>
+<div class='paint'>
+<table>
+<tr><td>export <span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>say</span>(<span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>hello</span>) {</td></tr>
+<tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>phrase <span class='pt17'>=</span> <span class='pt13'>calloc</span>(<span class='pt13'>strlen</span>(hello) <span class='pt17'>+</span> <span class='pt7'>9</span>, <span class='pt7'>1</span>);</td></tr>
+<tr><td>  <span class='pt13'>strcat</span>(phrase, hello);</td></tr>
+<tr><td>  <span class='pt13'>strcat</span>(phrase, <span class='pt8'>&quot;, World!&quot;</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> phrase;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Arrays</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> supports ArrayBuffers &amp; TypedArrays
+                        as an argument type. It will write the arrays to memory and
+                        pass the pointer to your <code>.wasm</code> function.
+                    </p>
+                    <p>
+                        By default the array will be freed after the function returns.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-sum" class="btn btn-sm mt-2">
+                            get_sum<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="sum-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt5 { background: #ffebda; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt8 { color: #032f62; }
+.paint .pt15 { color: #959da5; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt9 { color: #22863a; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt10 { color: #242930; }
+.paint .pt18 { color: #e36209; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt11 { color: #586069; }
+.paint .pt4 { background: #f0fff4; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt12'>// wrap `get_sum` function: 2 arguments, array pointer &amp; array length</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>get_sum</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;array&#39;</span>, <span class='pt8'>&#39;number&#39;</span>]],</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-sum&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>arr</span> = <span class='pt17'>new</span> <span class='pt7'>Uint32Array</span>([<span class='pt7'>1</span>, <span class='pt7'>1</span>, <span class='pt7'>2</span>, <span class='pt7'>3</span>, <span class='pt7'>5</span>, <span class='pt7'>8</span>, <span class='pt7'>13</span>, <span class='pt7'>21</span>]);</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>sum</span> = <span class='pt10'>library.</span><span class='pt13'>get_sum</span>(<span class='pt10'>arr</span>, <span class='pt10'>arr.length</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#sum-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Sum of </span><span class='pt17'>${</span><span class='pt10'>arr</span><span class='pt17'>}</span><span class='pt8'> is: </span><span class='pt17'>${</span><span class='pt10'>sum</span><span class='pt17'>}`</span>;</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt9 { color: #22863a; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt8 { color: #032f62; }
+.paint .pt15 { color: #959da5; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt18 { color: #e36209; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt10 { color: #242930; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt11 { color: #586069; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt17 { color: #d73a49; }
+</style>
+<div class='paint'>
+<table>
+<tr><td>export <span class='pt17'>int</span> <span class='pt13'>get_sum</span>(<span class='pt17'>int</span> <span class='pt13'>arr</span>[], <span class='pt17'>size_t</span> <span class='pt13'>length</span>) {</td></tr>
+<tr><td>  <span class='pt17'>int</span> i;</td></tr>
+<tr><td>  <span class='pt17'>int</span> sum <span class='pt17'>=</span> <span class='pt7'>0</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>for</span> (i <span class='pt17'>=</span> <span class='pt7'>0</span>; i <span class='pt17'>&lt;</span> length; <span class='pt17'>++</span>i) {</td></tr>
+<tr><td>    sum <span class='pt17'>+=</span> arr[i];</td></tr>
+<tr><td>  }</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> sum;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Pointers to data types</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A <code>Pointer</code> object encapsulates a reference to wasm memory.
+                    </p>
+                    <ul>
+                        <li><code>.ref()</code>: get memory address</li>
+                        <li><code>.deref()</code>: get data</li>
+                        <li><code>.set(value)</code>: set pointers value</li>
+                        <li><code>.free()</code>: free from wasm memory</li>
+                    </ul>
+                    <p>
+                        Create a new pointer with <code>new Pointer(type, value)</code>.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-pointer" class="btn btn-sm mt-2">
+                            get_pointer<span>()</span>
+                        </button>
+                        <button id="pass-pointer" class="btn btn-sm mt-2">
+                            pass_pointer<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="pointer-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt3 { background: #d73a49; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt15 { color: #959da5; }
+.paint .pt9 { color: #22863a; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt11 { color: #586069; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt10 { color: #242930; }
+.paint .pt8 { color: #032f62; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt18 { color: #e36209; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt1 { background: #005cc5; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>import</span> { <span class='pt10'>types</span>, <span class='pt10'>Pointer</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>get_pointer</span><span class='pt17'>:</span> [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)],</td></tr>
+<tr><td>  <span class='pt8'>pass_pointer</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)]],</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt10'>library.</span><span class='pt13'>get_pointer</span>();</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Value </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>deref</span>()<span class='pt17'>}</span><span class='pt8'> is located @ </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>ref</span>()<span class='pt17'>}`</span>;</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#pass-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt17'>new</span> ffi.<span class='pt13'>Pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>, <span class='pt7'>365</span>);</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>value</span> = <span class='pt10'>library.</span><span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Wasm read </span><span class='pt17'>${</span><span class='pt10'>value</span><span class='pt17'>}</span><span class='pt8'> from the pointer you sent</span><span class='pt17'>`</span>;</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt12 { color: #6a737d; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt10 { color: #242930; }
+.paint .pt11 { color: #586069; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt8 { color: #032f62; }
+.paint .pt9 { color: #22863a; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt18 { color: #e36209; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt15 { color: #959da5; }
+</style>
+<div class='paint'>
+<table>
+<tr><td>export <span class='pt17'>int</span> <span class='pt17'>*</span><span class='pt13'>get_pointer</span>() {</td></tr>
+<tr><td>  <span class='pt17'>int</span> <span class='pt17'>*</span>ptr <span class='pt17'>=</span> <span class='pt13'>malloc</span>(<span class='pt17'>sizeof</span> <span class='pt17'>*</span>ptr);</td></tr>
+<tr><td>  <span class='pt17'>*</span>ptr <span class='pt17'>=</span> <span class='pt7'>123</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> ptr;</td></tr>
+<tr><td>}</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>int</span> <span class='pt13'>pass_pointer</span>(<span class='pt17'>int</span> <span class='pt17'>*</span><span class='pt13'>ptr</span>) {</td></tr>
+<tr><td>  <span class='pt17'>return</span> <span class='pt17'>*</span>ptr;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        When you have a function that accepts or returns a struct pointer
+                        <code>wasm-ffi</code> will wrap that pointer into an object that
+                        is easier to use.
+                    </p>
+                    <p>
+                        To use a struct you first have to define a struct type. The order
+                        of the properties should be the same as how you have it defined in C.
+                        Use this struct definition in your wrapped function signatures.
+                    </p>
+                    <p>
+                        You can get the memory address of a struct with <code>.ref()</code>
+                        and you can free it from memory with <code>.free()</code>
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-person" class="btn btn-sm mt-2">
+                            get_person<span>()</span>
+                        </button>
+                        <button id="modify-person" class="btn btn-sm mt-2">
+                            modify person
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="person-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt13 { color: #6f42c1; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt9 { color: #22863a; }
+.paint .pt8 { color: #032f62; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt18 { color: #e36209; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt11 { color: #586069; }
+.paint .pt10 { color: #242930; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt15 { color: #959da5; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt19 { color: #f6f8fa; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>import</span> { <span class='pt10'>Struct</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// define a new struct type: Person</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
+<tr><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>get_person</span><span class='pt17'>:</span> [<span class='pt10'>Person</span>],</td></tr>
+<tr><td>  <span class='pt8'>person_facts</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt10'>Person</span>]],</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>about</span> = <span class='pt17'>`${</span><span class='pt10'>p.name</span><span class='pt17'>}</span><span class='pt8'> is </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt8'>. His favorite number is </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt8'>.</span><span class='pt17'>`</span>;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>about</span>;</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#modify-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt12'>// modify the properties of a struct:</span></td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
+<tr><td>  <span class='pt10'>p.age</span> = <span class='pt7'>255</span>;</td></tr>
+<tr><td>  <span class='pt10'>p.favorite_number</span> = <span class='pt7'>100</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>New age: </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt17'>`</span><span class='pt8'>New favorite: </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>p</span>);</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt4 { background: #f0fff4; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt9 { color: #22863a; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt8 { color: #032f62; }
+.paint .pt10 { color: #242930; }
+.paint .pt15 { color: #959da5; }
+.paint .pt18 { color: #e36209; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt11 { color: #586069; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>name;</td></tr>
+<tr><td>  <span class='pt17'>uint8_t</span> age;</td></tr>
+<tr><td>  <span class='pt17'>uint32_t</span> favorite_number;</td></tr>
+<tr><td>};</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>struct</span> Person <span class='pt17'>*</span><span class='pt13'>get_person</span>() {</td></tr>
+<tr><td>  <span class='pt17'>struct</span> Person <span class='pt17'>*</span>p <span class='pt17'>=</span> <span class='pt13'>malloc</span>(<span class='pt17'>sizeof</span>(<span class='pt17'>struct</span> Person));</td></tr>
+<tr><td>  p-&gt;name <span class='pt17'>=</span> <span class='pt8'>&quot;Jean-Luc Picard&quot;</span>;</td></tr>
+<tr><td>  p-&gt;age <span class='pt17'>=</span> <span class='pt7'>61</span>;</td></tr>
+<tr><td>  p-&gt;favorite_number <span class='pt17'>=</span> <span class='pt7'>1701</span>;</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> p;</td></tr>
+<tr><td>}</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>person_facts</span>(<span class='pt17'>struct</span> Person <span class='pt17'>*</span><span class='pt13'>p</span>) {</td></tr>
+<tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>about <span class='pt17'>=</span> <span class='pt13'>calloc</span>(<span class='pt13'>strlen</span>(p-&gt;name) <span class='pt17'>+</span> <span class='pt7'>40</span>, <span class='pt7'>1</span>);</td></tr>
+<tr><td>  <span class='pt13'>strcat</span>(about, p-&gt;name);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>if</span> (p-&gt;age <span class='pt17'>&gt;</span> p-&gt;favorite_number) {</td></tr>
+<tr><td>    <span class='pt13'>strcat</span>(about, <span class='pt8'>&quot; is older than his favorite number.&quot;</span>);</td></tr>
+<tr><td>  } <span class='pt17'>else</span> {</td></tr>
+<tr><td>    <span class='pt13'>strcat</span>(about, <span class='pt8'>&quot; is younger than his favorite number.&quot;</span>);</td></tr>
+<tr><td>  }</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> about;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs: creating from JavaScript</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A struct definition (like above) is also a constructor you
+                        can use to make new structs from JS. Any struct made in JS
+                        will get written to memory the first time it is used in a
+                        WebAssembly function.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input id="name" type="text" class="form-control input-sm" value="Black Francis">
+                        </div>
+                        <div class="form-group">
+                            <label>Age:</label>
+                            <input id="age" type="text" class="form-control input-sm" value="52">
+                        </div>
+                        <div class="form-group">
+                            <label>Favorite Number:</label>
+                            <input id="num" type="text" class="form-control input-sm" value="13">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="make-person" class="btn btn-sm">
+                                make person
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="make-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt17 { color: #d73a49; }
+.paint .pt10 { color: #242930; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt9 { color: #22863a; }
+.paint .pt11 { color: #586069; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt15 { color: #959da5; }
+.paint .pt18 { color: #e36209; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt8 { color: #032f62; }
+.paint .pt16 { color: #b31d28; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
+<tr><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#make-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>name</span> = <span class='pt13'>$</span>(<span class='pt8'>&#39;#name&#39;</span>)<span class='pt10'>.value</span>;</td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>age</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#age&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>num</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#num&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>person</span> = <span class='pt17'>new</span> <span class='pt13'>Person</span>({</td></tr>
+<tr><td>    <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt10'>name</span>,</td></tr>
+<tr><td>    <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt10'>age</span>,</td></tr>
+<tr><td>    <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt10'>num</span>,</td></tr>
+<tr><td>  });</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#make-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>person</span>);</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt1 { background: #005cc5; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt9 { color: #22863a; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt18 { color: #e36209; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt11 { color: #586069; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt10 { color: #242930; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt8 { color: #032f62; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt15 { color: #959da5; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt20 { color: #fafbfc; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>name;</td></tr>
+<tr><td>  <span class='pt17'>uint8_t</span> age;</td></tr>
+<tr><td>  <span class='pt17'>uint32_t</span> favorite_number;</td></tr>
+<tr><td>};</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>person_facts</span>(<span class='pt17'>struct</span> Person <span class='pt17'>*</span><span class='pt13'>p</span>) {</td></tr>
+<tr><td>  <span class='pt17'>char</span> <span class='pt17'>*</span>about <span class='pt17'>=</span> <span class='pt13'>calloc</span>(<span class='pt13'>strlen</span>(p-&gt;name) <span class='pt17'>+</span> <span class='pt7'>40</span>, <span class='pt7'>1</span>);</td></tr>
+<tr><td>  <span class='pt13'>strcat</span>(about, p-&gt;name);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>if</span> (p-&gt;age <span class='pt17'>&gt;</span> p-&gt;favorite_number) {</td></tr>
+<tr><td>    <span class='pt13'>strcat</span>(about, <span class='pt8'>&quot; is older than his favorite number.&quot;</span>);</td></tr>
+<tr><td>  } <span class='pt17'>else</span> {</td></tr>
+<tr><td>    <span class='pt13'>strcat</span>(about, <span class='pt8'>&quot; is younger than his favorite number.&quot;</span>);</td></tr>
+<tr><td>  }</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt17'>return</span> about;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Calling JS functions from C</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To call a JS function from C you need to import the JS function
+                        into your wasm module.
+                    </p>
+                    <p>
+                        Most wasm targeting compilers expect external functions to be
+                        in the <code>env</code> namespace.
+                    </p>
+                    <p class="mb-4">
+                        <button id="barrel-roll" class="btn btn-sm mt-2">
+                             do a barrel_roll<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt14 { color: #735c0f; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt8 { color: #032f62; }
+.paint .pt11 { color: #586069; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt15 { color: #959da5; }
+.paint .pt10 { color: #242930; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt9 { color: #22863a; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt18 { color: #e36209; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt12'>// `barrel_roll` will call the `rotate` function below</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>barrel_roll</span><span class='pt17'>:</span> [], <span class='pt12'>// no arguments</span></td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// this needs to be done before `library.fetch(&#39;main.wasm&#39;)`</span></td></tr>
+<tr><td><span class='pt10'>library.</span><span class='pt13'>imports</span>({</td></tr>
+<tr><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
+<tr><td>    <span class='pt8'>memory</span><span class='pt17'>:</span> <span class='pt17'>new</span> <span class='pt7'>WebAssembly</span><span class='pt10'>.</span><span class='pt13'>Memory</span>({ <span class='pt8'>initial</span><span class='pt17'>:</span> <span class='pt7'>10</span> }),</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>    <span class='pt13'>rotate</span><span class='pt17'>:</span> <span class='pt17'>function</span>() {</td></tr>
+<tr><td>      <span class='pt13'>$</span>(<span class='pt8'>&#39;body&#39;</span>)<span class='pt10'>.classList.</span><span class='pt13'>toggle</span>(<span class='pt8'>&#39;rotate&#39;</span>);</td></tr>
+<tr><td>    },</td></tr>
+<tr><td>  },</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#barrel-roll&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt10'>library.</span><span class='pt13'>barrel_roll</span>();</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt18 { color: #e36209; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt11 { color: #586069; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt15 { color: #959da5; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt8 { color: #032f62; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt10 { color: #242930; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt9 { color: #22863a; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt17'>extern</span> <span class='pt17'>void</span> <span class='pt13'>rotate</span>();</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>export <span class='pt17'>void</span> <span class='pt13'>barrel_roll</span>() {</td></tr>
+<tr><td>  <span class='pt13'>rotate</span>();</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+
+                <div class="Subhead">
+                    <div class="Subhead-heading">Wrapping imports</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        You can also wrap imported functions using the same notation as with
+                        a <code>Wrapper</code>. The last argument is the function to wrap. This
+                        will convert the inputs and outputs of the function to the right types.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Number:</label>
+                            <input id="number" type="text" class="form-control input-sm" value="777">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="multiply" class="btn btn-sm">
+                                mulitply_input<span>()</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="multiply-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt6 { background: #ffeef0; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt9 { color: #22863a; }
+.paint .pt10 { color: #242930; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt15 { color: #959da5; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt11 { color: #586069; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt18 { color: #e36209; }
+.paint .pt8 { color: #032f62; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt20 { color: #fafbfc; }
+.paint .pt5 { background: #ffebda; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt12'>// `multiply_input` will call `get_input_value` below:</span></td></tr>
+<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td>  <span class='pt8'>multiply_input</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td>});</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// change imports to a callback to expose the wrap fn</span></td></tr>
+<tr><td><span class='pt12'>// (remember to return an object here with the extra parenthesis: `({ ... })`)</span></td></tr>
+<tr><td><span class='pt10'>library.</span><span class='pt13'>imports</span>(<span class='pt10'>wrap</span> <span class='pt17'>=&gt;</span> ({</td></tr>
+<tr><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
+<tr><td>    <span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>    <span class='pt12'>// `get_input_value` takes a string and returns a number</span></td></tr>
+<tr><td>    <span class='pt8'>get_input_value</span><span class='pt17'>:</span> <span class='pt13'>wrap</span>([<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]], (<span class='pt10'>selector</span>) <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>      <span class='pt17'>return</span> <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt10'>selector</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td>    }),</td></tr>
+<tr><td>  },</td></tr>
+<tr><td>}));</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// ...</span></td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td>  <span class='pt12'>// gets the &lt;input&gt;.value and multiplies it by 2</span></td></tr>
+<tr><td>  <span class='pt17'>const</span> <span class='pt10'>number</span> = <span class='pt10'>library.</span><span class='pt13'>multiply_input</span>(<span class='pt8'>&#39;body #number&#39;</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Result: </span><span class='pt17'>${</span><span class='pt10'>number</span><span class='pt17'>}`</span>;</td></tr>
+<tr><td>});</td></tr>
+</table>
+</div>
+
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <style scoped>
+.paint {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    color: #24292e;
+    background-color: #ffffff;
+}
+.paint table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    line-height: 20px;
+    tab-size: 4;
+    color: inherit;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+}
+.paint td {
+    padding: 0 13px; white-space: pre;
+}
+.paint .ln {
+    width: 1px;
+    min-width: 25px;
+    box-sizing: content-box;
+    text-align: right;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #bebfbf; 
+}
+.paint .ln::after {
+    content: attr(data-ln);
+}
+.paint .hi {
+    background-color: #fffbdd;
+}
+.paint .un { text-decoration: underline; }
+.paint .bo { font-weight: bold; }
+.paint .it { font-style: italic; }
+        .paint .pt20 { color: #fafbfc; }
+.paint .pt9 { color: #22863a; }
+.paint .pt12 { color: #6a737d; }
+.paint .pt1 { background: #005cc5; }
+.paint .pt10 { color: #242930; }
+.paint .pt15 { color: #959da5; }
+.paint .pt7 { color: #005cc5; }
+.paint .pt18 { color: #e36209; }
+.paint .pt6 { background: #ffeef0; }
+.paint .pt16 { color: #b31d28; }
+.paint .pt13 { color: #6f42c1; }
+.paint .pt11 { color: #586069; }
+.paint .pt5 { background: #ffebda; }
+.paint .pt19 { color: #f6f8fa; }
+.paint .pt2 { background: #b31d28; }
+.paint .pt17 { color: #d73a49; }
+.paint .pt14 { color: #735c0f; }
+.paint .pt3 { background: #d73a49; }
+.paint .pt4 { background: #f0fff4; }
+.paint .pt8 { color: #032f62; }
+</style>
+<div class='paint'>
+<table>
+<tr><td><span class='pt12'>// does `document.querySelector()` and parses the `.value` of the element:</span></td></tr>
+<tr><td><span class='pt17'>extern</span> <span class='pt17'>int</span> <span class='pt13'>get_input_value</span>(<span class='pt17'>char</span> <span class='pt17'>*</span>);</td></tr>
+<tr><td>&#10;</td></tr>
+<tr><td><span class='pt12'>// multiplies the value contained in a given DOM selector:</span></td></tr>
+<tr><td>export <span class='pt17'>int</span> <span class='pt13'>multiply_input</span>(<span class='pt17'>char</span> <span class='pt17'>*</span><span class='pt13'>dom_selector</span>) {</td></tr>
+<tr><td>  <span class='pt17'>return</span> <span class='pt13'>get_input_value</span>(dom_selector) <span class='pt17'>*</span> <span class='pt7'>2</span>;</td></tr>
+<tr><td>}</td></tr>
+</table>
+</div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col gh">
+                <a href="https://github.com/demille/wasm-ffi">
+                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                        />
+                    </svg>
+                    more docs in the readme
+                </a>
+            </div>
+        </div>
+
+    </div> <!-- container -->
+
+
+    <script src="../common.js"></script>
+    <script src="../wasm-ffi.browser.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

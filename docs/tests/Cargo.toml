@@ -1,0 +1,13 @@
+[package]
+name = "tests"
+version = "0.0.0"
+
+[dependencies]
+wasm-glue = "0.1.0"
+
+[lib]
+path = "./main.rs"
+crate-type = ["cdylib"]
+
+[profile.dev]
+opt-level = 2

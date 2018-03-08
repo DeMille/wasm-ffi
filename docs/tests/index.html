@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Tests</title>
+  <link href="https://cdn.rawgit.com/mochajs/mocha/v3.5.3/mocha.css" rel="stylesheet" />
+
+  <style>
+    #mocha {
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    body #blanket-main {
+      max-width: 1000px;
+      margin: 40px auto 20px;
+    }
+
+    #blanket-main .bl-source {
+      font-size: 14px;
+    }
+
+    #blanket-main .bl-source .hit {
+      background-color: #f6f9f7;
+    }
+
+    #blanket-main .bl-source .miss {
+      background-color: #e6c2c66e;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mocha"></div>
+
+  <script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+  <script src="https://cdn.rawgit.com/mochajs/mocha/v3.5.3/mocha.js"></script>
+  <script src="./blanket.js"></script>
+
+  <script>mocha.setup('bdd')</script>
+
+  <!-- hacked up copy of blanket will check for SPANs instead of scripts: -->
+  <!-- with a <script> the code gets tested twice -->
+  <span data-cover src="./wasm-ffi.browser.js"></span>
+  <span data-cover src="./tests.js"></span>
+
+  <script>
+    mocha.run();
+  </script>
+</body>
+
+</html>

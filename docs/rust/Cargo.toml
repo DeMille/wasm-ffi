@@ -1,0 +1,10 @@
+[package]
+name = "example"
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+path = "./main.rs"
+
+[profile.dev]
+opt-level = 2

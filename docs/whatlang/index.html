@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wasm-ffi examples | whatlang-rs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="../hybrid.min.css" rel="stylesheet" />
+    <link href="../main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="warning-header" class="py-2 hidden">
+        <div class="capped-container-fluid">
+            <p class="m-0">
+                <b>Uh-oh: </b> It looks like this browser doesn't support WebAssembly. Sorry :(
+            </p>
+        </div>
+    </div>
+
+    <div class="header pt-6 pb-6">
+        <div class="capped-container-fluid">
+            <h1>wasm-ffi examples</h1>
+            <p style="font-size: 16px;">
+                Natural language detection using
+                <a href="https://github.com/greyblake/whatlang-rs" style="color: white; text-decoration: underline; font-style: italic;">
+                    <b>whatlang-rs</b>
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="capped-container-fluid">
+
+        <nav class="UnderlineNav UnderlineNav--right">
+            <div class="UnderlineNav-actions">
+                <a href="https://github.com/demille/wasm-ffi" style="color: #333;">
+                        &larr;
+                        <img height="16" width="16"
+                                 style="position: relative; top: 2px; left: 2px;"
+                                 src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/github.svg" />
+                </a>
+            </div>
+
+            <div class="UnderlineNav-body">
+                <a href="../whatlang" class="UnderlineNav-item selected">
+                    <span class="d-none d-sm-block">whatlang-rs</span>
+                    <span class="d-sm-none">whatlang</span>
+                </a>
+                <a href="../c" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-sm-none">C</span>
+                </a>
+                <a href="../rust" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-sm-none">Rust</span>
+                </a>
+            </div>
+        </nav>
+
+
+        <div class="row">
+            <div class="col col-lg-6 offset-lg-3 col-md-8 offset-md-2" >
+
+                <h3 class="text-center mt-7" style="font-size: 18px; margin-bottom: -6px;">
+                    Detected Language:
+                </h3>
+
+                <h2 class="text-center mb-4">
+                    <span id="reliable" class="yes">
+                        <span class="yes"></span>
+                        <span class="no"></span>
+                        <span id="language">English</span>
+                    </span>
+                </h2>
+
+                <div class="meter">
+                    <p>
+                        <nobr>Confidence: <span id="confidence">100.0%</span></nobr>
+                    </p>
+                    <div>
+                        <progress id="bar" value="100" max="100"></progress>
+                    </div>
+                </div>
+
+                <div class="form-group mt-0">
+                    <textarea id="textinput" class="form-control">Type something in here and whatlang.rs will tell you what language it is.
+
+It gives you a confidence score for the analysis as well as whether or not it considers the result to be reliable.
+
+
+
+(or try these 👇)</textarea>
+                </div>
+
+                <div id="languages" class="mb-6">
+                        <a class="btn btn-sm">Portuguese</a>
+                        <span class="hidden">Capitu, apesar daqueles olhos que o diabo lhe deu... Você já reparou nos olhos dela? São assim de cigana oblíqua e dissimulada. Pois apesar deles, poderia passar, se não fosse a vaidade e a adulação. Oh! a adulação!</span>
+
+                        <a class="btn btn-sm">Korean</a>
+                        <span class="hidden">내 호버크라프트는 장어로 가득 차 있어요</span>
+
+                        <a class="btn btn-sm">German</a>
+                        <span class="hidden">Ich verstehe nicht.
+Können Sie bitte langsamer sprechen?</span>
+
+                        <a class="btn btn-sm">Russian</a>
+                        <span class="hidden">Козла́ бо́йся спе́реди, коня́ — сза́ди, а лихо́го челове́ка — со всех сторо́н</span>
+
+                        <a class="btn btn-sm">Italian</a>
+                        <span class="hidden">Chi non si lascia consigliare, no si può aiutare.</span>
+
+                        <a class="btn btn-sm">English</a>
+                        <span class="hidden">Do they keep you in a cell? Cells.
+Cells.
+
+When you're not performing your duties do they keep you in a little box?
+Cells.
+
+What's it like to hold the hand of someone you love? Interlinked.
+Interlinked.</span>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row mt-7 mb-6">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading" style="font-size: 26px;">
+                        Under the hood &rarr;
+                    </div>
+                </div>
+                <div class="markdown-body" style="font-size: 15px;">
+                    <p>
+                        The main WebAssembly export here is <code>detect</code>, which takes a
+                        string pointer and gives back a pointer to a <code>DetectResult</code> struct.
+                        This function gets called each time the textarea is updated.
+                    </p>
+                    <p>
+                        <code>wasm-ffi</code> wraps the call to <code>detect</code>.  It writes the
+                        input string to memory before calling the WebAssembly function and it returns
+                        an object that can access the struct fields.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="col-md-8">
+                <div class="tabnav" style="margin-top: 9px;">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="rs">Rust</a>
+                    </nav>
+                </div>
+
+                <!-- javascript src: -->
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+
+                    <div class='paint'>
+                    <table>
+                    <tr><td class='ln' data-ln='1'></td><td><span class='pt17'>const</span> <span class='pt13'>$</span> <span class='pt17'>=</span> <span class='pt10'>sel</span> <span class='pt17'>=&gt;</span> <span class='pt17'>document</span><span class='pt10'>.</span><span class='pt13'>querySelector</span>(<span class='pt10'>sel</span>);</td></tr>
+                    <tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>textarea</span> = <span class='pt13'>$</span>(<span class='pt8'>&#39;textarea&#39;</span>);</td></tr>
+                    <tr><td class='ln' data-ln='3'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='4'></td><td><span class='pt17'>const</span> <span class='pt10'>DetectResult</span> = <span class='pt17'>new</span> ffi.<span class='pt13'>Struct</span>({</td></tr>
+                    <tr><td class='ln' data-ln='5'></td><td>  <span class='pt8'>lang</span><span class='pt17'>:</span> <span class='pt10'>ffi.rust.string</span>,</td></tr>
+                    <tr><td class='ln' data-ln='6'></td><td>  <span class='pt8'>confidence</span><span class='pt17'>:</span> <span class='pt8'>&#39;f64&#39;</span>,</td></tr>
+                    <tr><td class='ln' data-ln='7'></td><td>  <span class='pt8'>is_reliable</span><span class='pt17'>:</span> <span class='pt8'>&#39;bool&#39;</span>,</td></tr>
+                    <tr><td class='ln' data-ln='8'></td><td>});</td></tr>
+                    <tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='10'></td><td class='hi'><span class='pt17'>const</span> <span class='pt10'>whatlang</span> = <span class='pt17'>new</span> ffi.<span class='pt13'>Wrapper</span>({</td></tr>
+                    <tr><td class='ln' data-ln='11'></td><td class='hi'>  <span class='pt8'>detect</span><span class='pt17'>:</span> [<span class='pt10'>DetectResult</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+                    <tr><td class='ln' data-ln='12'></td><td class='hi'>});</td></tr>
+                    <tr><td class='ln' data-ln='13'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='14'></td><td><span class='pt10'>whatlang.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;whatlang.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+                    <tr><td class='ln' data-ln='15'></td><td>  <span class='pt17'>function</span> <span class='pt13'>update</span>(<span class='pt10'>str</span>) {</td></tr>
+                    <tr><td class='ln' data-ln='16'></td><td class='hi'>    <span class='pt17'>const</span> <span class='pt10'>result</span> = <span class='pt10'>whatlang.</span><span class='pt13'>detect</span>(<span class='pt10'>str</span>);</td></tr>
+                    <tr><td class='ln' data-ln='17'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='18'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#language&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>result.lang.value</span>;</td></tr>
+                    <tr><td class='ln' data-ln='19'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#reliable&#39;</span>)<span class='pt10'>.className</span> = (<span class='pt10'>result.is_reliable</span>) <span class='pt17'>?</span> <span class='pt8'>&#39;yes&#39;</span> <span class='pt17'>:</span> <span class='pt8'>&#39;no&#39;</span>;</td></tr>
+                    <tr><td class='ln' data-ln='20'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='21'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#confidence&#39;</span>)<span class='pt10'>.innerText</span> = (<span class='pt10'>result.confidence</span> <span class='pt17'>*</span> <span class='pt7'>100</span>)<span class='pt10'>.</span><span class='pt13'>toFixed</span>(<span class='pt7'>1</span>) <span class='pt17'>+</span> <span class='pt8'>&#39;%&#39;</span>;</td></tr>
+                    <tr><td class='ln' data-ln='22'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#bar&#39;</span>)<span class='pt10'>.value</span> = <span class='pt10'>result.confidence</span> <span class='pt17'>*</span> <span class='pt7'>100</span>;</td></tr>
+                    <tr><td class='ln' data-ln='23'></td><td>  }</td></tr>
+                    <tr><td class='ln' data-ln='24'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='25'></td><td>  <span class='pt10'>textarea.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;input&#39;</span>, () <span class='pt17'>=&gt;</span> <span class='pt13'>update</span>(<span class='pt10'>textarea.value</span>));</td></tr>
+                    <tr><td class='ln' data-ln='26'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='27'></td><td>  [<span class='pt17'>...</span><span class='pt10'>document.</span><span class='pt13'>querySelectorAll</span>(<span class='pt8'>&#39;#languages .btn&#39;</span>)]<span class='pt10'>.</span><span class='pt13'>forEach</span>(<span class='pt10'>el</span> <span class='pt17'>=&gt;</span></td></tr>
+                    <tr><td class='ln' data-ln='28'></td><td>    <span class='pt10'>el.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+                    <tr><td class='ln' data-ln='29'></td><td>      <span class='pt10'>textarea.value</span> = <span class='pt10'>el.nextElementSibling.innerHTML.</span><span class='pt13'>trim</span>();</td></tr>
+                    <tr><td class='ln' data-ln='30'></td><td>      <span class='pt13'>update</span>(<span class='pt10'>textarea.value</span>);</td></tr>
+                    <tr><td class='ln' data-ln='31'></td><td>    }));</td></tr>
+                    <tr><td class='ln' data-ln='32'></td><td>});</td></tr>
+                    <tr><td class='ln' data-ln='33'></td><td>&#10;</td></tr>
+                    </table>
+                    </div>
+
+                </div>
+
+
+                <!-- rust src: -->
+                <div data-tab="rs" class="src hidden">
+                    <span class="tag right">main.rs</span>
+
+                    <div class='paint'>
+                    <table>
+                    <tr><td class='ln' data-ln='1'></td><td><span class='pt17'>use</span> std<span class='pt17'>::</span>cell<span class='pt17'>::</span>RefCell;</td></tr>
+                    <tr><td class='ln' data-ln='2'></td><td><span class='pt17'>use</span> std<span class='pt17'>::</span>ffi<span class='pt17'>::</span>CStr;</td></tr>
+                    <tr><td class='ln' data-ln='3'></td><td><span class='pt17'>use</span> std<span class='pt17'>::</span>os<span class='pt17'>::</span>raw<span class='pt17'>::</span>{<span class='pt17'>c_char</span>, <span class='pt17'>c_void</span>};</td></tr>
+                    <tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='5'></td><td><span class='pt17'>extern</span> <span class='pt17'>crate</span> whatlang;</td></tr>
+                    <tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='7'></td><td><span class='pt7'>thread_local!</span>(</td></tr>
+                    <tr><td class='ln' data-ln='8'></td><td>    <span class='pt17'>static</span> <span class='pt7'>RESULT</span>: RefCell<span class='pt17'>&lt;Option&lt;</span>DetectResult<span class='pt17'>&gt;&gt;</span> <span class='pt17'>=</span> RefCell<span class='pt17'>::</span><span class='pt13'>new</span>(<span class='pt7'>None</span>);</td></tr>
+                    <tr><td class='ln' data-ln='9'></td><td>);</td></tr>
+                    <tr><td class='ln' data-ln='10'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='11'></td><td>#[<span class='pt13'>repr</span>(C)]</td></tr>
+                    <tr><td class='ln' data-ln='12'></td><td class='hi'><span class='pt17'>pub</span> <span class='pt17'>struct</span> <span class='pt13'>DetectResult</span> {</td></tr>
+                    <tr><td class='ln' data-ln='13'></td><td class='hi'>    <span class='pt10'>lang</span>: <span class='pt17'>String</span>,</td></tr>
+                    <tr><td class='ln' data-ln='14'></td><td class='hi'>    <span class='pt10'>confidence</span>: <span class='pt17'>f64</span>,</td></tr>
+                    <tr><td class='ln' data-ln='15'></td><td class='hi'>    <span class='pt10'>is_reliable</span>: <span class='pt17'>bool</span>,</td></tr>
+                    <tr><td class='ln' data-ln='16'></td><td class='hi'>}</td></tr>
+                    <tr><td class='ln' data-ln='17'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='18'></td><td>#[no_mangle]</td></tr>
+                    <tr><td class='ln' data-ln='19'></td><td class='hi'><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>detect</span>(<span class='pt10'>ptr</span>: *const c_char) -&gt; <span class='pt17'>*const</span> DetectResult {</td></tr>
+                    <tr><td class='ln' data-ln='20'></td><td>    <span class='pt7'>RESULT</span>.<span class='pt13'>with</span>(<span class='pt17'>|</span><span class='pt10'>cell</span><span class='pt17'>|</span> {</td></tr>
+                    <tr><td class='ln' data-ln='21'></td><td>        <span class='pt17'>let</span> <span class='pt17'>mut</span> wrapper <span class='pt17'>=</span> cell.<span class='pt13'>borrow_mut</span>();</td></tr>
+                    <tr><td class='ln' data-ln='22'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='23'></td><td>        <span class='pt17'>let</span> input <span class='pt17'>=</span> <span class='pt17'>unsafe</span> {</td></tr>
+                    <tr><td class='ln' data-ln='24'></td><td>            <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+                    <tr><td class='ln' data-ln='25'></td><td>            CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(ptr).<span class='pt13'>to_string_lossy</span>()</td></tr>
+                    <tr><td class='ln' data-ln='26'></td><td>        };</td></tr>
+                    <tr><td class='ln' data-ln='27'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='28'></td><td>        <span class='pt17'>let</span> info_result <span class='pt17'>=</span> whatlang<span class='pt17'>::</span><span class='pt13'>detect</span>(<span class='pt17'>&amp;</span>input);</td></tr>
+                    <tr><td class='ln' data-ln='29'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='30'></td><td>        <span class='pt17'>if</span> <span class='pt17'>let</span> <span class='pt7'>Some</span>(info) <span class='pt17'>=</span> info_result {</td></tr>
+                    <tr><td class='ln' data-ln='31'></td><td>            <span class='pt17'>*</span>wrapper <span class='pt17'>=</span> <span class='pt7'>Some</span>(DetectResult {</td></tr>
+                    <tr><td class='ln' data-ln='32'></td><td>                lang: info.<span class='pt13'>lang</span>().<span class='pt13'>eng_name</span>().<span class='pt13'>to_string</span>(),</td></tr>
+                    <tr><td class='ln' data-ln='33'></td><td>                confidence: info.<span class='pt13'>confidence</span>(),</td></tr>
+                    <tr><td class='ln' data-ln='34'></td><td>                is_reliable: info.<span class='pt13'>is_reliable</span>(),</td></tr>
+                    <tr><td class='ln' data-ln='35'></td><td>            });</td></tr>
+                    <tr><td class='ln' data-ln='36'></td><td>        } <span class='pt17'>else</span> {</td></tr>
+                    <tr><td class='ln' data-ln='37'></td><td>            <span class='pt17'>*</span>wrapper <span class='pt17'>=</span> <span class='pt7'>Some</span>(DetectResult {</td></tr>
+                    <tr><td class='ln' data-ln='38'></td><td>                lang: <span class='pt17'>String::</span><span class='pt13'>from</span>(<span class='pt8'>&quot;-----&quot;</span>),</td></tr>
+                    <tr><td class='ln' data-ln='39'></td><td>                confidence: <span class='pt7'>0.0</span>,</td></tr>
+                    <tr><td class='ln' data-ln='40'></td><td>                is_reliable: <span class='pt7'>false</span>,</td></tr>
+                    <tr><td class='ln' data-ln='41'></td><td>            });</td></tr>
+                    <tr><td class='ln' data-ln='42'></td><td>        }</td></tr>
+                    <tr><td class='ln' data-ln='43'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='44'></td><td>        <span class='pt17'>let</span> result <span class='pt17'>=</span> wrapper.<span class='pt13'>as_ref</span>().<span class='pt13'>unwrap</span>();</td></tr>
+                    <tr><td class='ln' data-ln='45'></td><td>        <span class='pt17'>&amp;*</span>result <span class='pt17'>as</span> <span class='pt17'>*const</span> DetectResult</td></tr>
+                    <tr><td class='ln' data-ln='46'></td><td>    })</td></tr>
+                    <tr><td class='ln' data-ln='47'></td><td>}</td></tr>
+                    <tr><td class='ln' data-ln='48'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='49'></td><td>#[no_mangle]</td></tr>
+                    <tr><td class='ln' data-ln='50'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>allocate</span>(<span class='pt10'>length</span>: <span class='pt17'>usize</span>) -&gt; <span class='pt17'>*mut</span> <span class='pt17'>c_void</span> {</td></tr>
+                    <tr><td class='ln' data-ln='51'></td><td>    <span class='pt17'>let</span> <span class='pt17'>mut</span> v <span class='pt17'>=</span> <span class='pt17'>Vec::</span><span class='pt13'>with_capacity</span>(length);</td></tr>
+                    <tr><td class='ln' data-ln='52'></td><td>    <span class='pt17'>let</span> ptr <span class='pt17'>=</span> v.<span class='pt13'>as_mut_ptr</span>();</td></tr>
+                    <tr><td class='ln' data-ln='53'></td><td>    std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>forget</span>(v);</td></tr>
+                    <tr><td class='ln' data-ln='54'></td><td>    ptr</td></tr>
+                    <tr><td class='ln' data-ln='55'></td><td>}</td></tr>
+                    <tr><td class='ln' data-ln='56'></td><td>&#10;</td></tr>
+                    <tr><td class='ln' data-ln='57'></td><td>#[no_mangle]</td></tr>
+                    <tr><td class='ln' data-ln='58'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>deallocate</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> c_void, <span class='pt10'>length</span>: <span class='pt17'>usize</span>) {</td></tr>
+                    <tr><td class='ln' data-ln='59'></td><td>    <span class='pt17'>unsafe</span> {</td></tr>
+                    <tr><td class='ln' data-ln='60'></td><td>        std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>drop</span>(<span class='pt17'>Vec::</span><span class='pt13'>from_raw_parts</span>(ptr, <span class='pt7'>0</span>, length));</td></tr>
+                    <tr><td class='ln' data-ln='61'></td><td>    }</td></tr>
+                    <tr><td class='ln' data-ln='62'></td><td>}</td></tr>
+                    </table>
+                    </div>
+
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+    </div> <!-- container -->
+
+    <script src="../common.js"></script>
+    <script src="../wasm-ffi.browser.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

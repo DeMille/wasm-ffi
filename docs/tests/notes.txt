@@ -1,0 +1,13 @@
+Notes:
+
+- Blanket.js is kinda old & can't parse es6 w/o throwing errors.
+  I still wanted to see in-browser coverage so I'm building en es5
+  version of wasm-ffi here.
+
+- npm run dev runs a webpack dev server w/ babel
+
+- build main.rs with:
+    cargo build --target=wasm32-unknown-unknown && cp ./target/wasm32-unknown-unknown/debug/test.wasm .\mod.rust.wasm
+
+- build main.c with:
+    wa compile main.c -o mod.c.wasm

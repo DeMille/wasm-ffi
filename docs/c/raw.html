@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wasm-ffi examples | C</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="../hybrid.min.css" rel="stylesheet" />
+    <link href="../main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="warning-header" class="py-2 hidden">
+        <div class="capped-container-fluid">
+            <p class="m-0">
+                <b>Uh-oh: </b> It looks like this browser doesn't support WebAssembly. Sorry :(
+            </p>
+        </div>
+    </div>
+
+    <div class="header pt-6 pb-6">
+        <div class="capped-container-fluid">
+            <h1>wasm-ffi examples</h1>
+            <p style="font-size: 16px;">
+                C examples using
+                <a href="https://github.com/dcodeIO/webassembly" style="color: white; text-decoration: underline; font-style: italic;">
+                    <b>dcodeIO/webassembly</b>
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="capped-container-fluid mb-7">
+
+        <nav class="UnderlineNav UnderlineNav--right">
+            <div class="UnderlineNav-actions">
+                <a href="https://github.com/demille/wasm-ffi" style="color: #333;">
+                        &larr;
+                        <img height="16" width="16"
+                             style="position: relative; top: 2px; left: 2px;"
+                             src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/github.svg" />
+                </a>
+            </div>
+
+            <div class="UnderlineNav-body">
+                <a href="../whatlang" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">whatlang-rs</span>
+                    <span class="d-sm-none">whatlang</span>
+                </a>
+                <a href="../c" class="UnderlineNav-item selected">
+                    <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-sm-none">C</span>
+                </a>
+                <a href="../rust" class="UnderlineNav-item">
+                    <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-sm-none">Rust</span>
+                </a>
+            </div>
+        </nav>
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading" style="font-size: 26px;">
+                        Compiling C to WebAssembly
+                    </div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        There are multiple ways to do this, but @dcodeIO's
+                        <a href="https://github.com/dcodeIO/webassembly">webassembly</a>
+                        package is an easy way to get started. It uses a single header to expose a
+                        minimal standard library based on musl and dlmalloc.
+                    </p>
+                    <p>
+                        You can download the whole toolchain &amp;
+                        prebuilt binaries with:
+                        <br/>
+                        <code>npm install -g webassembly</code>.
+                    </p>
+                    <p>
+                        The basic build command:
+                        <br/>
+                        <code>wa compile -o main.wasm main.c</code>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav" style="margin-top: 9px;">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">C &amp; &lt;webassembly.h&gt;</a>
+                    </nav>
+                </div>
+                <div class="src">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+#include <webassembly.h>
+
+// macro used to export functions to WebAssembly
+export int add(int a, int b) {
+  return a + b;
+}
+                    </pre>
+                </div>
+            </div>
+        </div> <!-- row -->
+
+
+        <div class="row mt-8 warning-block">
+            <div class="col d-none d-md-block pt-4">
+                <div class="zap"></div>
+            </div>
+            <div class="col-md-6">
+                <div class="Box">
+                    <div class="Box-header flash-warn">
+                        <h3 class="Box-title">
+                            <i class="icon-alert"></i>
+                            Warning: Memory Leaks
+                        </h3>
+                    </div>
+                    <div class="Box-body">
+                        <p>
+                            The examples below aren't even
+                            <i>trying</i> to be memory safe, so when you actually go to implement something, be careful!
+                        </p>
+                        <p>
+                            Read more about how wasm-ffi handles memory in the
+                            <a href="https://github.com/demille/wasm-ffi#memory-management">readme</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-none d-md-block pt-4">
+                <div class="zap" style="transform: scaleX(-1);"></div>
+            </div>
+        </div>
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Loading <code>.wasm</code> modules</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To load a <code>.wasm</code> module, you need to fetch it from
+                        the server and then load it with
+                        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/instantiateStreaming">
+                            WebAssembly.instantiateStreaming
+                        </a>.
+                        You can do that yourself or <code>wasm-ffi</code> will do it with
+                        <code>.fetch(url)</code>.
+                    </p>
+                    <p>
+                        Also, the default configuration of dcodeIO/webassembly requires memory to
+                        be imported at the <code>env.memory</code> namespace.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">JavaScript</a>
+                    </nav>
+                </div>
+                <div class="src">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+import { Wrapper } from 'wasm-ffi';
+
+// WebAssembly function you want to wrap will go here
+const library = new Wrapper({
+  // do_thing: [return_type, [arg_type_1. arg_type_2]]
+});
+
+// the dcodeIO/webassembly package needs to import WebAssembly memory before
+// instantiating the module. It looks for it at the `env.memory` namespace:
+library.imports({
+  env: {
+    memory: new WebAssembly.Memory({ initial: 10 }),
+  },
+});
+
+library.fetch('main.wasm').then(() => {
+    // library is now loaded and you can call your wrapped WebAssembly functions:
+    // library.do_thing()
+});
+                    </pre>
+                </div>
+            </div>
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading"><code>.wasm</code> Requirements</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> can read data from WebAssembly memory without
+                        any changes to your module. You can read strings, read struct fields,
+                        modify existing struct fields, etc.
+                    </p>
+                    <p>
+                        If your JavaSript needs to allocate any memory, though, you need to
+                        expose <code>malloc</code> / <code>free</code>. If you want to pass
+                        a string to WebAssembly, or create a new struct you'll need this.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">C</a>
+                    </nav>
+                </div>
+
+                <div class="src">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+export void *allocate(int size) {
+    return malloc(size);
+}
+
+export void deallocate(void *ptr) {
+    free(ptr);
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Strings</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        The format for wrapping functions is: <br/>
+                        <code>functionName: [returnType, [...argTypes]]</code>
+                    </p>
+                    <p>
+                        <code>say</code> takes a string pointer and returns a string pointer: <br/>
+                        <code>say: ['string', ['string']]</code>
+                    </p>
+                    <p>
+                        <button id="say-hello" class="btn btn-sm mt-2">
+                            say_hello<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+// wrap our exported C function `say`:
+const library = new Wrapper({
+  say: ['string', ['string']],
+});
+
+library.fetch('main.wasm').then(() => {
+    // call `say` on btn click:
+    $('#say-hello').addEventListener('click', () => {
+      alert(library.say('Hello'));
+    });
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+export char *say(char *hello) {
+  char *phrase = calloc(strlen(hello) + 9, 1);
+  strcat(phrase, hello);
+  strcat(phrase, ", World!");
+
+  return phrase;
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Arrays</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> supports ArrayBuffers &amp; TypedArrays
+                        as an argument type. It will write the arrays to memory and
+                        pass the pointer to your <code>.wasm</code> function.
+                    </p>
+                    <p>
+                        By default the array will be freed after the function returns.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-sum" class="btn btn-sm mt-2">
+                            get_sum<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="sum-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+// wrap `get_sum` function: 2 arguments, array pointer & array length
+const library = new Wrapper({
+  get_sum: ['number', ['array', 'number']],
+});
+
+// ...
+
+$('#get-sum').addEventListener('click', () => {
+  const arr = new Uint32Array([1, 1, 2, 3, 5, 8, 13, 21]);
+  const sum = library.get_sum(arr, arr.length);
+
+  $('#sum-log').innerText = `Sum of ${arr} is: ${sum}`;
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+export int get_sum(int arr[], size_t length) {
+  int i;
+  int sum = 0;
+
+  for (i = 0; i < length; ++i) {
+    sum += arr[i];
+  }
+
+  return sum;
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Pointers to data types</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A <code>Pointer</code> object encapsulates a reference to wasm memory.
+                    </p>
+                    <ul>
+                        <li><code>.ref()</code>: get memory address</li>
+                        <li><code>.deref()</code>: get data</li>
+                        <li><code>.set(value)</code>: set pointers value</li>
+                        <li><code>.free()</code>: free from wasm memory</li>
+                    </ul>
+                    <p>
+                        Create a new pointer with <code>new Pointer(type, value)</code>.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-pointer" class="btn btn-sm mt-2">
+                            get_pointer<span>()</span>
+                        </button>
+                        <button id="pass-pointer" class="btn btn-sm mt-2">
+                            pass_pointer<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="pointer-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+import { types, Pointer } from 'wasm-ffi';
+
+const library = new Wrapper({
+  get_pointer: [types.pointer('uint32')],
+  pass_pointer: ['number', [types.pointer('uint32')]],
+});
+
+// ...
+
+$('#get-pointer').addEventListener('click', () => {
+  const ptr = library.get_pointer();
+  $('#pointer-log').innerText = `Value ${ptr.deref()} is located @ ${ptr.ref()}`;
+});
+
+$('#pass-pointer').addEventListener('click', () => {
+  const ptr = new ffi.Pointer('uint32', 365);
+  const value = library.pass_pointer(ptr);
+
+  $('#pointer-log').innerText = `Wasm read ${value} from the pointer you sent`;
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+export int *get_pointer() {
+  int *ptr = malloc(sizeof *ptr);
+  *ptr = 123;
+
+  return ptr;
+}
+
+export int pass_pointer(int *ptr) {
+  return *ptr;
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        When you have a function that accepts or returns a struct pointer
+                        <code>wasm-ffi</code> will wrap that pointer into an object that
+                        is easier to use.
+                    </p>
+                    <p>
+                        To use a struct you first have to define a struct type. The order
+                        of the properties should be the same as how you have it defined in C.
+                        Use this struct definition in your wrapped function signatures.
+                    </p>
+                    <p>
+                        You can get the memory address of a struct with <code>.ref()</code>
+                        and you can free it from memory with <code>.free()</code>
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-person" class="btn btn-sm mt-2">
+                            get_person<span>()</span>
+                        </button>
+                        <button id="modify-person" class="btn btn-sm mt-2">
+                            modify person
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="person-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+import { Struct } from 'wasm-ffi';
+
+// define a new struct type: Person
+const Person = new Struct({
+  name: 'string',
+  age: 'uint8',
+  favorite_number: 'uint32',
+});
+
+const library = new Wrapper({
+  get_person: [Person],
+  person_facts: ['string', [Person]],
+});
+
+// ...
+
+$('#get-person').addEventListener('click', () => {
+  const p = library.get_person();
+
+  const about = `${p.name} is ${p.age}. His favorite number is ${p.favorite_number}.`;
+  $('#person-log').innerText = about;
+});
+
+$('#modify-person').addEventListener('click', () => {
+  // modify the properties of a struct:
+  const p = library.get_person();
+  p.age = 255;
+  p.favorite_number = 100;
+
+  $('#person-log').innerText = `New age: ${p.age}\n`;
+  $('#person-log').innerText += `New favorite: ${p.favorite_number}\n`;
+  $('#person-log').innerText += library.person_facts(p);
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+struct Person {
+  char *name;
+  uint8_t age;
+  uint32_t favorite_number;
+};
+
+export struct Person *get_person() {
+  struct Person *p = malloc(sizeof(struct Person));
+  p->name = "Jean-Luc Picard";
+  p->age = 61;
+  p->favorite_number = 1701;
+
+  return p;
+}
+
+export char *person_facts(struct Person *p) {
+  char *about = calloc(strlen(p->name) + 40, 1);
+  strcat(about, p->name);
+
+  if (p->age > p->favorite_number) {
+    strcat(about, " is older than his favorite number.");
+  } else {
+    strcat(about, " is younger than his favorite number.");
+  }
+
+  return about;
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs: creating from JavaScript</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A struct definition (like above) is also a constructor you
+                        can use to make new structs from JS. Any struct made in JS
+                        will get written to memory the first time it is used in a
+                        WebAssembly function.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input id="name" type="text" class="form-control input-sm" value="Black Francis">
+                        </div>
+                        <div class="form-group">
+                            <label>Age:</label>
+                            <input id="age" type="text" class="form-control input-sm" value="52">
+                        </div>
+                        <div class="form-group">
+                            <label>Favorite Number:</label>
+                            <input id="num" type="text" class="form-control input-sm" value="13">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="make-person" class="btn btn-sm">
+                                make person
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="make-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+const Person = new Struct({
+  name: 'string',
+  age: 'uint8',
+  favorite_number: 'uint32',
+});
+
+// ...
+
+$('#make-person').addEventListener('click', () => {
+const name = $('#name').value;
+const age = parseInt($('#age').value);
+const num = parseInt($('#num').value);
+
+  const person = new Person({
+    name: name,
+    age: age,
+    favorite_number: num,
+  });
+
+  $('#make-log').innerText = library.person_facts(person);
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+struct Person {
+  char *name;
+  uint8_t age;
+  uint32_t favorite_number;
+};
+
+export char *person_facts(struct Person *p) {
+  char *about = calloc(strlen(p->name) + 40, 1);
+  strcat(about, p->name);
+
+  if (p->age > p->favorite_number) {
+    strcat(about, " is older than his favorite number.");
+  } else {
+    strcat(about, " is younger than his favorite number.");
+  }
+
+  return about;
+}
+
+                    </pre>
+                </div>
+
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Calling JS functions from C</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To call a JS function from C you need to import the JS function
+                        into your wasm module.
+                    </p>
+                    <p>
+                        Most wasm targeting compilers expect external functions to be
+                        in the <code>env</code> namespace.
+                    </p>
+                    <p class="mb-4">
+                        <button id="barrel-roll" class="btn btn-sm mt-2">
+                             do a barrel_roll<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+// `barrel_roll` will call the `rotate` function below
+const library = new Wrapper({
+  barrel_roll: [], // no arguments
+});
+
+// this needs to be done before `library.fetch('main.wasm')`
+library.imports({
+  env: {
+    memory: new WebAssembly.Memory({ initial: 10 }),
+
+    rotate: function() {
+      $('body').classList.toggle('rotate');
+    },
+  },
+});
+
+// ...
+
+$('#barrel-roll').addEventListener('click', () => {
+  library.barrel_roll();
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+extern void rotate();
+
+export void barrel_roll() {
+  rotate();
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+
+                <div class="Subhead">
+                    <div class="Subhead-heading">Wrapping imports</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        You can also wrap imported functions using the same notation as with
+                        a <code>Wrapper</code>. The last argument is the function to wrap. This
+                        will convert the inputs and outputs of the function to the right types.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Number:</label>
+                            <input id="number" type="text" class="form-control input-sm" value="777">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="multiply" class="btn btn-sm">
+                                mulitply_input<span>()</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="multiply-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="c">C</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <span class="tag right">index.js</span>
+                    <pre data-paint="js">
+// `multiply_input` will call `get_input_value` below:
+const library = new Wrapper({
+  multiply_input: ['number', ['string']],
+});
+
+// change imports to a callback to expose the wrap fn
+// (remember to return an object here with the extra parenthesis: `({ ... })`)
+library.imports(wrap => ({
+  env: {
+    // ...
+
+    // `get_input_value` takes a string and returns a number
+    get_input_value: wrap(['number', ['string']], (selector) => {
+      return parseInt($(selector).value);
+    }),
+  },
+}));
+
+// ...
+
+$('#multiply').addEventListener('click', () => {
+  // gets the <input>.value and multiplies it by 2
+  const number = library.multiply_input('body #number');
+
+  $('#multiply-log').innerText = `Result: ${number}`;
+});
+                    </pre>
+                </div>
+
+                <div class="src hidden" data-tab="c">
+                    <span class="tag right">main.c</span>
+                    <pre data-paint="c">
+// does `document.querySelector()` and parses the `.value` of the element:
+extern int get_input_value(char *);
+
+// multiplies the value contained in a given DOM selector:
+export int multiply_input(char *dom_selector) {
+  return get_input_value(dom_selector) * 2;
+}
+                    </pre>
+                </div>
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col gh">
+                <a href="https://github.com/demille/wasm-ffi">
+                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                        />
+                    </svg>
+                    more docs in the readme
+                </a>
+            </div>
+        </div>
+
+    </div> <!-- container -->
+
+
+    <script src="../common.js"></script>
+    <script src="../wasm-ffi.browser.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
