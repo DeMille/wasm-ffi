@@ -38,6 +38,7 @@ Each WebAssembly instance is backed by a [memory object][2]. Your module will us
 `wasm-ffi` wraps your WebAssembly functions and does this pointer conversion for you. It takes objects/strings and translates them into pointers for your function calls. It takes struct pointers and lets you use them like plain JS objects. It even handles the padding in structs so you don't have to do it yourself.
 
 The goal here is to reduce friction and make WebAssembly easier to work with.
+
 <br/>
 
 [2]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Memory
@@ -107,6 +108,7 @@ library.fetch('todo.wasm').then(() => {
 ```
 
 Check the [live examples][demo] for more.
+
 <br/>
 
 
@@ -134,6 +136,7 @@ const Wrapper = ffi.Wrapper
 const Wrapper = ffi.Wrapper
 const Pointer = ffi.Pointer
 ```
+
 <br/>
 
 
@@ -151,10 +154,11 @@ you need **two exported functions** from your WebAssembly module:
 - `allocate(size) → pointer`
 - `deallocate(pointer, size /* optional */)`
 
-([implementation in rust](...))  
-([in C](...))
+([implementation in rust](https://github.com/DeMille/wasm-ffi/blob/master/docs/rust/main.rs#L9-L28))  
+([in C](https://github.com/DeMille/wasm-ffi/blob/master/docs/c/main.c#L8-L15))
 
 `wasm-ffi` also expects to find WebAssembly memory at `instance.exports.memory` or `imports.env.memory`. If your module imports WebAssembly memory from a different namespace, you'll need to add it as an option in `new Wrapper()`.
+
 <br/>
 
 
