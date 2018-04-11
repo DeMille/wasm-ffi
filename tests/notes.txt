@@ -7,7 +7,7 @@ Notes:
 - npm run dev runs a webpack dev server w/ babel
 
 - build main.rs with:
-    cargo build --target=wasm32-unknown-unknown && cp ./target/wasm32-unknown-unknown/debug/test.wasm .\mod.rust.wasm
+    cargo build --target=wasm32-unknown-unknown && cp ./target/wasm32-unknown-unknown/debug/test.wasm .\mod.rust.webasm
 
 - build main.c with:
-    wa compile main.c -o mod.c.wasm
+    wa compile main.c -o mod.c.webasm

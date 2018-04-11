@@ -356,7 +356,7 @@ describe('Wrapper', function() {
       },
     });
 
-    return library.fetch(baseURL + './mod.rust.wasm')
+    return library.fetch(baseURL + './mod.rust.webasm')
       .then(function() {
         library.exports.hook();
       });
@@ -683,7 +683,7 @@ describe('import wrapper', function() {
       }
     });
 
-    return library.fetch(baseURL + './mod.rust.wasm')
+    return library.fetch(baseURL + './mod.rust.webasm')
       .then(function() {
         library.exports.hook();
       });
@@ -759,7 +759,7 @@ describe('cwrap / ccall', function() {
 
     var get = (typeof fetch === 'function' && fetch || fetch_node);
 
-    return get(baseURL + './mod.rust.wasm')
+    return get(baseURL + './mod.rust.webasm')
       .then(function(response) { return response.arrayBuffer(); })
       .then(function(buffer) { return WebAssembly.instantiate(buffer, imports); })
       .then(function(result) {
@@ -862,7 +862,7 @@ describe('Rust types', function() {
       };
     });
 
-    return library.fetch(baseURL + './mod.rust.wasm')
+    return library.fetch(baseURL + './mod.rust.webasm')
       .then(function() {
         library.exports.hook();
       });
@@ -1018,7 +1018,7 @@ describe('Rust types', function() {
 });
 
 
-describe('mod.c.wasm', function() {
+describe('mod.c.webasm', function() {
   var library;
   var cb;
   var PlainStruct
@@ -1049,7 +1049,7 @@ describe('mod.c.wasm', function() {
       },
     });
 
-    return library.fetch(baseURL + './mod.c.wasm');
+    return library.fetch(baseURL + './mod.c.webasm');
   });
 
   describe('strings', function() {

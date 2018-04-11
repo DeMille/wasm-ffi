@@ -25,7 +25,7 @@ Heavily based on the ideas & syntax of [node-ffi](https://github.com/node-ffi/no
 - [Tests](#tests)
 - [License (MIT)](#license)
 
-[demo]: https://demille.github.io/wasm-ffi/whatlang/
+[demo]: https://demille.github.io/wasm-ffi/docs/whatlang/
 [tests]: https://demille.github.io/wasm-ffi/tests/
 [1]: https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html#interacting-with-code-ccall-cwrap
 
@@ -154,8 +154,8 @@ you need **two exported functions** from your WebAssembly module:
 - `allocate(size) → pointer`
 - `deallocate(pointer, size /* optional */)`
 
-([implementation in rust](https://github.com/DeMille/wasm-ffi/blob/master/docs/rust/main.rs#L9-L28))  
-([in C](https://github.com/DeMille/wasm-ffi/blob/master/docs/c/main.c#L8-L15))
+([in rust](https://github.com/DeMille/wasm-ffi/blob/master/docs/rust/main.rs#L9-L28))  
+([malloc/free in C](https://github.com/DeMille/wasm-ffi/blob/master/docs/c/main.c#L8-L15))
 
 `wasm-ffi` also expects to find WebAssembly memory at `instance.exports.memory` or `imports.env.memory`. If your module imports WebAssembly memory from a different namespace, you'll need to add it as an option in `new Wrapper()`.
 
@@ -987,10 +987,12 @@ library.give_foo(foo);
 
 
 ## Tests
-Find them in the `/docs/tests` directory.  
-[Try em][tests] now in your browser of choice.
+Find them in the `/tests` directory.  
+[Try em][tests] in your browser of choice, or run through node with
 
-Tests for `wasm-ffi` use mocha in the browser because I want to see how `wasm-ffi` fares across different browsers and WebAssembly implementations. I'll probably port them to run on node later too.
+```sh
+npm run test
+```
 
 
 <br/>

@@ -36,7 +36,7 @@ library.imports(wrap => ({
   },
 }));
 
-library.fetch('main.wasm').then(() => {
+library.fetch('main.webasm').then(() => {
 
   $('#say-hello').addEventListener('click', () => {
     alert(library.say('Hello'));

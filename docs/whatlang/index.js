@@ -11,7 +11,7 @@ const whatlang = new ffi.Wrapper({
   detect: [DetectResult, ['string']],
 });
 
-whatlang.fetch('whatlang.wasm').then(() => {
+whatlang.fetch('whatlang.webasm').then(() => {
   function update(str) {
     const result = whatlang.detect(str);
 
