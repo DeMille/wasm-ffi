@@ -6,7 +6,7 @@ module.exports = {
 
   output: {
     filename: 'wasm-ffi.browser.js',
-    path: path.resolve(__dirname, 'docs/tests'),
+    path: path.resolve(__dirname, 'tests'),
     library: 'ffi',
   },
 

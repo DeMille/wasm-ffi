@@ -7,7 +7,7 @@ const webpack_config = {
   output: {
     filename: 'wasm-ffi.bundle.js',
     path: path.resolve(__dirname, 'dist'),
-    libraryTarget: 'commonjs2'
+    libraryTarget: 'commonjs2',
   },
 };
 

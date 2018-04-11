@@ -1,5 +1,6 @@
 import Struct from './Struct';
 import { types, parseType, Pointer } from './types';
+import { Encoder, Decoder } from './encoding';
 import { assert, vslice } from './misc';
 
 
@@ -112,13 +113,13 @@ function RustString() {
 
     get() {
       const memory = this[DATA].view.buffer;
-      const view = new DataView(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return (new TextDecoder()).decode(view);
+      return (new Decoder()).decode(buf);
     },
 
     set(str) {
-      const buf = (new TextEncoder()).encode(str);
+      const buf = (new Encoder()).encode(str);
       const len = buf.length;
 
       this.ptr = new Pointer(['u8', len], buf);
@@ -147,13 +148,13 @@ function RustStr() {
 
     get() {
       const memory = this[DATA].view.buffer;
-      const view = new DataView(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return (new TextDecoder()).decode(view);
+      return (new Decoder()).decode(buf);
     },
 
     set(str) {
-      const buf = (new TextEncoder()).encode(str);
+      const buf = (new Encoder()).encode(str);
       const len = buf.length;
 
       this.ptr = new Pointer(['u8', len], buf);
@@ -330,30 +331,48 @@ function RustEnum(obj, tagSize = 4) {
 
 const rust = {
   tuple: RustTuple,
-  Tuple: (type, values) => new (RustTuple(...type))([...values]),
+  Tuple: function ctor(type, values) {
+    return new (RustTuple(...type))([...values]);
+  },
 
   vector: RustVector,
-  Vector: (type, values) => new (RustVector(type))({ values }),
+  Vector: function ctor(type, values) {
+    return new (RustVector(type))({ values });
+  },
 
   slice: RustSlice,
-  Slice: (type, values) => new (RustSlice(type))({ values }),
+  Slice: function ctor(type, values) {
+    return new (RustSlice(type))({ values });
+  },
 
   string: RustString(),
-  String: str => new (rust.string)({ value: str }),
+  String: function ctor(str) {
+    return new (RustString())({ value: str });
+  },
 
   str: RustStr(),
-  Str: str => new (rust.str)({ value: str }),
+  Str: function ctor(str) {
+    return new (RustStr())({ value: str });
+  },
 
   option: RustOption,
-  Option: (type, value, ...opts) => new (RustOption(type, ...opts))({
-    value,
-    discriminant: (typeof value === 'undefined') ? 0 : 1,
-  }),
+  Option: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))({
+      value,
+      discriminant: (typeof value === 'undefined') ? 0 : 1,
+    });
+  },
 
-  Some: (...args) => rust.Option(...args),
-  None: (type, ...opts) => rust.Option(type, undefined, ...opts),
+  Some: function ctor(...args) {
+    return new rust.Option(...args);
+  },
+
+  None: function ctor(type, ...opts) {
+    return new rust.Option(type, undefined, ...opts);
+  },
 
   enum: RustEnum,
 };
+
 
 export default rust;

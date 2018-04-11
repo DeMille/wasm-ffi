@@ -61,7 +61,7 @@ var ffi =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -74,7 +74,9 @@ var ffi =
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return Pointer; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CString; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return parseType; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__misc__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__encoding__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(2);
+
 
 
 
@@ -82,7 +84,7 @@ var ffi =
 // Optional read / write methods, just gives a DataView by default.
 class CustomType {
   constructor(size, opts = {}) {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(!isNaN(size), 'Type size must be a number, given: %s', size);
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!isNaN(size), 'Type size must be a number, given: %s', size);
 
     this.width = size;
     this.alignment = ('alignment' in opts) ? opts.alignment : size;
@@ -96,7 +98,7 @@ class CustomType {
   }
 
   write(view, value) {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(value instanceof ArrayBuffer || ArrayBuffer.isView(value),
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof ArrayBuffer || ArrayBuffer.isView(value),
       'Value must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
 
     const buf = (ArrayBuffer.isView(value))
@@ -218,7 +220,7 @@ class Pointer {
   }
 
   deref() {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated pointer');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated pointer');
     return this.type.read(this.view, this._free);
   }
 
@@ -231,7 +233,7 @@ class Pointer {
   }
 
   free() {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(this.view, 'Cant free pointer: unallocated / already freed');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Cant free pointer: unallocated / already freed');
 
     this._free(this.ref(), this.type.width);
     this._free = null;
@@ -259,8 +261,8 @@ types.pointer = function(typedef) {
     },
 
     write(view, value) {
-      Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(value instanceof Pointer, `Trying to write ${value} as a pointer`);
-      Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(value.ref(), 'Cant write pointer, hasnt been allocated yet');
+      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof Pointer, `Trying to write ${value} as a pointer`);
+      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value.ref(), 'Cant write pointer, hasnt been allocated yet');
       view.setUint32(0, value.ref(), true /* little-endian */);
     },
   };
@@ -279,7 +281,7 @@ class CString {
     this._free = null;
 
     if (typeof value === 'string') {
-      this._temp = (new TextEncoder()).encode(value);
+      this._temp = (new __WEBPACK_IMPORTED_MODULE_0__encoding__["b" /* Encoder */]()).encode(value);
       this.type.width = this._temp.byteLength + 1;
     }
 
@@ -307,7 +309,7 @@ class CString {
   }
 
   deref() {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated CString');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated CString');
 
     const memory = new Uint8Array(this.view.buffer);
     const addr = this.view.byteOffset;
@@ -315,13 +317,13 @@ class CString {
 
     // `subarray` uses the same underlying ArrayBuffer
     const buf = new Uint8Array(memory.subarray(addr, end));
-    const str = (new TextDecoder()).decode(buf);
+    const str = (new __WEBPACK_IMPORTED_MODULE_0__encoding__["a" /* Decoder */]()).decode(buf);
 
     return str;
   }
 
   free() {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(!!this.view, 'Cant free cstring: unallocated / already freed');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!this.view, 'Cant free cstring: unallocated / already freed');
 
     this._free(this.ref(), this.type.width);
     this._free = null;
@@ -357,8 +359,8 @@ types.string = {
   },
 
   write(view, value) {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(value instanceof CString, 'value must be a `CString`');
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(value.ref(), 'Cant write CString, hasnt been allocated yet');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof CString, 'value must be a `CString`');
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value.ref(), 'Cant write CString, hasnt been allocated yet');
     view.setUint32(0, value.ref(), true /* little-endian */);
   },
 };
@@ -378,7 +380,7 @@ class ArrayType {
     const arr = [];
 
     for (let i = 0; i <= this.length - 1; i++) {
-      const subview = Object(__WEBPACK_IMPORTED_MODULE_0__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
+      const subview = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
       arr.push(this.type.read(subview, free));
     }
 
@@ -386,11 +388,11 @@ class ArrayType {
   }
 
   write(view, values) {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(values.length === this.length,
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(values.length === this.length,
       'Values length does not match struct array length');
 
     values.forEach((value, i) => {
-      const subview = Object(__WEBPACK_IMPORTED_MODULE_0__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
+      const subview = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
       this.type.write(subview, value);
     });
   }
@@ -448,7 +450,7 @@ function parseType(typedef) {
   }
 
   if (Array.isArray(typedef)) {
-    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])(typedef.length === 2,
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(typedef.length === 2,
       'Array type needs 2 arguments: [type, length], given: \n%s', typedef);
 
     const type = parseType(typedef[0]);
@@ -459,10 +461,10 @@ function parseType(typedef) {
 
   // make sure its an ok type interface
   const errMsg = "Given argument type isn't a proper 'type' interface: \n%s";
-  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])('width' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])('alignment' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])('read' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["a" /* assert */])('write' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('width' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('alignment' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('read' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('write' in typedef, errMsg, typedef);
 
   return typedef;
 }
@@ -473,6 +475,224 @@ function parseType(typedef) {
 
 /***/ }),
 /* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Encoder; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Decoder; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return encodeUTF8; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return decodeUTF8; });
+// utf8 decode/encode adapted from the buffer module
+// @ github.com/feross/buffer
+//
+function encodeUTF8(str) {
+  let codePoint;
+  let leadSurrogate = null;
+  let units = Infinity;
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    codePoint = str.charCodeAt(i);
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+          continue;
+
+        } else if (i + 1 === str.length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+          continue;
+        }
+
+        // valid lead
+        leadSurrogate = codePoint;
+        continue;
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+        leadSurrogate = codePoint;
+        continue;
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000;
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+    }
+
+    leadSurrogate = null;
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break;
+      bytes.push(codePoint);
+
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break;
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      );
+
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break;
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      );
+
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break;
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      );
+
+    } else {
+      throw new Error('Invalid code point');
+    }
+  }
+
+  return Uint8Array.from(bytes);
+}
+
+
+function decodeUTF8(buf) {
+  const start = 0; // view.byteOffset;
+  const end = buf.length;
+
+  const pts = [];
+  let i = start;
+
+  while (i < end) {
+    const firstByte = buf[i];
+    let codePoint = null;
+
+    let bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+        : (firstByte > 0xBF) ? 2
+          : 1;
+
+    if (i + bytesPerSequence <= end) {
+      let secondByte, thirdByte, fourthByte, tempCodePoint;
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte;
+          }
+          break;
+        case 2:
+          secondByte = buf[i + 1];
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F);
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        case 3:
+          secondByte = buf[i + 1];
+          thirdByte = buf[i + 2];
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F);
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        case 4:
+          secondByte = buf[i + 1];
+          thirdByte = buf[i + 2];
+          fourthByte = buf[i + 3];
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F);
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        default:
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD;
+      bytesPerSequence = 1;
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000;
+      pts.push(codePoint >>> 10 & 0x3FF | 0xD800);
+      codePoint = 0xDC00 | codePoint & 0x3FF;
+    }
+
+    pts.push(codePoint);
+    i += bytesPerSequence;
+  }
+
+  // Based on http://stackoverflow.com/a/22747272/680742, the browser with
+  // the lowest limit is Chrome, with 0x10000 args.
+  // We go 1 magnitude less, for safety
+  const MAX = 0x1000;
+
+  if (pts.length <= MAX) {
+    return String.fromCharCode.call(String, ...pts); // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  let str = '';
+  let j = 0;
+
+  while (j < pts.length) {
+    str += String.fromCharCode.call(String, ...pts.slice(j, j += MAX));
+  }
+
+  return str;
+}
+
+
+class EncoderPolyfill {
+  encode(str) {
+    return encodeUTF8(str);
+  }
+}
+
+class DecoderPolyfill {
+  decode(view) {
+    return decodeUTF8(view);
+  }
+}
+
+
+const Encoder = (typeof TextEncoder !== 'undefined')
+  ? TextEncoder
+  : EncoderPolyfill;
+
+const Decoder = (typeof TextDecoder !== 'undefined')
+  ? TextDecoder
+  : DecoderPolyfill;
+
+
+
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -508,7 +728,7 @@ function vslice(view, start, length) {
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -633,12 +853,12 @@ function demangleStack(err) {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(2);
 
 
 
@@ -797,16 +1017,19 @@ class Struct {
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Wrapper__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Struct__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__demangle__ = __webpack_require__(2);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_encodeUTF8", function() { return _encodeUTF8; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_decodeUTF8", function() { return _decodeUTF8; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Wrapper__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Struct__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__demangle__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__rust__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__rust__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__encoding__ = __webpack_require__(1);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Wrapper", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "cwrap", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["c"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "ccall", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["b"]; });
@@ -823,6 +1046,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
+const _encodeUTF8 = __WEBPACK_IMPORTED_MODULE_5__encoding__["d" /* encodeUTF8 */];
+const _decodeUTF8 = __WEBPACK_IMPORTED_MODULE_5__encoding__["c" /* decodeUTF8 */];
+
+
 /* harmony default export */ __webpack_exports__["default"] = ({
   Wrapper: __WEBPACK_IMPORTED_MODULE_0__Wrapper__["a" /* Wrapper */],
   cwrap: __WEBPACK_IMPORTED_MODULE_0__Wrapper__["c" /* cwrap */],
@@ -834,13 +1062,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
   CString: __WEBPACK_IMPORTED_MODULE_3__types__["a" /* CString */],
   demangle: __WEBPACK_IMPORTED_MODULE_2__demangle__["a" /* default */],
   rust: __WEBPACK_IMPORTED_MODULE_4__rust__["a" /* default */],
+  _encodeUTF8,
+  _decodeUTF8,
 });
 
 
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -848,8 +1078,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return cwrap; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return ccall; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__demangle__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__encoding__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__misc__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__demangle__ = __webpack_require__(3);
+
 
 
 
@@ -885,17 +1117,41 @@ function areValid(types) {
 }
 
 
+// a node fetch polyfill that won't trigger webpack
+// idea borrowed from:
+// https://github.com/dcodeIO/webassembly/blob/master/src/index.js#L223
+let fs;
+function fetch_polyfill(file) {
+  return new Promise((resolve, reject) => {
+    (fs || (fs = eval('equire'.replace(/^/, 'r'))('fs'))).readFile(
+      file,
+      function(err, data) {
+        return (err)
+          ? reject(err)
+          : resolve({
+              arrayBuffer: () => Promise.resolve(data),
+              ok: true,
+            });
+      }
+    );
+  });
+}
+
+
+const fetchFn = (typeof fetch === 'function' && fetch) || fetch_polyfill;
+
+
 // gets the wasm at a url and instantiates it.
 // checks if streaming instantiation is available and uses that
 function fetchAndInstantiate(url, imports) {
-  return fetch(url)
+  return fetchFn(url)
     .then((resp) => {
       if (!resp.ok) {
         throw new Error(`Got a ${resp.status} fetching wasm @ ${url}`);
       }
 
       const wasm = 'application/wasm';
-      const type = resp.headers.get('content-type');
+      const type = resp.headers && resp.headers.get('content-type');
 
       return (WebAssembly.instantiateStreaming && type === wasm)
         ? WebAssembly.instantiateStreaming(resp, imports)
@@ -927,16 +1183,16 @@ class Wrapper {
 
     Object.entries(signatures).forEach(([fn, [returnType, argTypes = []]]) => {
       // check for name collisions:
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(fn !== 'exports', '`exports` is a reserved wrapper name');
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(fn !== 'utils', '`utils` is a reserved wrapper name');
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(fn !== 'imports', '`imports` is a reserved wrapper method name');
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(fn !== 'fetch', '`fetch` is a reserved wrapper method name');
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(fn !== 'use', '`use` is a reserved wrapper method name');
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'exports', '`exports` is a reserved wrapper name');
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'utils', '`utils` is a reserved wrapper name');
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'imports', '`imports` is a reserved wrapper method name');
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'fetch', '`fetch` is a reserved wrapper method name');
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'use', '`use` is a reserved wrapper method name');
 
       // validate arg types
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(argTypes.every(arg => !!arg), `'${fn}' has undefined types`);
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(areValid([returnType]), `'${fn}' has invalid types`);
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(areValid(argTypes), `'${fn}' has invalid types`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(argTypes.every(arg => !!arg), `'${fn}' has undefined types`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid([returnType]), `'${fn}' has invalid types`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid(argTypes), `'${fn}' has invalid types`);
 
       this[DATA].signatures.add({ fnName: fn, returnType, argTypes });
     });
@@ -952,7 +1208,7 @@ class Wrapper {
       writePointer: this.__readPointer.bind(this),
 
       allocate: function(value) {
-        Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('ref' in value, 'This method is for Pointer / Structs / CStrings');
+        Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])('ref' in value, 'This method is for Pointer / Structs / CStrings');
 
         (value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["c" /* Pointer */] || value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["a" /* CString */])
           ? this.__writePointer(value)
@@ -983,8 +1239,8 @@ class Wrapper {
       // detructure into appropriate vars
       const [returnType, argTypes = []] = types;
 
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(areValid(argTypes), `Import has invalid types: ${argTypes}`);
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(areValid([returnType]), `Import has invalid types: ${returnType}`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid(argTypes), `Import has invalid types: ${argTypes}`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid([returnType]), `Import has invalid types: ${returnType}`);
 
       return (...raw) => {
         const value = fn(...raw.map((r, i) => this.__out(r, argTypes[i])));
@@ -1034,7 +1290,7 @@ class Wrapper {
   }
 
   use(instance) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
       '.use(instance) requires a WebAssembly.Instance');
 
     this.__link(instance);
@@ -1046,7 +1302,7 @@ class Wrapper {
                    instance.exports.memory ||
                    (this[DATA].imports.env && this[DATA].imports.env.memory);
 
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!memory, '' +
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!memory, '' +
       'Wrapper needs access to your WebAssemmbly memory. It looks for this in' +
       'either your `imports.env.memory` or `exports.env.memory`. If you don\'t' +
       'use either, you need to add it in the options with `new Wrapper`');
@@ -1057,7 +1313,7 @@ class Wrapper {
 
     this[DATA].signatures.forEach(({ fnName, returnType, argTypes }) => {
       const fn = this.exports[fnName];
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!fn, `Fn '${fnName}' missing from wasm exports`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!fn, `Fn '${fnName}' missing from wasm exports`);
 
       this[fnName] = this.__wrap(fn, argTypes, returnType);
     });
@@ -1073,7 +1329,7 @@ class Wrapper {
       try {
         value = fn(...ffi_args);
       } catch (err) {
-        throw Object(__WEBPACK_IMPORTED_MODULE_2__demangle__["a" /* default */])(err);
+        throw Object(__WEBPACK_IMPORTED_MODULE_3__demangle__["a" /* default */])(err);
       }
 
       stack.forEach(ptr => this.__free(ptr));
@@ -1086,7 +1342,7 @@ class Wrapper {
 
   // wrap a variable heading into a wasm function
   __in(value, type, stack) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
@@ -1100,7 +1356,7 @@ class Wrapper {
 
   // wrap a variable heading out of a wasm function
   __out(value, type) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
@@ -1112,11 +1368,11 @@ class Wrapper {
   }
 
   __allocate(size) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!this.exports.allocate && !!this.exports.deallocate,
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!this.exports.allocate && !!this.exports.deallocate,
       "Missing allocate/deallocate fns in wasm exports, can't allocate memory");
 
     const ptr = this.exports.allocate(size);
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!ptr, 'allocate failed');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!ptr, 'allocate failed');
 
     if (this[DATA].debug) console.log('Alloc: %s (size=%s)', ptr, size);
     this[DATA].allocations.set(ptr, size);
@@ -1145,13 +1401,13 @@ class Wrapper {
 
     // subarray uses same underlying ArrayBuffer
     const buf = new Uint8Array(view.subarray(ptr, end));
-    const str = (new TextDecoder()).decode(buf);
+    const str = (new __WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* Decoder */]()).decode(buf);
 
     return str;
   }
 
   __writeString(str, stack) {
-    const buf = (new TextEncoder()).encode(str);
+    const buf = (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]()).encode(str);
     const len = buf.byteLength + 1;
 
     const ptr = this.__allocate(len);
@@ -1165,7 +1421,7 @@ class Wrapper {
   }
 
   __writeArray(arr, stack) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(arr instanceof ArrayBuffer || ArrayBuffer.isView(arr),
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(arr instanceof ArrayBuffer || ArrayBuffer.isView(arr),
       'Argument must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
 
     const buf = (ArrayBuffer.isView(arr))
@@ -1182,7 +1438,7 @@ class Wrapper {
   }
 
   __readStruct(ptr, StructType) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!StructType, 'No struct StructType given');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!StructType, 'No struct StructType given');
 
     const view = this.__view(ptr, StructType.width);
     const struct = StructType.read(view, this.__free);
@@ -1217,7 +1473,7 @@ class Wrapper {
   }
 
   __readPointer(ptr, ptrType) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!ptrType, 'No pointer type given');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!ptrType, 'No pointer type given');
 
     // get the size of what the pointer points to
     const view = this.__view(ptr, ptrType.type.width);
@@ -1249,7 +1505,7 @@ class Wrapper {
 
 
 function cwrap(instance, fnName, returnType = null, argTypes = []) {
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
     '.cwrap() requires a ready WebAssembly.Instance');
 
   const wrapper = new Wrapper({ [fnName]: [returnType, argTypes] });
@@ -1259,7 +1515,7 @@ function cwrap(instance, fnName, returnType = null, argTypes = []) {
 }
 
 function ccall(instance, fnName, returnType = null, argTypes = [], ...args) {
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
     '.ccall() requires a ready WebAssembly.Instance');
 
   const wrapper = new Wrapper({ [fnName]: [returnType, argTypes] });
@@ -1273,13 +1529,15 @@ function ccall(instance, fnName, returnType = null, argTypes = [], ...args) {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Struct__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Struct__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__misc__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__encoding__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__misc__ = __webpack_require__(2);
+
 
 
 
@@ -1394,13 +1652,13 @@ function RustString() {
 
     get() {
       const memory = this[DATA].view.buffer;
-      const view = new DataView(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return (new TextDecoder()).decode(view);
+      return (new __WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* Decoder */]()).decode(buf);
     },
 
     set(str) {
-      const buf = (new TextEncoder()).encode(str);
+      const buf = (new __WEBPACK_IMPORTED_MODULE_2__encoding__["b" /* Encoder */]()).encode(str);
       const len = buf.length;
 
       this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */](['u8', len], buf);
@@ -1429,13 +1687,13 @@ function RustStr() {
 
     get() {
       const memory = this[DATA].view.buffer;
-      const view = new DataView(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return (new TextDecoder()).decode(view);
+      return (new __WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* Decoder */]()).decode(buf);
     },
 
     set(str) {
-      const buf = (new TextEncoder()).encode(str);
+      const buf = (new __WEBPACK_IMPORTED_MODULE_2__encoding__["b" /* Encoder */]()).encode(str);
       const len = buf.length;
 
       this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */](['u8', len], buf);
@@ -1515,7 +1773,7 @@ function RustEnum(obj, tagSize = 4) {
     }
 
     _set(variant) {
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(Object.keys(variant).length === 1, 'Enum value must be a variant');
+      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* assert */])(Object.keys(variant).length === 1, 'Enum value must be a variant');
 
       const [name, value] = Object.entries(variant)[0];
 
@@ -1525,7 +1783,7 @@ function RustEnum(obj, tagSize = 4) {
 
     tag() {
       const tag = this.discriminant;
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(tag <= variants.length, 'Enum discriminant > than # of variants');
+      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* assert */])(tag <= variants.length, 'Enum discriminant > than # of variants');
       return tag;
     }
 
@@ -1567,10 +1825,10 @@ function RustEnum(obj, tagSize = 4) {
       const type = vtypes[tag];
       const value = (struct.ref()) ? struct.value : struct[DATA].temp.value;
 
-      const field_1 = Object(__WEBPACK_IMPORTED_MODULE_2__misc__["b" /* vslice */])(view, 0, discriminant.width);
+      const field_1 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* vslice */])(view, 0, discriminant.width);
       discriminant.write(field_1, tag);
 
-      const field_2 = Object(__WEBPACK_IMPORTED_MODULE_2__misc__["b" /* vslice */])(view, discriminant.width, type.width);
+      const field_2 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* vslice */])(view, discriminant.width, type.width);
       type.write(field_2, value);
 
       struct[DATA].view = view;
@@ -1612,31 +1870,49 @@ function RustEnum(obj, tagSize = 4) {
 
 const rust = {
   tuple: RustTuple,
-  Tuple: (type, values) => new (RustTuple(...type))([...values]),
+  Tuple: function ctor(type, values) {
+    return new (RustTuple(...type))([...values]);
+  },
 
   vector: RustVector,
-  Vector: (type, values) => new (RustVector(type))({ values }),
+  Vector: function ctor(type, values) {
+    return new (RustVector(type))({ values });
+  },
 
   slice: RustSlice,
-  Slice: (type, values) => new (RustSlice(type))({ values }),
+  Slice: function ctor(type, values) {
+    return new (RustSlice(type))({ values });
+  },
 
   string: RustString(),
-  String: str => new (rust.string)({ value: str }),
+  String: function ctor(str) {
+    return new (RustString())({ value: str });
+  },
 
   str: RustStr(),
-  Str: str => new (rust.str)({ value: str }),
+  Str: function ctor(str) {
+    return new (RustStr())({ value: str });
+  },
 
   option: RustOption,
-  Option: (type, value, ...opts) => new (RustOption(type, ...opts))({
-    value,
-    discriminant: (typeof value === 'undefined') ? 0 : 1,
-  }),
+  Option: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))({
+      value,
+      discriminant: (typeof value === 'undefined') ? 0 : 1,
+    });
+  },
 
-  Some: (...args) => rust.Option(...args),
-  None: (type, ...opts) => rust.Option(type, undefined, ...opts),
+  Some: function ctor(...args) {
+    return new rust.Option(...args);
+  },
+
+  None: function ctor(type, ...opts) {
+    return new rust.Option(type, undefined, ...opts);
+  },
 
   enum: RustEnum,
 };
+
 
 /* harmony default export */ __webpack_exports__["a"] = (rust);
 

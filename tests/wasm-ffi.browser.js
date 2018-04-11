@@ -61,7 +61,7 @@ var ffi =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -78,7 +78,9 @@ exports.parseType = exports.CString = exports.Pointer = exports.CustomType = exp
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _misc = __webpack_require__(1);
+var _encoding = __webpack_require__(1);
+
+var _misc = __webpack_require__(2);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -306,7 +308,7 @@ var CString = function () {
     this._free = null;
 
     if (typeof value === 'string') {
-      this._temp = new TextEncoder().encode(value);
+      this._temp = new _encoding.Encoder().encode(value);
       this.type.width = this._temp.byteLength + 1;
     }
 
@@ -346,7 +348,7 @@ var CString = function () {
 
       // `subarray` uses the same underlying ArrayBuffer
       var buf = new Uint8Array(memory.subarray(addr, end));
-      var str = new TextDecoder().decode(buf);
+      var str = new _encoding.Decoder().decode(buf);
 
       return str;
     }
@@ -526,6 +528,231 @@ exports.parseType = parseType;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+// utf8 decode/encode adapted from the buffer module
+// @ github.com/feross/buffer
+//
+function encodeUTF8(str) {
+  var codePoint = void 0;
+  var leadSurrogate = null;
+  var units = Infinity;
+
+  var bytes = [];
+
+  for (var i = 0; i < str.length; ++i) {
+    codePoint = str.charCodeAt(i);
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+          continue;
+        } else if (i + 1 === str.length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+          continue;
+        }
+
+        // valid lead
+        leadSurrogate = codePoint;
+        continue;
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+        leadSurrogate = codePoint;
+        continue;
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000;
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD);
+    }
+
+    leadSurrogate = null;
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break;
+      bytes.push(codePoint);
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break;
+      bytes.push(codePoint >> 0x6 | 0xC0, codePoint & 0x3F | 0x80);
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break;
+      bytes.push(codePoint >> 0xC | 0xE0, codePoint >> 0x6 & 0x3F | 0x80, codePoint & 0x3F | 0x80);
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break;
+      bytes.push(codePoint >> 0x12 | 0xF0, codePoint >> 0xC & 0x3F | 0x80, codePoint >> 0x6 & 0x3F | 0x80, codePoint & 0x3F | 0x80);
+    } else {
+      throw new Error('Invalid code point');
+    }
+  }
+
+  return Uint8Array.from(bytes);
+}
+
+function decodeUTF8(buf) {
+  var start = 0; // view.byteOffset;
+  var end = buf.length;
+
+  var pts = [];
+  var i = start;
+
+  while (i < end) {
+    var firstByte = buf[i];
+    var codePoint = null;
+
+    var bytesPerSequence = firstByte > 0xEF ? 4 : firstByte > 0xDF ? 3 : firstByte > 0xBF ? 2 : 1;
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte = void 0,
+          thirdByte = void 0,
+          fourthByte = void 0,
+          tempCodePoint = void 0;
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte;
+          }
+          break;
+        case 2:
+          secondByte = buf[i + 1];
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | secondByte & 0x3F;
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        case 3:
+          secondByte = buf[i + 1];
+          thirdByte = buf[i + 2];
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | thirdByte & 0x3F;
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        case 4:
+          secondByte = buf[i + 1];
+          thirdByte = buf[i + 2];
+          fourthByte = buf[i + 3];
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | fourthByte & 0x3F;
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint;
+            }
+          }
+          break;
+        default:
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD;
+      bytesPerSequence = 1;
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000;
+      pts.push(codePoint >>> 10 & 0x3FF | 0xD800);
+      codePoint = 0xDC00 | codePoint & 0x3FF;
+    }
+
+    pts.push(codePoint);
+    i += bytesPerSequence;
+  }
+
+  // Based on http://stackoverflow.com/a/22747272/680742, the browser with
+  // the lowest limit is Chrome, with 0x10000 args.
+  // We go 1 magnitude less, for safety
+  var MAX = 0x1000;
+
+  if (pts.length <= MAX) {
+    var _String$fromCharCode;
+
+    return (_String$fromCharCode = String.fromCharCode).call.apply(_String$fromCharCode, [String].concat(pts)); // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var str = '';
+  var j = 0;
+
+  while (j < pts.length) {
+    var _String$fromCharCode2;
+
+    str += (_String$fromCharCode2 = String.fromCharCode).call.apply(_String$fromCharCode2, [String].concat(_toConsumableArray(pts.slice(j, j += MAX))));
+  }
+
+  return str;
+}
+
+var EncoderPolyfill = function () {
+  function EncoderPolyfill() {
+    _classCallCheck(this, EncoderPolyfill);
+  }
+
+  _createClass(EncoderPolyfill, [{
+    key: 'encode',
+    value: function encode(str) {
+      return encodeUTF8(str);
+    }
+  }]);
+
+  return EncoderPolyfill;
+}();
+
+var DecoderPolyfill = function () {
+  function DecoderPolyfill() {
+    _classCallCheck(this, DecoderPolyfill);
+  }
+
+  _createClass(DecoderPolyfill, [{
+    key: 'decode',
+    value: function decode(view) {
+      return decodeUTF8(view);
+    }
+  }]);
+
+  return DecoderPolyfill;
+}();
+
+var Encoder = typeof TextEncoder !== 'undefined' ? TextEncoder : EncoderPolyfill;
+
+var Decoder = typeof TextDecoder !== 'undefined' ? TextDecoder : DecoderPolyfill;
+
+exports.Encoder = Encoder;
+exports.Decoder = Decoder;
+exports.encodeUTF8 = encodeUTF8;
+exports.decodeUTF8 = decodeUTF8;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.assert = assert;
 exports.vslice = vslice;
 // simple assert, throws if assertion fails
@@ -563,7 +790,7 @@ function vslice(view, start, length) {
 }
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -682,7 +909,7 @@ function demangleStack(err) {
 }
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -698,7 +925,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _types = __webpack_require__(0);
 
-var _misc = __webpack_require__(1);
+var _misc = __webpack_require__(2);
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
@@ -885,7 +1112,7 @@ var Struct = function Struct() {
 exports.default = Struct;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -894,25 +1121,30 @@ exports.default = Struct;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.rust = exports.demangle = exports.CString = exports.CustomType = exports.Pointer = exports.types = exports.Struct = exports.ccall = exports.cwrap = exports.Wrapper = undefined;
+exports._decodeUTF8 = exports._encodeUTF8 = exports.rust = exports.demangle = exports.CString = exports.CustomType = exports.Pointer = exports.types = exports.Struct = exports.ccall = exports.cwrap = exports.Wrapper = undefined;
 
-var _Wrapper = __webpack_require__(5);
+var _Wrapper = __webpack_require__(6);
 
-var _Struct = __webpack_require__(3);
+var _Struct = __webpack_require__(4);
 
 var _Struct2 = _interopRequireDefault(_Struct);
 
-var _demangle = __webpack_require__(2);
+var _demangle = __webpack_require__(3);
 
 var _demangle2 = _interopRequireDefault(_demangle);
 
 var _types = __webpack_require__(0);
 
-var _rust = __webpack_require__(6);
+var _rust = __webpack_require__(7);
 
 var _rust2 = _interopRequireDefault(_rust);
 
+var _encoding = __webpack_require__(1);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _encodeUTF8 = _encoding.encodeUTF8;
+var _decodeUTF8 = _encoding.decodeUTF8;
 
 exports.default = {
   Wrapper: _Wrapper.Wrapper,
@@ -924,7 +1156,9 @@ exports.default = {
   CustomType: _types.CustomType,
   CString: _types.CString,
   demangle: _demangle2.default,
-  rust: _rust2.default
+  rust: _rust2.default,
+  _encodeUTF8: _encodeUTF8,
+  _decodeUTF8: _decodeUTF8
 };
 exports.Wrapper = _Wrapper.Wrapper;
 exports.cwrap = _Wrapper.cwrap;
@@ -936,9 +1170,11 @@ exports.CustomType = _types.CustomType;
 exports.CString = _types.CString;
 exports.demangle = _demangle2.default;
 exports.rust = _rust2.default;
+exports._encodeUTF8 = _encodeUTF8;
+exports._decodeUTF8 = _decodeUTF8;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -955,9 +1191,11 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _types2 = __webpack_require__(0);
 
-var _misc = __webpack_require__(1);
+var _encoding = __webpack_require__(1);
 
-var _demangle = __webpack_require__(2);
+var _misc = __webpack_require__(2);
+
+var _demangle = __webpack_require__(3);
 
 var _demangle2 = _interopRequireDefault(_demangle);
 
@@ -977,16 +1215,35 @@ function areValid(types) {
   });
 }
 
+// a node fetch polyfill that won't trigger webpack
+// idea borrowed from:
+// https://github.com/dcodeIO/webassembly/blob/master/src/index.js#L223
+var fs = void 0;
+function fetch_polyfill(file) {
+  return new Promise(function (resolve, reject) {
+    (fs || (fs = eval('equire'.replace(/^/, 'r'))('fs'))).readFile(file, function (err, data) {
+      return err ? reject(err) : resolve({
+        arrayBuffer: function arrayBuffer() {
+          return Promise.resolve(data);
+        },
+        ok: true
+      });
+    });
+  });
+}
+
+var fetchFn = typeof fetch === 'function' && fetch || fetch_polyfill;
+
 // gets the wasm at a url and instantiates it.
 // checks if streaming instantiation is available and uses that
 function fetchAndInstantiate(url, imports) {
-  return fetch(url).then(function (resp) {
+  return fetchFn(url).then(function (resp) {
     if (!resp.ok) {
       throw new Error('Got a ' + resp.status + ' fetching wasm @ ' + url);
     }
 
     var wasm = 'application/wasm';
-    var type = resp.headers.get('content-type');
+    var type = resp.headers && resp.headers.get('content-type');
 
     return WebAssembly.instantiateStreaming && type === wasm ? WebAssembly.instantiateStreaming(resp, imports) : resp.arrayBuffer().then(function (buf) {
       return WebAssembly.instantiate(buf, imports);
@@ -1292,14 +1549,14 @@ var Wrapper = function () {
         ++end;
       } // subarray uses same underlying ArrayBuffer
       var buf = new Uint8Array(view.subarray(ptr, end));
-      var str = new TextDecoder().decode(buf);
+      var str = new _encoding.Decoder().decode(buf);
 
       return str;
     }
   }, {
     key: '__writeString',
     value: function __writeString(str, stack) {
-      var buf = new TextEncoder().encode(str);
+      var buf = new _encoding.Encoder().encode(str);
       var len = buf.byteLength + 1;
 
       var ptr = this.__allocate(len);
@@ -1437,7 +1694,7 @@ exports.cwrap = cwrap;
 exports.ccall = ccall;
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1453,13 +1710,15 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _Struct = __webpack_require__(3);
+var _Struct = __webpack_require__(4);
 
 var _Struct2 = _interopRequireDefault(_Struct);
 
 var _types = __webpack_require__(0);
 
-var _misc = __webpack_require__(1);
+var _encoding = __webpack_require__(1);
+
+var _misc = __webpack_require__(2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1588,12 +1847,12 @@ function RustString() {
 
     get: function get() {
       var memory = this[DATA].view.buffer;
-      var view = new DataView(memory, this.ptr.ref(), this.len);
+      var buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return new TextDecoder().decode(view);
+      return new _encoding.Decoder().decode(buf);
     },
     set: function set(str) {
-      var buf = new TextEncoder().encode(str);
+      var buf = new _encoding.Encoder().encode(str);
       var len = buf.length;
 
       this.ptr = new _types.Pointer(['u8', len], buf);
@@ -1621,12 +1880,12 @@ function RustStr() {
 
     get: function get() {
       var memory = this[DATA].view.buffer;
-      var view = new DataView(memory, this.ptr.ref(), this.len);
+      var buf = new Uint8Array(memory, this.ptr.ref(), this.len);
 
-      return new TextDecoder().decode(view);
+      return new _encoding.Decoder().decode(buf);
     },
     set: function set(str) {
-      var buf = new TextEncoder().encode(str);
+      var buf = new _encoding.Encoder().encode(str);
       var len = buf.length;
 
       this.ptr = new _types.Pointer(['u8', len], buf);
@@ -1823,32 +2082,32 @@ function RustEnum(obj) {
 
 var rust = {
   tuple: RustTuple,
-  Tuple: function Tuple(type, values) {
+  Tuple: function ctor(type, values) {
     return new (RustTuple.apply(undefined, _toConsumableArray(type)))([].concat(_toConsumableArray(values)));
   },
 
   vector: RustVector,
-  Vector: function Vector(type, values) {
+  Vector: function ctor(type, values) {
     return new (RustVector(type))({ values: values });
   },
 
   slice: RustSlice,
-  Slice: function Slice(type, values) {
+  Slice: function ctor(type, values) {
     return new (RustSlice(type))({ values: values });
   },
 
   string: RustString(),
-  String: function String(str) {
-    return new rust.string({ value: str });
+  String: function ctor(str) {
+    return new (RustString())({ value: str });
   },
 
   str: RustStr(),
-  Str: function Str(str) {
-    return new rust.str({ value: str });
+  Str: function ctor(str) {
+    return new (RustStr())({ value: str });
   },
 
   option: RustOption,
-  Option: function Option(type, value) {
+  Option: function ctor(type, value) {
     for (var _len2 = arguments.length, opts = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
       opts[_key2 - 2] = arguments[_key2];
     }
@@ -1859,15 +2118,20 @@ var rust = {
     });
   },
 
-  Some: function Some() {
-    return rust.Option.apply(rust, arguments);
-  },
-  None: function None(type) {
-    for (var _len3 = arguments.length, opts = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-      opts[_key3 - 1] = arguments[_key3];
+  Some: function ctor() {
+    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
     }
 
-    return rust.Option.apply(rust, [type, undefined].concat(opts));
+    return new (Function.prototype.bind.apply(rust.Option, [null].concat(args)))();
+  },
+
+  None: function ctor(type) {
+    for (var _len4 = arguments.length, opts = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+      opts[_key4 - 1] = arguments[_key4];
+    }
+
+    return new (Function.prototype.bind.apply(rust.Option, [null].concat([type, undefined], opts)))();
   },
 
   enum: RustEnum

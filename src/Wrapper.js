@@ -1,4 +1,5 @@
 import { Pointer, CString } from './types';
+import { Encoder, Decoder } from './encoding';
 import { assert } from './misc';
 import demangle from './demangle';
 
@@ -33,17 +34,41 @@ function areValid(types) {
 }
 
 
+// a node fetch polyfill that won't trigger webpack
+// idea borrowed from:
+// https://github.com/dcodeIO/webassembly/blob/master/src/index.js#L223
+let fs;
+function fetch_polyfill(file) {
+  return new Promise((resolve, reject) => {
+    (fs || (fs = eval('equire'.replace(/^/, 'r'))('fs'))).readFile(
+      file,
+      function(err, data) {
+        return (err)
+          ? reject(err)
+          : resolve({
+              arrayBuffer: () => Promise.resolve(data),
+              ok: true,
+            });
+      }
+    );
+  });
+}
+
+
+const fetchFn = (typeof fetch === 'function' && fetch) || fetch_polyfill;
+
+
 // gets the wasm at a url and instantiates it.
 // checks if streaming instantiation is available and uses that
 function fetchAndInstantiate(url, imports) {
-  return fetch(url)
+  return fetchFn(url)
     .then((resp) => {
       if (!resp.ok) {
         throw new Error(`Got a ${resp.status} fetching wasm @ ${url}`);
       }
 
       const wasm = 'application/wasm';
-      const type = resp.headers.get('content-type');
+      const type = resp.headers && resp.headers.get('content-type');
 
       return (WebAssembly.instantiateStreaming && type === wasm)
         ? WebAssembly.instantiateStreaming(resp, imports)
@@ -293,13 +318,13 @@ class Wrapper {
 
     // subarray uses same underlying ArrayBuffer
     const buf = new Uint8Array(view.subarray(ptr, end));
-    const str = (new TextDecoder()).decode(buf);
+    const str = (new Decoder()).decode(buf);
 
     return str;
   }
 
   __writeString(str, stack) {
-    const buf = (new TextEncoder()).encode(str);
+    const buf = (new Encoder()).encode(str);
     const len = buf.byteLength + 1;
 
     const ptr = this.__allocate(len);

@@ -1,8 +1,13 @@
 {
   "name": "wasm-ffi",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A lightweight FFI library for JS/WebAssembly",
-  "keywords": ["WebAssembly", "wasm", "ffi", "rust"],
+  "keywords": [
+    "WebAssembly",
+    "wasm",
+    "ffi",
+    "rust"
+  ],
   "author": "Sterling DeMille <sterlingdemille+npm@gmail.com>",
   "license": "MIT",
   "repository": "https://github.com/DeMille/wasm-ffi",
@@ -14,12 +19,23 @@
     "bundle:dist": "webpack --progress --display-modules",
     "bundle:test": "webpack --config webpack.dev.config.js --progress --display-modules",
     "bundle": "npm run bundle:dist && npm run bundle:test && cp ./dist/wasm-ffi.browser.js ./docs/wasm-ffi.browser.js",
-    "dev": "webpack-dev-server --config webpack.dev.config.js --content-base ./docs/tests --port 8000 --no-inline"
+    "dev:server": "webpack-dev-server --config webpack.dev.config.js --content-base ./tests --port 8000 --no-inline",
+    "dev:watch": "webpack --watch --progress",
+    "dev": "concurrently --kill-others \"npm run dev:server\" \"npm run dev:watch\"",
+    "test": "mocha ./tests/tests.js",
+    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha ./tests/tests.js",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.1",
+    "concurrently": "^3.5.1",
+    "coveralls": "^3.0.0",
+    "expect.js": "^0.3.1",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.0.5",
+    "mocha-lcov-reporter": "^1.3.0",
     "uglifyjs-webpack-plugin": "^1.1.6",
     "webpack": "^3.6.0",
     "webpack-dev-server": "^2.9.1"

@@ -1,3 +1,4 @@
+import { Encoder, Decoder } from './encoding';
 import { assert, vslice } from './misc';
 
 
@@ -202,7 +203,7 @@ class CString {
     this._free = null;
 
     if (typeof value === 'string') {
-      this._temp = (new TextEncoder()).encode(value);
+      this._temp = (new Encoder()).encode(value);
       this.type.width = this._temp.byteLength + 1;
     }
 
@@ -238,7 +239,7 @@ class CString {
 
     // `subarray` uses the same underlying ArrayBuffer
     const buf = new Uint8Array(memory.subarray(addr, end));
-    const str = (new TextDecoder()).decode(buf);
+    const str = (new Decoder()).decode(buf);
 
     return str;
   }
