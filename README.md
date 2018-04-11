@@ -1,5 +1,7 @@
 # wasm-ffi
-**A lightweight foreign function interface library for JavaScript & WebAssembly**
+#### A lightweight foreign function interface library for JavaScript & WebAssembly
+
+[![Build Status](https://travis-ci.org/DeMille/wasm-ffi.svg?branch=master)](https://travis-ci.org/DeMille/wasm-ffi) [![Coverage Status](https://coveralls.io/repos/github/DeMille/wasm-ffi/badge.svg?branch=master)](https://coveralls.io/github/DeMille/wasm-ffi?branch=master)
 
 👉 [Demo & Examples][demo]  
 🚥 [Run the tests][tests]
