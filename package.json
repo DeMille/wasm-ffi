@@ -11,7 +11,7 @@
   "author": "Sterling DeMille <sterlingdemille+npm@gmail.com>",
   "license": "MIT",
   "repository": "https://github.com/DeMille/wasm-ffi",
-  "homepage": "https://demille.github.io/wasm-ffi",
+  "homepage": "https://demille.github.io/wasm-ffi/docs/whatlang/",
   "main": "./dist/wasm-ffi.bundle.js",
   "module": "./src/index.js",
   "unpkg": "dist/wasm-ffi.browser.min.js",

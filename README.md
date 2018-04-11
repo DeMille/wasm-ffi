@@ -988,9 +988,9 @@ library.give_foo(foo);
 
 ## Tests
 Find them in the `/tests` directory.  
-[Try em][tests] in your browser of choice, or run through node with
+[Try em][tests] in your browser of choice, or run through node with:
 
-```sh
+```
 npm run test
 ```
 
