@@ -53,6 +53,33 @@ class AbstractStructType {
     this[DATA].view = null;
   }
 
+  toString() {
+    let out = '{\n';
+
+    const stringify = (struct) => {
+      struct.constructor.fields.forEach((field, name) => {
+        out += `  ${name}: `;
+
+        if (field.type.isPointer) out += struct[name].deref();
+        else out += struct[name].toString();
+
+        out += ',\n';
+      });
+    };
+
+    stringify(this);
+
+    if (out.length <= 80) {
+      out = out.replace(/\n/g, '')    // remove line breaks
+               .replace(/ {2}/g, ' ') // collapse whitespace
+               .replace(/,$/g, ' ');  // trailing comma
+    }
+
+    out += '}';
+
+    return out;
+  }
+
   static read(view, free) {
     const StructType = this;
 

@@ -914,6 +914,33 @@ class AbstractStructType {
     this[DATA].view = null;
   }
 
+  toString() {
+    let out = '{\n';
+
+    const stringify = (struct) => {
+      struct.constructor.fields.forEach((field, name) => {
+        out += `  ${name}: `;
+
+        if (field.type.isPointer) out += struct[name].deref();
+        else out += struct[name].toString();
+
+        out += ',\n';
+      });
+    };
+
+    stringify(this);
+
+    if (out.length <= 80) {
+      out = out.replace(/\n/g, '')    // remove line breaks
+               .replace(/ {2}/g, ' ') // collapse whitespace
+               .replace(/,$/g, ' ');  // trailing comma
+    }
+
+    out += '}';
+
+    return out;
+  }
+
   static read(view, free) {
     const StructType = this;
 
@@ -1172,6 +1199,8 @@ class Wrapper {
     // wrapped function names don't conflict with whats already here.(Like if
     // someone had a method called "memory()", it would've been a problem)
     // Same strategy with the "__" prefixed object methods.
+    const dialect = opts.dialect && opts.dialect.toLowerCase();
+
     this[DATA] = {
       instance: null,
       imports: null,
@@ -1179,6 +1208,7 @@ class Wrapper {
       allocations: new Map(),
       memory: opts.memory,
       debug: !!opts.debug,
+      isAssemblyScript: dialect === 'assemblyscript',
     };
 
     Object.entries(signatures).forEach(([fn, [returnType, argTypes = []]]) => {
@@ -1227,7 +1257,7 @@ class Wrapper {
   }
 
   // takes an import object or a function what will produce a import object
-  imports(arg, defaults = true) {
+  imports(arg, applyDefaults = true) {
     const wrap = (...args) => {
       // function to wrap is always the last argument
       const fn = args.pop();
@@ -1252,19 +1282,26 @@ class Wrapper {
     };
 
     const env = {
+      // wasm-glue (rust)
       print:  wrap('string', str => console.log(str)),
       eprint: wrap('string', str => console.error(str)),
 
-      trace:  wrap('string', (str) => {
+      trace: wrap('string', (str) => {
         throw new Error(str);
       }),
 
+      // assemblyscript
+      abort: wrap('string', 'string', 'number', 'number', (msg, file, line, col) => {
+        throw new Error(`${msg} @ ${file}:${line}:${col}`);
+      }),
+
+      // <webassembly.h>
       _abort(errCode) {
-        throw new Error(`wasm aborting: ${errCode}`);
+        throw new Error(`Aborting, error code: ${errCode}`);
       },
 
       _exit(exitCode) {
-        if (exitCode) throw new Error(`wasm exit error: ${exitCode}`);
+        if (exitCode) throw new Error(`Exit error code: ${exitCode}`);
       },
 
       _grow() {},
@@ -1274,7 +1311,7 @@ class Wrapper {
       ? arg(wrap)
       : arg;
 
-    if (defaults) obj.env = Object.assign(env, obj.env);
+    if (applyDefaults) obj.env = Object.assign(env, obj.env);
     this[DATA].imports = obj;
 
     return obj;
@@ -1393,29 +1430,45 @@ class Wrapper {
   }
 
   __readString(ptr) {
-    const view = new Uint8Array(this[DATA].memory.buffer);
+    const memory = new Uint8Array(this[DATA].memory.buffer);
+
+    if (this[DATA].isAssemblyScript) {
+      const len = this.__view().getUint32(ptr, true);
+      const start = ptr + 4; // header
+      const end = start + (len << 1); // 2 bytes per char
+
+      return (new TextDecoder('utf-16')).decode(memory.subarray(start, end));
+    }
 
     // find end of string (null byte)
     let end = ptr;
-    while (view[end]) ++end;
+    while (memory[end]) ++end;
 
     // subarray uses same underlying ArrayBuffer
-    const buf = new Uint8Array(view.subarray(ptr, end));
-    const str = (new __WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* Decoder */]()).decode(buf);
-
-    return str;
+    return (new __WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* Decoder */]()).decode(memory.subarray(ptr, end));
   }
 
   __writeString(str, stack) {
-    const buf = (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]()).encode(str);
-    const len = buf.byteLength + 1;
+    const buf = (this[DATA].isAssemblyScript)
+      ? (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]('utf-16')).encode(str)
+      : (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]('utf-8')).encode(str);
+
+    const len = (this[DATA].isAssemblyScript)
+      ? buf.byteLength + 4  // assemblyscript header
+      : buf.byteLength + 1; // null terminating byte
 
     const ptr = this.__allocate(len);
     if (stack) stack.push(ptr);
 
-    const view = new Uint8Array(this[DATA].memory.buffer);
-    view.set(buf, ptr);
-    view[ptr + len - 1] = 0;
+    const memory = new Uint8Array(this[DATA].memory.buffer);
+
+    if (this[DATA].isAssemblyScript) {
+      this.__view().setUint32(ptr, buf.byteLength, true);
+      memory.set(buf, ptr + 4);
+    } else {
+      memory.set(buf, ptr);
+      memory[ptr + len - 1] = 0;
+    }
 
     return ptr;
   }
@@ -1428,11 +1481,21 @@ class Wrapper {
       ? new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
       : new Uint8Array(arr);
 
-    const ptr = this.__allocate(buf.byteLength);
+    const len = (this[DATA].isAssemblyScript)
+      ? buf.byteLength + 8 /* assebmlyscript's ArrayBuffer header */
+      : buf.byteLength;
+
+    const ptr = this.__allocate(len);
     if (stack) stack.push(ptr);
 
-    const view = new Uint8Array(this[DATA].memory.buffer);
-    view.set(buf, ptr);
+    const memory = new Uint8Array(this[DATA].memory.buffer);
+
+    if (this[DATA].isAssemblyScript) {
+      this.__view().setUint32(ptr, buf.byteLength, true);
+      memory.set(buf, ptr + 8);
+    } else {
+      memory.set(buf, ptr);
+    }
 
     return ptr;
   }
