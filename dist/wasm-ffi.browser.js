@@ -1473,28 +1473,29 @@ class Wrapper {
     return ptr;
   }
 
-  __writeArray(arr, stack) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(arr instanceof ArrayBuffer || ArrayBuffer.isView(arr),
-      'Argument must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
+  __writeArray(arg, stack) {
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(arg instanceof ArrayBuffer || ArrayBuffer.isView(arg),
+      'Argument must be an ArrayBuffer or a TypedArry (like Uint8Array)');
 
-    const buf = (ArrayBuffer.isView(arr))
-      ? new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
-      : new Uint8Array(arr);
+    const arr = (!ArrayBuffer.isView(arg)) ? new Uint8Array(arg) : arg;
 
     const len = (this[DATA].isAssemblyScript)
-      ? buf.byteLength + 8 /* assebmlyscript's ArrayBuffer header */
-      : buf.byteLength;
+      ? arr.byteLength + 16 /* Array/ArrayBuffer header */
+      : arr.byteLength;
 
     const ptr = this.__allocate(len);
     if (stack) stack.push(ptr);
 
     const memory = new Uint8Array(this[DATA].memory.buffer);
+    const data = new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
 
     if (this[DATA].isAssemblyScript) {
-      this.__view().setUint32(ptr, buf.byteLength, true);
-      memory.set(buf, ptr + 8);
+      this.__view().setUint32(ptr + 0, ptr + 8, true);        // arraybuffer ptr
+      this.__view().setUint32(ptr + 4, arr.length, true);     // array length
+      this.__view().setUint32(ptr + 8, arr.byteLength, true); // byteLength
+      memory.set(data, ptr + 16);                             // contents
     } else {
-      memory.set(buf, ptr);
+      memory.set(data, ptr);
     }
 
     return ptr;
