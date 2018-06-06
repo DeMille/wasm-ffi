@@ -1,13 +1,15 @@
 import { Wrapper, cwrap, ccall } from './Wrapper';
 import Struct from './Struct';
 import demangle from './demangle';
-import { types, Pointer, CString, CustomType } from './types';
 import rust from './rust';
+import assemblyscript from './assemblyscript';
+import { types, Pointer, StringPointer, CustomType } from './types';
 
 import { encodeUTF8, decodeUTF8 } from './encoding';
 const _encodeUTF8 = encodeUTF8;
 const _decodeUTF8 = decodeUTF8;
 
+const CString = StringPointer;
 
 export default {
   Wrapper,
@@ -15,11 +17,13 @@ export default {
   ccall,
   Struct,
   types,
-  Pointer,
   CustomType,
-  CString,
+  Pointer,
+  StringPointer,
+  CString, // deprecated
   demangle,
   rust,
+  assemblyscript,
   _encodeUTF8,
   _decodeUTF8,
 };
@@ -30,11 +34,13 @@ export {
   ccall,
   Struct,
   types,
-  Pointer,
   CustomType,
-  CString,
+  Pointer,
+  StringPointer,
+  CString, // deprecated
   demangle,
   rust,
+  assemblyscript,
   _encodeUTF8,
   _decodeUTF8,
 };

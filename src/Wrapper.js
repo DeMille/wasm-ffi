@@ -1,6 +1,6 @@
-import { Pointer, CString } from './types';
-import { Encoder, Decoder } from './encoding';
-import { assert } from './misc';
+import { Pointer, StringPointer } from './types';
+import { encode, decode } from './encoding';
+import { assert, isNil, toUint8Array } from './misc';
 import demangle from './demangle';
 
 
@@ -18,8 +18,8 @@ const numbers = new Set([
 ]);
 
 
-function areValid(types) {
-  return types.every(type =>
+function areValid(argTypes) {
+  return argTypes.every(type =>
     type === null ||
     type === undefined ||
     type === 'void' ||
@@ -85,12 +85,10 @@ const DATA = (typeof Symbol !== 'undefined')
 
 class Wrapper {
   constructor(signatures, opts = {}) {
-    // Keep internal info behind the DATA symbol, try to minimize footprint so
-    // wrapped function names don't conflict with whats already here.(Like if
-    // someone had a method called "memory()", it would've been a problem)
-    // Same strategy with the "__" prefixed object methods.
     const dialect = opts.dialect && opts.dialect.toLowerCase();
 
+    // Keep internal info behind the DATA symbol so wrapped function names
+    // won't cause conflicts
     this[DATA] = {
       instance: null,
       imports: null,
@@ -103,67 +101,74 @@ class Wrapper {
 
     Object.entries(signatures).forEach(([fn, [returnType, argTypes = []]]) => {
       // check for name collisions:
-      assert(fn !== 'exports', '`exports` is a reserved wrapper name');
-      assert(fn !== 'utils', '`utils` is a reserved wrapper name');
-      assert(fn !== 'imports', '`imports` is a reserved wrapper method name');
-      assert(fn !== 'fetch', '`fetch` is a reserved wrapper method name');
-      assert(fn !== 'use', '`use` is a reserved wrapper method name');
+      ['exports', 'imports', 'utils', 'fetch', 'use'].forEach(name =>
+        assert(fn !== name, '`%s` is a reserved wrapper name', name));
 
       // validate arg types
-      assert(argTypes.every(arg => !!arg), `'${fn}' has undefined types`);
-      assert(areValid([returnType]), `'${fn}' has invalid types`);
-      assert(areValid(argTypes), `'${fn}' has invalid types`);
+      assert(argTypes.every(arg => !!arg), '`%s` has undefined types', fn);
+      assert(areValid([returnType]), '`%s` has invalid types', fn);
+      assert(areValid(argTypes), '`%s` has invalid types', fn);
 
       this[DATA].signatures.add({ fnName: fn, returnType, argTypes });
     });
 
     // exposing some methods via `.utils`
     this.utils = {
-      readString:   this.__readString.bind(this),
-      writeString:  this.__writeString.bind(this),
-      writeArray:   this.__writeArray.bind(this),
-      readStruct:   this.__readStruct.bind(this),
-      writeStruct:  this.__readStruct.bind(this),
-      readPointer:  this.__readPointer.bind(this),
-      writePointer: this.__readPointer.bind(this),
+      encodeString:   this.__encodeString.bind(this),
+      decodeString:   this.__decodeString.bind(this),
+      readStringView: this.__readStringView.bind(this),
+      readString:     this.__readString.bind(this),
+      writeString:    this.__writeString.bind(this),
+      writeArray:     this.__writeArray.bind(this),
+      readStruct:     this.__readStruct.bind(this),
+      writeStruct:    this.__writeStruct.bind(this),
+      readPointer:    this.__readPointer.bind(this),
+      writePointer:   this.__writePointer.bind(this),
 
       allocate: function(value) {
-        assert('ref' in value, 'This method is for Pointer / Structs / CStrings');
+        assert(typeof value.ref === 'function',
+          "Can't allocate '%s' This method is for Pointer & Structs", value);
 
-        (value instanceof Pointer || value instanceof CString)
+        (value instanceof Pointer || value instanceof StringPointer)
           ? this.__writePointer(value)
           : this.__writeStruct(value);
       }.bind(this),
 
       free: function(value) {
-        ('ref' in value)
+        (typeof value.ref === 'function')
           ? this.__free(value.ref())
           : this.__free(value);
       }.bind(this),
     };
 
     this.exports = null;
-    this.__free = this.__free.bind(this); // convenience bind
   }
 
   // takes an import object or a function what will produce a import object
-  imports(arg, applyDefaults = true) {
-    const wrap = (...args) => {
+  imports(importArg, applyDefaults = true) {
+    const wrap = (...fnConfig) => {
       // function to wrap is always the last argument
-      const fn = args.pop();
+      const fn = fnConfig.pop();
       // two argument formats (this might be a bad idea):
-      //   * with return type: wrap([returnType, [...argTypes]], fn)
-      //   * no return type: wrap(arg1, arg2, ..., fn)
+      //   1) with return type: wrap([returnType, [...argTypes]], fn)
+      //   2) no return type: wrap(arg1, arg2, ..., fn)
       //
-      const types = (Array.isArray(args[0])) ? args[0] : [null, args];
       // detructure into appropriate vars
-      const [returnType, argTypes = []] = types;
+      const [returnType, argTypes = []] = (Array.isArray(fnConfig[0]))
+        ? fnConfig[0]       // 1st format
+        : [null, fnConfig]; // 2nd format
 
       assert(areValid(argTypes), `Import has invalid types: ${argTypes}`);
       assert(areValid([returnType]), `Import has invalid types: ${returnType}`);
 
-      return (...raw) => {
-        const value = fn(...raw.map((r, i) => this.__out(r, argTypes[i])));
+      return (...args) => {
+        const ffi_args = argTypes.map((type, i) => this.__out(args[i], type));
+
+        if (args.length > argTypes.length) {
+          ffi_args.push(...args.slice(argTypes.length - args.length));
+        }
+
+        const value = fn(...ffi_args);
 
         if (returnType && returnType !== 'void') {
           return this.__in(value, returnType);
@@ -172,13 +177,10 @@ class Wrapper {
     };
 
     const env = {
-      // wasm-glue (rust)
-      print:  wrap('string', str => console.log(str)),
-      eprint: wrap('string', str => console.error(str)),
-
-      trace: wrap('string', (str) => {
-        throw new Error(str);
-      }),
+      // wasm-glue
+      print:  wrap('string', (str, ...args) => console.log(str, ...args)),
+      eprint: wrap('string', (str, ...args) => console.error(str, ...args)),
+      trace:  wrap('string', (str) => { throw new Error(str); }),
 
       // assemblyscript
       abort: wrap('string', 'string', 'number', 'number', (msg, file, line, col) => {
@@ -197,9 +199,9 @@ class Wrapper {
       _grow() {},
     };
 
-    const obj = (typeof arg === 'function')
-      ? arg(wrap)
-      : arg;
+    const obj = (typeof importArg === 'function')
+      ? importArg(wrap)
+      : importArg;
 
     if (applyDefaults) obj.env = Object.assign(env, obj.env);
     this[DATA].imports = obj;
@@ -249,9 +251,12 @@ class Wrapper {
   __wrap(fn, argTypes, returnType) {
     return function(...args) {
       const stack = [];
-      const ffi_args = args.map((arg, i) => this.__in(arg, argTypes[i], stack));
-
+      const ffi_args = argTypes.map((type, i) => this.__in(args[i], type, stack));
       let value;
+
+      if (args.length > argTypes.length) {
+        ffi_args.push(...args.slice(argTypes.length - args.length));
+      }
 
       try {
         value = fn(...ffi_args);
@@ -269,13 +274,13 @@ class Wrapper {
 
   // wrap a variable heading into a wasm function
   __in(value, type, stack) {
-    assert(!!type, 'No arg type was specified for function');
+    assert(!!type, 'No arg type was specified for this function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
     if (type === 'string') return this.__writeString(value, stack);
     if (type === 'array') return this.__writeArray(value, stack);
-    if (type.isStruct) return this.__writeStruct(value);
+    if (type.isStruct) return this.__writeStruct(value, type);
     if (type.isPointer) return this.__writePointer(value);
 
     throw new Error(`Unknown type: \n${JSON.stringify(type)}`);
@@ -283,7 +288,7 @@ class Wrapper {
 
   // wrap a variable heading out of a wasm function
   __out(value, type) {
-    assert(!!type, 'No arg type was specified for function');
+    assert(!!type, 'No arg type was specified for this function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
@@ -319,53 +324,74 @@ class Wrapper {
     return new DataView(this[DATA].memory.buffer, start, length);
   }
 
-  __readString(ptr) {
-    const memory = new Uint8Array(this[DATA].memory.buffer);
+  __encodeString(str) {
+    const encoded = (this[DATA].isAssemblyScript)
+      ? encode(str, 'utf-16')
+      : encode(str);
+
+    const len = (this[DATA].isAssemblyScript)
+      ? encoded.byteLength + 4  // assemblyscript header
+      : encoded.byteLength + 1; // null terminating byte
+
+    const buf = new Uint8Array(new ArrayBuffer(len));
 
     if (this[DATA].isAssemblyScript) {
-      const len = this.__view().getUint32(ptr, true);
-      const start = ptr + 4; // header
-      const end = start + (len << 1); // 2 bytes per char
-
-      return (new TextDecoder('utf-16')).decode(memory.subarray(start, end));
+      const header = encoded.byteLength / 2;
+      (new DataView(buf.buffer)).setUint32(0, header, true);
+      buf.set(encoded, 4);
+    } else {
+      buf.set(encoded, 0);
+      buf[len - 1] = 0;
     }
 
-    // find end of string (null byte)
+    return buf;
+  }
+
+  __decodeString(view) {
+    const buf = toUint8Array(view);
+
+    return (this[DATA].isAssemblyScript)
+      ? decode(buf.subarray(4), 'utf-16')
+      : decode(buf.subarray(0, -1));
+  }
+
+  __readStringView(ptr) {
+    // length prefixed
+    if (this[DATA].isAssemblyScript) {
+      const strlen = this.__view().getUint32(ptr, true); // header
+      const len = 4 + (strlen * 2);
+
+      return this.__view(ptr, len);
+    }
+
+    // null terminated
+    const memory = new Uint8Array(this[DATA].memory.buffer);
+
     let end = ptr;
     while (memory[end]) ++end;
 
-    // subarray uses same underlying ArrayBuffer
-    return (new Decoder()).decode(memory.subarray(ptr, end));
+    return this.__view(ptr, (end - ptr + 1));
+  }
+
+  __readString(ptr) {
+    return this.__decodeString(this.__readStringView(ptr));
   }
 
   __writeString(str, stack) {
-    const buf = (this[DATA].isAssemblyScript)
-      ? (new Encoder('utf-16')).encode(str)
-      : (new Encoder('utf-8')).encode(str);
+    const buf = this.__encodeString(str);
 
-    const len = (this[DATA].isAssemblyScript)
-      ? buf.byteLength + 4  // assemblyscript header
-      : buf.byteLength + 1; // null terminating byte
-
-    const ptr = this.__allocate(len);
+    const ptr = this.__allocate(buf.byteLength);
     if (stack) stack.push(ptr);
 
     const memory = new Uint8Array(this[DATA].memory.buffer);
-
-    if (this[DATA].isAssemblyScript) {
-      this.__view().setUint32(ptr, buf.byteLength, true);
-      memory.set(buf, ptr + 4);
-    } else {
-      memory.set(buf, ptr);
-      memory[ptr + len - 1] = 0;
-    }
+    memory.set(buf, ptr);
 
     return ptr;
   }
 
   __writeArray(arg, stack) {
     assert(arg instanceof ArrayBuffer || ArrayBuffer.isView(arg),
-      'Argument must be an ArrayBuffer or a TypedArry (like Uint8Array)');
+      'Argument must be an ArrayBuffer or a TypedArray (like Uint8Array)');
 
     const arr = (!ArrayBuffer.isView(arg)) ? new Uint8Array(arg) : arg;
 
@@ -377,7 +403,7 @@ class Wrapper {
     if (stack) stack.push(ptr);
 
     const memory = new Uint8Array(this[DATA].memory.buffer);
-    const data = new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+    const data = toUint8Array(arr);
 
     if (this[DATA].isAssemblyScript) {
       this.__view().setUint32(ptr + 0, ptr + 8, true);        // arraybuffer ptr
@@ -395,33 +421,20 @@ class Wrapper {
     assert(!!StructType, 'No struct StructType given');
 
     const view = this.__view(ptr, StructType.width);
-    const struct = StructType.read(view, this.__free);
+    const struct = StructType.read(view, this.utils);
 
     return struct;
   }
 
-  __writeStruct(struct) {
+  __writeStruct(value, Type) {
     // if struct has already been allocated:
-    if (struct.ref()) return struct.ref();
+    if (!isNil(value) && value.ref && value.ref()) return value.ref();
 
-    const StructType = struct.constructor;
+    const StructType = Type || value.constructor;
     const ptr = this.__allocate(StructType.width);
     const view = this.__view(ptr, StructType.width);
 
-    const allocPointers = (sub) => {
-      sub.constructor.fields.forEach((field, name) => {
-        if (field.type.isStruct && sub[name]) {
-          allocPointers(sub[name]);
-        }
-
-        if (field.type.isPointer && sub[name]) {
-          this.__writePointer(sub[name]);
-        }
-      });
-    };
-
-    allocPointers(struct);
-    StructType.write(view, struct, this.__free);
+    StructType.write(view, value, this.utils);
 
     return ptr;
   }
@@ -434,11 +447,12 @@ class Wrapper {
 
     // handle pointer of a pointer cases (structs are pointers too here)
     if (ptrType.type.isStruct || ptrType.type.isPointer) {
-      return ptrType.read(view, this.__free);
+      return ptrType.read(view, this.utils);
     }
 
     const pointer = new Pointer(ptrType.type);
-    pointer.attach(view, this.__free);
+    pointer.view = view;
+    pointer.wrapper = this.utils;
 
     return pointer;
   }
@@ -446,12 +460,15 @@ class Wrapper {
   __writePointer(pointer) {
     if (pointer.ref()) return pointer.ref();
 
-    // allocate space for what the pointer points to
-    const addr = this.__allocate(pointer.type.width);
-    const view = this.__view(addr, pointer.type.width);
+    pointer.wrapper = this.utils;
 
-    // attach wasm memory to pointer and write the pointed-to data
-    pointer.attach(view, this.__free);
+    // allocate space for what the pointer points to
+    const size = pointer.size();
+    const addr = this.__allocate(size);
+    const view = this.__view(addr, size);
+
+    pointer.view = view;
+    pointer.commit();
 
     return addr;
   }

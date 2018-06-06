@@ -70,13 +70,11 @@ var ffi =
 
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return types; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return CustomType; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return Pointer; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CString; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return CustomType; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Pointer; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return StringPointer; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return parseType; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__encoding__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(2);
-
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__misc__ = __webpack_require__(1);
 
 
 
@@ -84,7 +82,7 @@ var ffi =
 // Optional read / write methods, just gives a DataView by default.
 class CustomType {
   constructor(size, opts = {}) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!isNaN(size), 'Type size must be a number, given: %s', size);
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(!isNaN(size), 'Type size must be a number, given: %s', size);
 
     this.width = size;
     this.alignment = ('alignment' in opts) ? opts.alignment : size;
@@ -98,21 +96,15 @@ class CustomType {
   }
 
   write(view, value) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof ArrayBuffer || ArrayBuffer.isView(value),
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(value instanceof ArrayBuffer || ArrayBuffer.isView(value),
       'Value must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
 
-    const buf = (ArrayBuffer.isView(value))
-      ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
-      : new Uint8Array(value);
-
-    const uint8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
-
-    uint8.set(buf);
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["f" /* toUint8Array */])(view).set(Object(__WEBPACK_IMPORTED_MODULE_0__misc__["f" /* toUint8Array */])(value));
   }
 }
 
 
-class Signed {
+class SignedInteger {
   constructor(width) {
     this.width = width;
     this.alignment = width;
@@ -126,7 +118,7 @@ class Signed {
 }
 
 
-class Unsigned {
+class UnsignedInteger {
   constructor(width) {
     this.width = width;
     this.alignment = width;
@@ -149,12 +141,12 @@ types.void = {
   write: () => {},
 };
 
-types.int8 = new Signed(1);
-types.int16 = new Signed(2);
-types.int32 = new Signed(4);
-types.uint8 = new Unsigned(1);
-types.uint16 = new Unsigned(2);
-types.uint32 = new Unsigned(4);
+types.int8 = new SignedInteger(1);
+types.int16 = new SignedInteger(2);
+types.int32 = new SignedInteger(4);
+types.uint8 = new UnsignedInteger(1);
+types.uint16 = new UnsignedInteger(2);
+types.uint32 = new UnsignedInteger(4);
 
 types.int64 = new CustomType(8);
 types.uint64 = new CustomType(8);
@@ -204,15 +196,19 @@ class Pointer {
   constructor(type, value) {
     this.type = parseType(type);
     this.view = null;
-    this._free = null;
+    this.wrapper = null;
+
     this._temp = value;
   }
 
-  attach(view, free) {
-    this.view = view;
-    this._free = free;
+  size() {
+    return this.type.width;
+  }
 
-    if (this._temp) this.set(this._temp);
+  commit() {
+    if (this._temp) {
+      this.type.write(this.view, this._temp, this.wrapper);
+    }
   }
 
   ref() {
@@ -220,24 +216,29 @@ class Pointer {
   }
 
   deref() {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated pointer');
-    return this.type.read(this.view, this._free);
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(this.view, 'Trying to deref an unallocated pointer');
+    return this.type.read(this.view, this.wrapper);
   }
 
   set(value) {
     if (this.view) {
-      this.type.write(this.view, value, this._free);
+      this.type.write(this.view, value, this.wrapper);
     } else {
       this._temp = value;
     }
   }
 
   free() {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Cant free pointer: unallocated / already freed');
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(this.view, 'Cant free pointer: unallocated / already freed');
 
-    this._free(this.ref(), this.type.width);
-    this._free = null;
+    this.wrapper.free(this.ref(), this.type.width);
     this.view = null;
+  }
+
+  toString() {
+    return (this.ref())
+      ? `Pointer( ${this.deref()} )`
+      : 'Pointer( null )';
   }
 }
 
@@ -250,57 +251,50 @@ types.pointer = function(typedef) {
     alignment: 4,
     isPointer: true,
 
-    read(view, free) {
+    read(view, wrapper) {
       const addr = view.getUint32(0, true /* little-endian */);
+      const data = new DataView(view.buffer, addr, type.width);
 
       const pointer = new Pointer(type);
-      pointer.view = new DataView(view.buffer, addr, type.width);
-      pointer._free = free;
+      pointer.view = data;
+      pointer.wrapper = wrapper;
 
       return pointer;
     },
 
-    write(view, value) {
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof Pointer, `Trying to write ${value} as a pointer`);
-      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value.ref(), 'Cant write pointer, hasnt been allocated yet');
+    write(view, value, wrapper) {
+      Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(value instanceof Pointer, `Trying to write ${value} as a pointer`);
+
+      if (!value.ref()) wrapper.writePointer(value);
       view.setUint32(0, value.ref(), true /* little-endian */);
     },
   };
 };
 
 
-// A pointer to a null-terminated string
-class CString {
-  constructor(value, free) {
-    this.type = {
-      isPointer: true,
-      width: null,
-    };
+class StringPointer {
+  constructor(value) {
     this.view = null;
-    this._temp = null;
-    this._free = null;
+    this.wrapper = null;
 
-    if (typeof value === 'string') {
-      this._temp = (new __WEBPACK_IMPORTED_MODULE_0__encoding__["b" /* Encoder */]()).encode(value);
-      this.type.width = this._temp.byteLength + 1;
-    }
-
-    if (value instanceof DataView) {
-      this.view = value;
-      this._free = free;
-      this.type.width = value.byteLength;
-    }
+    this._tempStr = value;
+    this._tempBuf = null;
+    this._width = null;
   }
 
-  attach(view, free) {
-    this.view = view;
-    this._free = free;
+  size() {
+    this._tempBuf = this.wrapper.encodeString(this._tempStr);
+    this._width = this._tempBuf.byteLength;
 
-    if (this._temp) {
-      const memory = new Uint8Array(view.buffer);
+    return this._width;
+  }
 
-      memory.set(this._temp, view.byteOffset);
-      memory[view.byteOffset + this.type.width - 1] = 0;
+  commit() {
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(!!this.view, 'Cant commit StringPointer, no view!');
+
+    if (this._tempBuf) {
+      const memory = new Uint8Array(this.view.buffer);
+      memory.set(this._tempBuf, this.view.byteOffset);
     }
   }
 
@@ -309,58 +303,49 @@ class CString {
   }
 
   deref() {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(this.view, 'Trying to deref an unallocated CString');
-
-    const memory = new Uint8Array(this.view.buffer);
-    const addr = this.view.byteOffset;
-    const end = addr + this.type.width - 1;
-
-    // `subarray` uses the same underlying ArrayBuffer
-    const buf = new Uint8Array(memory.subarray(addr, end));
-    const str = (new __WEBPACK_IMPORTED_MODULE_0__encoding__["a" /* Decoder */]()).decode(buf);
-
-    return str;
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(this.view, 'Trying to deref an unallocated StringPointer');
+    return this.wrapper.decodeString(this.view);
   }
 
   free() {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!this.view, 'Cant free cstring: unallocated / already freed');
-
-    this._free(this.ref(), this.type.width);
-    this._free = null;
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(!!this.view, 'Cant free StringPointer: unallocated / already freed');
+    this.wrapper.free(this.ref(), this._width);
     this.view = null;
   }
-
-  valueOf() {
-    return this.deref();
-  }
-
-  toString() {
-    return this.deref();
-  }
 }
+
+Object.defineProperty(StringPointer.prototype, 'value', {
+  enumerable: true,
+
+  get() {
+    return this.deref();
+  },
+});
+
+Object(__WEBPACK_IMPORTED_MODULE_0__misc__["b" /* addStringFns */])(StringPointer);
+
 
 types.string = {
   width: 4,
   alignment: 4,
   isPointer: true,
 
-  read(view, free) {
-    const memory = new Uint8Array(view.buffer);
+  read(view, wrapper) {
     const addr = view.getUint32(0, true /* little-endian */);
-    let end = addr;
 
-    // find null byte
-    while (memory[end]) ++end;
+    const pointer =  new StringPointer();
+    pointer.view = wrapper.readStringView(addr);
+    pointer.wrapper = wrapper;
 
-    const length = end - addr + 1;
-    const data = new DataView(view.buffer, addr, length);
-
-    return new CString(data, free);
+    return pointer;
   },
 
-  write(view, value) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value instanceof CString, 'value must be a `CString`');
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(value.ref(), 'Cant write CString, hasnt been allocated yet');
+  write(view, value, wrapper) {
+    if (typeof value === 'string') {
+      value = new StringPointer(value);
+    }
+
+    if (!value.ref()) wrapper.writePointer(value);
     view.setUint32(0, value.ref(), true /* little-endian */);
   },
 };
@@ -376,24 +361,24 @@ class ArrayType {
     this.alignment = type.alignment;
   }
 
-  read(view, free) {
+  read(view, wrapper) {
     const arr = [];
 
     for (let i = 0; i <= this.length - 1; i++) {
-      const subview = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
-      arr.push(this.type.read(subview, free));
+      const subview = Object(__WEBPACK_IMPORTED_MODULE_0__misc__["g" /* vslice */])(view, i * this.type.width, this.type.width);
+      arr.push(this.type.read(subview, wrapper));
     }
 
     return arr;
   }
 
-  write(view, values) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(values.length === this.length,
+  write(view, values, wrapper) {
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(values.length === this.length,
       'Values length does not match struct array length');
 
     values.forEach((value, i) => {
-      const subview = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(view, i * this.type.width, this.type.width);
-      this.type.write(subview, value);
+      const subview = Object(__WEBPACK_IMPORTED_MODULE_0__misc__["g" /* vslice */])(view, i * this.type.width, this.type.width);
+      this.type.write(subview, value, wrapper);
     });
   }
 }
@@ -450,7 +435,7 @@ function parseType(typedef) {
   }
 
   if (Array.isArray(typedef)) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(typedef.length === 2,
+    Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])(typedef.length === 2,
       'Array type needs 2 arguments: [type, length], given: \n%s', typedef);
 
     const type = parseType(typedef[0]);
@@ -461,10 +446,10 @@ function parseType(typedef) {
 
   // make sure its an ok type interface
   const errMsg = "Given argument type isn't a proper 'type' interface: \n%s";
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('width' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('alignment' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('read' in typedef, errMsg, typedef);
-  Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])('write' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])('width' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])('alignment' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])('read' in typedef, errMsg, typedef);
+  Object(__WEBPACK_IMPORTED_MODULE_0__misc__["c" /* assert */])('write' in typedef, errMsg, typedef);
 
   return typedef;
 }
@@ -478,10 +463,133 @@ function parseType(typedef) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Encoder; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Decoder; });
+/* harmony export (immutable) */ __webpack_exports__["c"] = assert;
+/* harmony export (immutable) */ __webpack_exports__["g"] = vslice;
+/* harmony export (immutable) */ __webpack_exports__["f"] = toUint8Array;
+/* harmony export (immutable) */ __webpack_exports__["d"] = isNil;
+/* harmony export (immutable) */ __webpack_exports__["b"] = addStringFns;
+/* harmony export (immutable) */ __webpack_exports__["a"] = addArrayFns;
+/* harmony export (immutable) */ __webpack_exports__["e"] = makeIterable;
+// simple assert, throws if assertion fails
+// also matches args to %s formatters
+function assert(condition, errMsg, ...args) {
+  if (condition) return;
+  if (!args || !args.length) throw new Error(errMsg);
+
+  let msg = '';
+  let strings;
+
+  try {
+    strings = args.map(arg => JSON.stringify(arg, null, 2));
+  } catch (e) {
+    throw new Error(errMsg);
+  }
+
+  errMsg.split('%s').forEach((part) => {
+    msg += part;
+    if (strings.length) msg += strings.pop();
+  });
+
+  throw new Error(msg);
+}
+
+
+// takes a subslice of a DataView
+function vslice(view, start, length) {
+  return new DataView(view.buffer, view.byteOffset + start, length);
+}
+
+
+function toUint8Array(arr) {
+  return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+}
+
+
+function isNil(thing) {
+  return thing === null || typeof thing === 'undefined';
+}
+
+
+const has = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+const isFunction = thing => (typeof thing === 'function');
+
+
+function addStringFns(StringLike) {
+  assert(!!has(StringLike.prototype, 'value'), 'Missing `value` property');
+
+  Object.getOwnPropertyNames(String.prototype).forEach((prop) => {
+    if (has(StringLike.prototype, prop)) return;
+    if (!isFunction(String.prototype[prop])) return;
+
+    StringLike.prototype[prop] = function(...args) {
+      return this.value[prop](...args);
+    };
+  });
+}
+
+
+function addArrayFns(ArrayLike) {
+  assert(!!has(ArrayLike.prototype, 'values'), 'Missing `values` property');
+
+  Object.getOwnPropertyNames(Array.prototype).forEach((prop) => {
+    if (has(ArrayLike.prototype, prop)) return;
+    if (!isFunction(Array.prototype[prop])) return;
+
+    ArrayLike.prototype[prop] = function(...args) {
+      return this.values[prop](...args);
+    };
+  });
+}
+
+
+function makeIterable(ArrayLike) {
+  assert(!!has(ArrayLike.prototype, 'values'), 'Missing `values` property');
+  assert(!!has(ArrayLike.prototype, 'length'), 'Missing `length` property');
+
+  ArrayLike.prototype[Symbol.iterator] = function() {
+    const values = this.values;
+    const length = this.length;
+    let i = 0;
+
+    return {
+      next() {
+        return (i < length)
+          ? { value: values[i++], done: false }
+          : { done: true };
+      }
+    };
+  };
+}
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return encode; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return decode; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return encodeUTF8; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return decodeUTF8; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return decodeUTF8; });
+function encodeUTF16(str) {
+  const buf = new ArrayBuffer(str.length * 2); // 2 per char
+  const arr = new Uint16Array(buf);
+
+  for (let i = 0; i < str.length; i++) {
+    arr[i] = str.charCodeAt(i);
+  }
+
+  return new Uint8Array(buf);
+}
+
+function decodeUTF16(buf) {
+  const len = buf.byteLength;
+  const num = (len % 2) ? ((len + 1) / 2) : (len / 2);
+  const pts = new Uint16Array(buf.buffer, buf.byteOffset, num);
+
+  return String.fromCharCode(...pts);
+}
+
 // utf8 decode/encode adapted from the buffer module
 // @ github.com/feross/buffer
 //
@@ -666,69 +774,247 @@ function decodeUTF8(buf) {
 }
 
 
-class EncoderPolyfill {
-  encode(str) {
-    return encodeUTF8(str);
-  }
-}
+function encode(str, type) {
+  if (type === 'utf-16') return encodeUTF16(str);
 
-class DecoderPolyfill {
-  decode(view) {
-    return decodeUTF8(view);
-  }
+  return (typeof TextEncoder !== 'undefined')
+    ? (new TextEncoder()).encode(str)
+    : encodeUTF8(str);
 }
 
 
-const Encoder = (typeof TextEncoder !== 'undefined')
-  ? TextEncoder
-  : EncoderPolyfill;
+function decode(str, type) {
+  if (type === 'utf-16') return decodeUTF16(str);
 
-const Decoder = (typeof TextDecoder !== 'undefined')
-  ? TextDecoder
-  : DecoderPolyfill;
-
-
-
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = assert;
-/* harmony export (immutable) */ __webpack_exports__["b"] = vslice;
-// simple assert, throws if assertion fails
-// also matches args to %s formatters
-function assert(condition, errMsg, ...args) {
-  if (condition) return;
-  if (!args || !args.length) throw new Error(errMsg);
-
-  let msg = '';
-  let strings;
-
-  try {
-    strings = args.map(arg => JSON.stringify(arg, null, 2));
-  } catch (e) {
-    throw new Error(errMsg);
-  }
-
-  errMsg.split('%s').forEach((part) => {
-    msg += part;
-    if (strings.length) msg += strings.pop();
-  });
-
-  throw new Error(msg);
+  return (typeof TextDecoder !== 'undefined')
+    ? (new TextDecoder()).decode(str)
+    : decodeUTF8(str);
 }
 
-// takes a subslice of a DataView
-function vslice(view, start, length) {
-  return new DataView(view.buffer, view.byteOffset + start, length);
-}
+
+
 
 
 /***/ }),
 /* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__types__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(1);
+
+
+
+
+const DATA = (typeof Symbol !== 'undefined')
+  ? Symbol.for('struct-data')
+  : '__data';
+
+
+class AbstractStructType {
+  constructor(obj) {
+    // structs can be made with any object keys
+    // hide internal info behind the data symbol so you can still have
+    // struct fields like `.view`
+    this[DATA] = {
+      temp: {},
+      view: null,
+      wrapper: null,
+    };
+
+    if (obj) {
+      Object.entries(obj).forEach(([key, value]) => {
+        Object(__WEBPACK_IMPORTED_MODULE_1__misc__["c" /* assert */])(key in this, `Can't set value, struct missing field '${key}'`);
+        this[key] = value;
+      });
+    }
+  }
+
+  ref() {
+    return (this[DATA].view) ? this[DATA].view.byteOffset : 0;
+  }
+
+  free(internal = false) {
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["c" /* assert */])(!!this[DATA].wrapper,
+      'Cant free struct, either: unallocated / already freed / sub-struct');
+
+    // frees any pointers contained in the struct
+    const freePointers = (struct) => {
+      struct.constructor.fields.forEach((field, name) => {
+        if (field.type.isPointer) struct[name].free();
+        if (field.type.isStruct) freePointers(struct[name]);
+      });
+    };
+
+    if (internal) freePointers(this);
+
+    this[DATA].wrapper.free(this.ref(), this.constructor.width);
+    this[DATA].wrapper = null;
+    this[DATA].view = null;
+  }
+
+  toString() {
+    let out = '{\n';
+
+    const stringify = (struct) => {
+      const fields = struct.constructor.fields;
+      const proto = struct.constructor.prototype;
+
+      fields.forEach((field, name) => {
+        out += `  ${name}: ${struct[name]},\n`;
+      });
+
+      Object.getOwnPropertyNames(proto).forEach((name) => {
+        if (fields.has(name)) return;
+
+        const value = struct[name];
+
+        if (typeof value !== 'function') {
+          out += `  ${name}: ${value},\n`;
+        }
+      });
+    };
+
+    stringify(this);
+
+    if (out.length <= 80) {
+      out = out.replace(/\n/g, '')    // remove line breaks
+               .replace(/ {2}/g, ' ') // collapse whitespace
+               .replace(/,$/g, ' ');  // trailing comma
+    }
+
+    out += '}';
+
+    return out;
+  }
+
+  dataview(name) {
+    const view = this[DATA].view;
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["c" /* assert */])(!!view, "Struct hasn't been written yet, can't get dataview");
+
+    if (!name) return view;
+
+    const StructType = this.constructor;
+    const field = StructType.fields.get(name);
+    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["c" /* assert */])(!!field, `Field '${name}' doesn't exist on struct`);
+
+    return Object(__WEBPACK_IMPORTED_MODULE_1__misc__["g" /* vslice */])(view, field.offset, field.type.width);
+  }
+
+  static read(view, wrapper) {
+    const StructType = this;
+
+    const struct = new StructType();
+    struct[DATA].view = view;
+    struct[DATA].wrapper = wrapper;
+
+    return struct;
+  }
+
+  static write(view, struct, wrapper) {
+    const StructType = this;
+
+    if (Object(__WEBPACK_IMPORTED_MODULE_1__misc__["d" /* isNil */])(struct) || !struct.constructor.isStruct) {
+      struct = new StructType(struct);
+    }
+
+    StructType.fields.forEach((field, name) => {
+      const type = field.type;
+      let value = struct[name];
+
+      if (typeof value !== 'undefined') {
+        if (type.isStruct && (Object(__WEBPACK_IMPORTED_MODULE_1__misc__["d" /* isNil */])(value) || !value.constructor.isStruct)) {
+          value = new type(value);
+        }
+
+        const fieldView = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["g" /* vslice */])(view, field.offset, type.width);
+        type.write(fieldView, value, wrapper);
+      }
+    });
+
+    struct[DATA].view = view;
+    struct[DATA].wrapper = wrapper;
+  }
+}
+
+
+// Creates a new class that will create new struct instances
+// (this returns a constructor)
+class Struct {
+  constructor(fields = {}, opt = {}) {
+    // preserve field insertion order with [[OwnPropertyKeys]]
+    const names = Object.getOwnPropertyNames(fields);
+
+    // check for field name conflicts
+    ['ref', 'free', 'dataview'].forEach(name =>
+      Object(__WEBPACK_IMPORTED_MODULE_1__misc__["c" /* assert */])(!(names in names), `Field '${name}' is a reserved method name`));
+
+    // keep metadata on the constructor itself
+    class StructType extends AbstractStructType {}
+    StructType.fields = new Map();
+    StructType.packed = ('packed' in opt) ? !!opt.packed : false;
+    StructType.alignment = opt.alignment || 0;
+    StructType.isStruct = true;
+
+    let offset = 0;
+
+    // get type/size/alignment for each field
+    names.forEach((name) => {
+      const type = Object(__WEBPACK_IMPORTED_MODULE_0__types__["d" /* parseType */])(fields[name]);
+
+      if (!opt.alignment && type.alignment > StructType.alignment) {
+        StructType.alignment = type.alignment;
+      }
+
+      if (!StructType.packed && offset % type.alignment !== 0) {
+        offset += type.alignment - (offset % type.alignment);
+      }
+
+      StructType.fields.set(name, { name, offset, type });
+      offset += type.width;
+    });
+
+    StructType.width = (offset % StructType.alignment)
+      ? offset + StructType.alignment - (offset % StructType.alignment)
+      : offset;
+
+    // define getter / setter behavior for each field
+    // these will read / write each field to memory according to its type
+    StructType.fields.forEach((field, name) => {
+      Object.defineProperty(StructType.prototype, name, {
+        enumerable: true,
+
+        get() {
+          if (!this[DATA].view) {
+            return this[DATA].temp[name];
+          }
+
+          const view = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["g" /* vslice */])(this[DATA].view, field.offset, field.type.width);
+          return field.type.read(view, this[DATA].wrapper);
+        },
+
+        set(value) {
+          if (!this[DATA].view) {
+            this[DATA].temp[name] = value;
+            return;
+          }
+
+          const view = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["g" /* vslice */])(this[DATA].view, field.offset, field.type.width);
+          field.type.write(view, value, this[DATA].wrapper);
+        },
+      });
+    });
+
+    return StructType;
+  }
+}
+
+
+/* harmony default export */ __webpack_exports__["a"] = (Struct);
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -823,7 +1109,7 @@ function demangle(mangled = '') {
   });
 
   // make sure last label is included
-  if (label) labels.push(label);
+  labels.push(label);
 
   // if the last element is a hash, exclude it so the result is more readable
   if (isHash(labels.slice(-1)[0])) labels.pop();
@@ -853,220 +1139,32 @@ function demangleStack(err) {
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__misc__ = __webpack_require__(2);
-
-
-
-
-const DATA = (typeof Symbol !== 'undefined')
-  ? Symbol.for('struct-data')
-  : '__data';
-
-
-class AbstractStructType {
-  constructor(obj) {
-    // structs can be made with any object keys
-    // hide internal info behind the data symbol so you can still have
-    // struct fields like `.view`
-    this[DATA] = {
-      temp: {},
-      view: null,
-      free: null,
-    };
-
-    if (obj) {
-      Object.entries(obj).forEach(([key, value]) => {
-        // check for name conflicts
-        Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(key in this, `Struct missing field '${key}'`);
-        Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(key !== 'ref', 'Field `ref` is a reserved method name');
-        Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(key !== 'free', 'Field `free` is a reserved method name');
-        // this should trigger the get/setter behavior
-        this[key] = value;
-      });
-    }
-  }
-
-  ref() {
-    return (this[DATA].view) ? this[DATA].view.byteOffset : 0;
-  }
-
-  free(recursive = false) {
-    Object(__WEBPACK_IMPORTED_MODULE_1__misc__["a" /* assert */])(!!this[DATA].free,
-      'Cant free struct, either: unallocated / already freed / sub-struct');
-
-    // frees any pointers contained in the struct
-    const freePointers = (struct) => {
-      struct.constructor.fields.forEach((field, name) => {
-        if (field.type.isPointer) struct[name].free();
-        if (field.type.isStruct) freePointers(struct[name]);
-      });
-    };
-
-    if (recursive) freePointers(this);
-
-    this[DATA].free(this.ref(), this.constructor.width);
-    this[DATA].free = null;
-    this[DATA].view = null;
-  }
-
-  toString() {
-    let out = '{\n';
-
-    const stringify = (struct) => {
-      struct.constructor.fields.forEach((field, name) => {
-        out += `  ${name}: `;
-
-        if (field.type.isPointer) out += struct[name].deref();
-        else out += struct[name].toString();
-
-        out += ',\n';
-      });
-    };
-
-    stringify(this);
-
-    if (out.length <= 80) {
-      out = out.replace(/\n/g, '')    // remove line breaks
-               .replace(/ {2}/g, ' ') // collapse whitespace
-               .replace(/,$/g, ' ');  // trailing comma
-    }
-
-    out += '}';
-
-    return out;
-  }
-
-  static read(view, free) {
-    const StructType = this;
-
-    const struct = new StructType();
-    struct[DATA].view = view;
-    struct[DATA].free = free;
-
-    return struct;
-  }
-
-  static write(view, struct, free) {
-    const StructType = this;
-
-    StructType.fields.forEach((field, name) => {
-      const value = struct[name];
-
-      if (typeof value !== 'undefined') {
-        const fieldView = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(view, field.offset, field.type.width);
-        field.type.write(fieldView, value);
-      }
-    });
-
-    struct[DATA].view = view;
-    if (free) struct[DATA].free = free;
-  }
-}
-
-
-// Creates a new class that will create new struct instances
-// (this returns a constructor)
-class Struct {
-  constructor(fields = {}, opt = {}) {
-    class StructType extends AbstractStructType {}
-
-    // keep metadata on the struct constructor itself
-    StructType.fields = new Map();
-    StructType.packed = ('packed' in opt) ? !!opt.packed : false;
-    StructType.alignment = opt.alignment || 0;
-    StructType.isStruct = true;
-
-    let offset = 0;
-
-    // preserve field insertion order with [[OwnPropertyKeys]]
-    Object.getOwnPropertyNames(fields).forEach((name) => {
-      const type = Object(__WEBPACK_IMPORTED_MODULE_0__types__["d" /* parseType */])(fields[name]);
-
-      if (!opt.alignment && type.alignment > StructType.alignment) {
-        StructType.alignment = type.alignment;
-      }
-
-      if (!StructType.packed && offset % type.alignment !== 0) {
-        offset += type.alignment - (offset % type.alignment);
-      }
-
-      StructType.fields.set(name, { name, offset, type });
-      offset += type.width;
-    });
-
-    StructType.width = (offset % StructType.alignment)
-      ? offset + StructType.alignment - (offset % StructType.alignment)
-      : offset;
-
-    // define getter / setter behavior for each field
-    // these will read / write each field to memory according to its type
-    StructType.fields.forEach((field, name) => {
-      Object.defineProperty(StructType.prototype, name, {
-        enumerable: true,
-
-        get() {
-          if (!this[DATA].view) {
-            return this[DATA].temp[name];
-          }
-
-          const view = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(this[DATA].view, field.offset, field.type.width);
-          return field.type.read(view, this[DATA].free);
-        },
-
-        set(value) {
-          // fudging for ease of use:
-          if (typeof value === 'string' && field.type === __WEBPACK_IMPORTED_MODULE_0__types__["e" /* types */].string) {
-            value = new __WEBPACK_IMPORTED_MODULE_0__types__["a" /* CString */](value);
-          }
-
-          if (!this[DATA].view) {
-            this[DATA].temp[name] = value;
-            return;
-          }
-
-          const view = Object(__WEBPACK_IMPORTED_MODULE_1__misc__["b" /* vslice */])(this[DATA].view, field.offset, field.type.width);
-          field.type.write(view, value);
-        },
-      });
-    });
-
-    return StructType;
-  }
-}
-
-
-/* harmony default export */ __webpack_exports__["a"] = (Struct);
-
-
-/***/ }),
 /* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CString", function() { return CString; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_encodeUTF8", function() { return _encodeUTF8; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_decodeUTF8", function() { return _decodeUTF8; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Wrapper__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Struct__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__demangle__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__rust__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__encoding__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Struct__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__demangle__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__rust__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__assemblyscript__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__types__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__encoding__ = __webpack_require__(2);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Wrapper", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "cwrap", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["c"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "ccall", function() { return __WEBPACK_IMPORTED_MODULE_0__Wrapper__["b"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Struct", function() { return __WEBPACK_IMPORTED_MODULE_1__Struct__["a"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "types", function() { return __WEBPACK_IMPORTED_MODULE_3__types__["e"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Pointer", function() { return __WEBPACK_IMPORTED_MODULE_3__types__["c"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "CustomType", function() { return __WEBPACK_IMPORTED_MODULE_3__types__["b"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "CString", function() { return __WEBPACK_IMPORTED_MODULE_3__types__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "types", function() { return __WEBPACK_IMPORTED_MODULE_5__types__["e"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "CustomType", function() { return __WEBPACK_IMPORTED_MODULE_5__types__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Pointer", function() { return __WEBPACK_IMPORTED_MODULE_5__types__["b"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "StringPointer", function() { return __WEBPACK_IMPORTED_MODULE_5__types__["c"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "demangle", function() { return __WEBPACK_IMPORTED_MODULE_2__demangle__["a"]; });
-/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "rust", function() { return __WEBPACK_IMPORTED_MODULE_4__rust__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "rust", function() { return __WEBPACK_IMPORTED_MODULE_3__rust__["a"]; });
+/* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "assemblyscript", function() { return __WEBPACK_IMPORTED_MODULE_4__assemblyscript__["a"]; });
 
 
 
@@ -1074,21 +1172,25 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-const _encodeUTF8 = __WEBPACK_IMPORTED_MODULE_5__encoding__["d" /* encodeUTF8 */];
-const _decodeUTF8 = __WEBPACK_IMPORTED_MODULE_5__encoding__["c" /* decodeUTF8 */];
 
+const _encodeUTF8 = __WEBPACK_IMPORTED_MODULE_6__encoding__["d" /* encodeUTF8 */];
+const _decodeUTF8 = __WEBPACK_IMPORTED_MODULE_6__encoding__["b" /* decodeUTF8 */];
+
+const CString = __WEBPACK_IMPORTED_MODULE_5__types__["c" /* StringPointer */];
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   Wrapper: __WEBPACK_IMPORTED_MODULE_0__Wrapper__["a" /* Wrapper */],
   cwrap: __WEBPACK_IMPORTED_MODULE_0__Wrapper__["c" /* cwrap */],
   ccall: __WEBPACK_IMPORTED_MODULE_0__Wrapper__["b" /* ccall */],
   Struct: __WEBPACK_IMPORTED_MODULE_1__Struct__["a" /* default */],
-  types: __WEBPACK_IMPORTED_MODULE_3__types__["e" /* types */],
-  Pointer: __WEBPACK_IMPORTED_MODULE_3__types__["c" /* Pointer */],
-  CustomType: __WEBPACK_IMPORTED_MODULE_3__types__["b" /* CustomType */],
-  CString: __WEBPACK_IMPORTED_MODULE_3__types__["a" /* CString */],
+  types: __WEBPACK_IMPORTED_MODULE_5__types__["e" /* types */],
+  CustomType: __WEBPACK_IMPORTED_MODULE_5__types__["a" /* CustomType */],
+  Pointer: __WEBPACK_IMPORTED_MODULE_5__types__["b" /* Pointer */],
+  StringPointer: __WEBPACK_IMPORTED_MODULE_5__types__["c" /* StringPointer */],
+  CString, // deprecated
   demangle: __WEBPACK_IMPORTED_MODULE_2__demangle__["a" /* default */],
-  rust: __WEBPACK_IMPORTED_MODULE_4__rust__["a" /* default */],
+  rust: __WEBPACK_IMPORTED_MODULE_3__rust__["a" /* default */],
+  assemblyscript: __WEBPACK_IMPORTED_MODULE_4__assemblyscript__["a" /* default */],
   _encodeUTF8,
   _decodeUTF8,
 });
@@ -1105,9 +1207,9 @@ const _decodeUTF8 = __WEBPACK_IMPORTED_MODULE_5__encoding__["c" /* decodeUTF8 */
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return cwrap; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return ccall; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__encoding__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__misc__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__demangle__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__encoding__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__misc__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__demangle__ = __webpack_require__(4);
 
 
 
@@ -1128,8 +1230,8 @@ const numbers = new Set([
 ]);
 
 
-function areValid(types) {
-  return types.every(type =>
+function areValid(argTypes) {
+  return argTypes.every(type =>
     type === null ||
     type === undefined ||
     type === 'void' ||
@@ -1195,12 +1297,10 @@ const DATA = (typeof Symbol !== 'undefined')
 
 class Wrapper {
   constructor(signatures, opts = {}) {
-    // Keep internal info behind the DATA symbol, try to minimize footprint so
-    // wrapped function names don't conflict with whats already here.(Like if
-    // someone had a method called "memory()", it would've been a problem)
-    // Same strategy with the "__" prefixed object methods.
     const dialect = opts.dialect && opts.dialect.toLowerCase();
 
+    // Keep internal info behind the DATA symbol so wrapped function names
+    // won't cause conflicts
     this[DATA] = {
       instance: null,
       imports: null,
@@ -1213,67 +1313,74 @@ class Wrapper {
 
     Object.entries(signatures).forEach(([fn, [returnType, argTypes = []]]) => {
       // check for name collisions:
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'exports', '`exports` is a reserved wrapper name');
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'utils', '`utils` is a reserved wrapper name');
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'imports', '`imports` is a reserved wrapper method name');
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'fetch', '`fetch` is a reserved wrapper method name');
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(fn !== 'use', '`use` is a reserved wrapper method name');
+      ['exports', 'imports', 'utils', 'fetch', 'use'].forEach(name =>
+        Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(fn !== name, '`%s` is a reserved wrapper name', name));
 
       // validate arg types
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(argTypes.every(arg => !!arg), `'${fn}' has undefined types`);
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid([returnType]), `'${fn}' has invalid types`);
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid(argTypes), `'${fn}' has invalid types`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(argTypes.every(arg => !!arg), '`%s` has undefined types', fn);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(areValid([returnType]), '`%s` has invalid types', fn);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(areValid(argTypes), '`%s` has invalid types', fn);
 
       this[DATA].signatures.add({ fnName: fn, returnType, argTypes });
     });
 
     // exposing some methods via `.utils`
     this.utils = {
-      readString:   this.__readString.bind(this),
-      writeString:  this.__writeString.bind(this),
-      writeArray:   this.__writeArray.bind(this),
-      readStruct:   this.__readStruct.bind(this),
-      writeStruct:  this.__readStruct.bind(this),
-      readPointer:  this.__readPointer.bind(this),
-      writePointer: this.__readPointer.bind(this),
+      encodeString:   this.__encodeString.bind(this),
+      decodeString:   this.__decodeString.bind(this),
+      readStringView: this.__readStringView.bind(this),
+      readString:     this.__readString.bind(this),
+      writeString:    this.__writeString.bind(this),
+      writeArray:     this.__writeArray.bind(this),
+      readStruct:     this.__readStruct.bind(this),
+      writeStruct:    this.__writeStruct.bind(this),
+      readPointer:    this.__readPointer.bind(this),
+      writePointer:   this.__writePointer.bind(this),
 
       allocate: function(value) {
-        Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])('ref' in value, 'This method is for Pointer / Structs / CStrings');
+        Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(typeof value.ref === 'function',
+          "Can't allocate '%s' This method is for Pointer & Structs", value);
 
-        (value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["c" /* Pointer */] || value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["a" /* CString */])
+        (value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["b" /* Pointer */] || value instanceof __WEBPACK_IMPORTED_MODULE_0__types__["c" /* StringPointer */])
           ? this.__writePointer(value)
           : this.__writeStruct(value);
       }.bind(this),
 
       free: function(value) {
-        ('ref' in value)
+        (typeof value.ref === 'function')
           ? this.__free(value.ref())
           : this.__free(value);
       }.bind(this),
     };
 
     this.exports = null;
-    this.__free = this.__free.bind(this); // convenience bind
   }
 
   // takes an import object or a function what will produce a import object
-  imports(arg, applyDefaults = true) {
-    const wrap = (...args) => {
+  imports(importArg, applyDefaults = true) {
+    const wrap = (...fnConfig) => {
       // function to wrap is always the last argument
-      const fn = args.pop();
+      const fn = fnConfig.pop();
       // two argument formats (this might be a bad idea):
-      //   * with return type: wrap([returnType, [...argTypes]], fn)
-      //   * no return type: wrap(arg1, arg2, ..., fn)
+      //   1) with return type: wrap([returnType, [...argTypes]], fn)
+      //   2) no return type: wrap(arg1, arg2, ..., fn)
       //
-      const types = (Array.isArray(args[0])) ? args[0] : [null, args];
       // detructure into appropriate vars
-      const [returnType, argTypes = []] = types;
+      const [returnType, argTypes = []] = (Array.isArray(fnConfig[0]))
+        ? fnConfig[0]       // 1st format
+        : [null, fnConfig]; // 2nd format
 
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid(argTypes), `Import has invalid types: ${argTypes}`);
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(areValid([returnType]), `Import has invalid types: ${returnType}`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(areValid(argTypes), `Import has invalid types: ${argTypes}`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(areValid([returnType]), `Import has invalid types: ${returnType}`);
 
-      return (...raw) => {
-        const value = fn(...raw.map((r, i) => this.__out(r, argTypes[i])));
+      return (...args) => {
+        const ffi_args = argTypes.map((type, i) => this.__out(args[i], type));
+
+        if (args.length > argTypes.length) {
+          ffi_args.push(...args.slice(argTypes.length - args.length));
+        }
+
+        const value = fn(...ffi_args);
 
         if (returnType && returnType !== 'void') {
           return this.__in(value, returnType);
@@ -1282,13 +1389,10 @@ class Wrapper {
     };
 
     const env = {
-      // wasm-glue (rust)
-      print:  wrap('string', str => console.log(str)),
-      eprint: wrap('string', str => console.error(str)),
-
-      trace: wrap('string', (str) => {
-        throw new Error(str);
-      }),
+      // wasm-glue
+      print:  wrap('string', (str, ...args) => console.log(str, ...args)),
+      eprint: wrap('string', (str, ...args) => console.error(str, ...args)),
+      trace:  wrap('string', (str) => { throw new Error(str); }),
 
       // assemblyscript
       abort: wrap('string', 'string', 'number', 'number', (msg, file, line, col) => {
@@ -1307,9 +1411,9 @@ class Wrapper {
       _grow() {},
     };
 
-    const obj = (typeof arg === 'function')
-      ? arg(wrap)
-      : arg;
+    const obj = (typeof importArg === 'function')
+      ? importArg(wrap)
+      : importArg;
 
     if (applyDefaults) obj.env = Object.assign(env, obj.env);
     this[DATA].imports = obj;
@@ -1327,7 +1431,7 @@ class Wrapper {
   }
 
   use(instance) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(instance instanceof WebAssembly.Instance,
       '.use(instance) requires a WebAssembly.Instance');
 
     this.__link(instance);
@@ -1339,7 +1443,7 @@ class Wrapper {
                    instance.exports.memory ||
                    (this[DATA].imports.env && this[DATA].imports.env.memory);
 
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!memory, '' +
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!memory, '' +
       'Wrapper needs access to your WebAssemmbly memory. It looks for this in' +
       'either your `imports.env.memory` or `exports.env.memory`. If you don\'t' +
       'use either, you need to add it in the options with `new Wrapper`');
@@ -1350,7 +1454,7 @@ class Wrapper {
 
     this[DATA].signatures.forEach(({ fnName, returnType, argTypes }) => {
       const fn = this.exports[fnName];
-      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!fn, `Fn '${fnName}' missing from wasm exports`);
+      Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!fn, `Fn '${fnName}' missing from wasm exports`);
 
       this[fnName] = this.__wrap(fn, argTypes, returnType);
     });
@@ -1359,9 +1463,12 @@ class Wrapper {
   __wrap(fn, argTypes, returnType) {
     return function(...args) {
       const stack = [];
-      const ffi_args = args.map((arg, i) => this.__in(arg, argTypes[i], stack));
-
+      const ffi_args = argTypes.map((type, i) => this.__in(args[i], type, stack));
       let value;
+
+      if (args.length > argTypes.length) {
+        ffi_args.push(...args.slice(argTypes.length - args.length));
+      }
 
       try {
         value = fn(...ffi_args);
@@ -1379,13 +1486,13 @@ class Wrapper {
 
   // wrap a variable heading into a wasm function
   __in(value, type, stack) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!type, 'No arg type was specified for this function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
     if (type === 'string') return this.__writeString(value, stack);
     if (type === 'array') return this.__writeArray(value, stack);
-    if (type.isStruct) return this.__writeStruct(value);
+    if (type.isStruct) return this.__writeStruct(value, type);
     if (type.isPointer) return this.__writePointer(value);
 
     throw new Error(`Unknown type: \n${JSON.stringify(type)}`);
@@ -1393,7 +1500,7 @@ class Wrapper {
 
   // wrap a variable heading out of a wasm function
   __out(value, type) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!type, 'No arg type was specified for function');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!type, 'No arg type was specified for this function');
 
     if (type === 'number' || numbers.has(type)) return value;
     if (type === 'boolean' || type === 'bool') return !!value;
@@ -1405,11 +1512,11 @@ class Wrapper {
   }
 
   __allocate(size) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!this.exports.allocate && !!this.exports.deallocate,
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!this.exports.allocate && !!this.exports.deallocate,
       "Missing allocate/deallocate fns in wasm exports, can't allocate memory");
 
     const ptr = this.exports.allocate(size);
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!ptr, 'allocate failed');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!ptr, 'allocate failed');
 
     if (this[DATA].debug) console.log('Alloc: %s (size=%s)', ptr, size);
     this[DATA].allocations.set(ptr, size);
@@ -1429,53 +1536,74 @@ class Wrapper {
     return new DataView(this[DATA].memory.buffer, start, length);
   }
 
-  __readString(ptr) {
-    const memory = new Uint8Array(this[DATA].memory.buffer);
+  __encodeString(str) {
+    const encoded = (this[DATA].isAssemblyScript)
+      ? Object(__WEBPACK_IMPORTED_MODULE_1__encoding__["c" /* encode */])(str, 'utf-16')
+      : Object(__WEBPACK_IMPORTED_MODULE_1__encoding__["c" /* encode */])(str);
+
+    const len = (this[DATA].isAssemblyScript)
+      ? encoded.byteLength + 4  // assemblyscript header
+      : encoded.byteLength + 1; // null terminating byte
+
+    const buf = new Uint8Array(new ArrayBuffer(len));
 
     if (this[DATA].isAssemblyScript) {
-      const len = this.__view().getUint32(ptr, true);
-      const start = ptr + 4; // header
-      const end = start + (len << 1); // 2 bytes per char
-
-      return (new TextDecoder('utf-16')).decode(memory.subarray(start, end));
+      const header = encoded.byteLength / 2;
+      (new DataView(buf.buffer)).setUint32(0, header, true);
+      buf.set(encoded, 4);
+    } else {
+      buf.set(encoded, 0);
+      buf[len - 1] = 0;
     }
 
-    // find end of string (null byte)
+    return buf;
+  }
+
+  __decodeString(view) {
+    const buf = Object(__WEBPACK_IMPORTED_MODULE_2__misc__["f" /* toUint8Array */])(view);
+
+    return (this[DATA].isAssemblyScript)
+      ? Object(__WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* decode */])(buf.subarray(4), 'utf-16')
+      : Object(__WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* decode */])(buf.subarray(0, -1));
+  }
+
+  __readStringView(ptr) {
+    // length prefixed
+    if (this[DATA].isAssemblyScript) {
+      const strlen = this.__view().getUint32(ptr, true); // header
+      const len = 4 + (strlen * 2);
+
+      return this.__view(ptr, len);
+    }
+
+    // null terminated
+    const memory = new Uint8Array(this[DATA].memory.buffer);
+
     let end = ptr;
     while (memory[end]) ++end;
 
-    // subarray uses same underlying ArrayBuffer
-    return (new __WEBPACK_IMPORTED_MODULE_1__encoding__["a" /* Decoder */]()).decode(memory.subarray(ptr, end));
+    return this.__view(ptr, (end - ptr + 1));
+  }
+
+  __readString(ptr) {
+    return this.__decodeString(this.__readStringView(ptr));
   }
 
   __writeString(str, stack) {
-    const buf = (this[DATA].isAssemblyScript)
-      ? (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]('utf-16')).encode(str)
-      : (new __WEBPACK_IMPORTED_MODULE_1__encoding__["b" /* Encoder */]('utf-8')).encode(str);
+    const buf = this.__encodeString(str);
 
-    const len = (this[DATA].isAssemblyScript)
-      ? buf.byteLength + 4  // assemblyscript header
-      : buf.byteLength + 1; // null terminating byte
-
-    const ptr = this.__allocate(len);
+    const ptr = this.__allocate(buf.byteLength);
     if (stack) stack.push(ptr);
 
     const memory = new Uint8Array(this[DATA].memory.buffer);
-
-    if (this[DATA].isAssemblyScript) {
-      this.__view().setUint32(ptr, buf.byteLength, true);
-      memory.set(buf, ptr + 4);
-    } else {
-      memory.set(buf, ptr);
-      memory[ptr + len - 1] = 0;
-    }
+    memory.set(buf, ptr);
 
     return ptr;
   }
 
   __writeArray(arg, stack) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(arg instanceof ArrayBuffer || ArrayBuffer.isView(arg),
-      'Argument must be an ArrayBuffer or a TypedArry (like Uint8Array)');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(arg instanceof ArrayBuffer || ArrayBuffer.isView(arg),
+      'Argument must be an ArrayBuffer or a TypedArray (like Uint8Array)');
 
     const arr = (!ArrayBuffer.isView(arg)) ? new Uint8Array(arg) : arg;
 
@@ -1487,7 +1615,7 @@ class Wrapper {
     if (stack) stack.push(ptr);
 
     const memory = new Uint8Array(this[DATA].memory.buffer);
-    const data = new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+    const data = Object(__WEBPACK_IMPORTED_MODULE_2__misc__["f" /* toUint8Array */])(arr);
 
     if (this[DATA].isAssemblyScript) {
       this.__view().setUint32(ptr + 0, ptr + 8, true);        // arraybuffer ptr
@@ -1502,53 +1630,41 @@ class Wrapper {
   }
 
   __readStruct(ptr, StructType) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!StructType, 'No struct StructType given');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!StructType, 'No struct StructType given');
 
     const view = this.__view(ptr, StructType.width);
-    const struct = StructType.read(view, this.__free);
+    const struct = StructType.read(view, this.utils);
 
     return struct;
   }
 
-  __writeStruct(struct) {
+  __writeStruct(value, Type) {
     // if struct has already been allocated:
-    if (struct.ref()) return struct.ref();
+    if (!Object(__WEBPACK_IMPORTED_MODULE_2__misc__["d" /* isNil */])(value) && value.ref && value.ref()) return value.ref();
 
-    const StructType = struct.constructor;
+    const StructType = Type || value.constructor;
     const ptr = this.__allocate(StructType.width);
     const view = this.__view(ptr, StructType.width);
 
-    const allocPointers = (sub) => {
-      sub.constructor.fields.forEach((field, name) => {
-        if (field.type.isStruct && sub[name]) {
-          allocPointers(sub[name]);
-        }
-
-        if (field.type.isPointer && sub[name]) {
-          this.__writePointer(sub[name]);
-        }
-      });
-    };
-
-    allocPointers(struct);
-    StructType.write(view, struct, this.__free);
+    StructType.write(view, value, this.utils);
 
     return ptr;
   }
 
   __readPointer(ptr, ptrType) {
-    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(!!ptrType, 'No pointer type given');
+    Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(!!ptrType, 'No pointer type given');
 
     // get the size of what the pointer points to
     const view = this.__view(ptr, ptrType.type.width);
 
     // handle pointer of a pointer cases (structs are pointers too here)
     if (ptrType.type.isStruct || ptrType.type.isPointer) {
-      return ptrType.read(view, this.__free);
+      return ptrType.read(view, this.utils);
     }
 
-    const pointer = new __WEBPACK_IMPORTED_MODULE_0__types__["c" /* Pointer */](ptrType.type);
-    pointer.attach(view, this.__free);
+    const pointer = new __WEBPACK_IMPORTED_MODULE_0__types__["b" /* Pointer */](ptrType.type);
+    pointer.view = view;
+    pointer.wrapper = this.utils;
 
     return pointer;
   }
@@ -1556,12 +1672,15 @@ class Wrapper {
   __writePointer(pointer) {
     if (pointer.ref()) return pointer.ref();
 
-    // allocate space for what the pointer points to
-    const addr = this.__allocate(pointer.type.width);
-    const view = this.__view(addr, pointer.type.width);
+    pointer.wrapper = this.utils;
 
-    // attach wasm memory to pointer and write the pointed-to data
-    pointer.attach(view, this.__free);
+    // allocate space for what the pointer points to
+    const size = pointer.size();
+    const addr = this.__allocate(size);
+    const view = this.__view(addr, size);
+
+    pointer.view = view;
+    pointer.commit();
 
     return addr;
   }
@@ -1569,7 +1688,7 @@ class Wrapper {
 
 
 function cwrap(instance, fnName, returnType = null, argTypes = []) {
-  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(instance instanceof WebAssembly.Instance,
     '.cwrap() requires a ready WebAssembly.Instance');
 
   const wrapper = new Wrapper({ [fnName]: [returnType, argTypes] });
@@ -1579,7 +1698,7 @@ function cwrap(instance, fnName, returnType = null, argTypes = []) {
 }
 
 function ccall(instance, fnName, returnType = null, argTypes = [], ...args) {
-  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* assert */])(instance instanceof WebAssembly.Instance,
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["c" /* assert */])(instance instanceof WebAssembly.Instance,
     '.ccall() requires a ready WebAssembly.Instance');
 
   const wrapper = new Wrapper({ [fnName]: [returnType, argTypes] });
@@ -1597,10 +1716,10 @@ function ccall(instance, fnName, returnType = null, argTypes = [], ...args) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Struct__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Struct__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__types__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__encoding__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__misc__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__encoding__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__misc__ = __webpack_require__(1);
 
 
 
@@ -1613,163 +1732,202 @@ const DATA = (typeof Symbol !== 'undefined')
   : '__data';
 
 
-// helper fn, overrides free to be free(true) by default
-function extend(StructType) {
-  class RustType extends StructType {
-    free() {
-      super.free(true);
-    }
-  }
-
-  Object.assign(RustType, StructType);
-  return RustType;
-}
-
-
-function RustTuple(...tupleTypes) {
+function RustTuple(tupleTypes, values) {
   const fields = {};
 
   tupleTypes.forEach((type, i) => {
     fields[i] = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])(type);
   });
 
-  return new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */](fields);
+  const Tuple = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */](fields);
+
+  return (values)
+    ? new Tuple(values)
+    : Tuple;
 }
 
 
-function RustVector(typedef) {
+function RustVector(typedef, initialValues) {
   const type = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])(typedef);
 
-  const Vector = extend(new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
     ptr: __WEBPACK_IMPORTED_MODULE_1__types__["e" /* types */].pointer(type),
     cap: 'usize',
-    len: 'usize',
+    length: 'usize',
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Vector.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get() {
-      const arrayType = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])([type, this.len]);
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
+
+      const arrayType = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])([type, this.length]);
       const view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
 
     set(values) {
-      const len = values.length;
-
-      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */]([type, len], values);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["b" /* Pointer */]([type, values.length], values);
+      this.length = values.length;
+      this.cap = values.length;
     },
   });
 
-  return Vector;
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* addArrayFns */])(Base);
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["e" /* makeIterable */])(Base);
+
+  class Vector extends Base {
+    constructor(values) {
+      super();
+      if (values) this.values = values;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return (initialValues)
+    ? new Vector(initialValues)
+    : Vector;
 }
 
 
-function RustSlice(typedef) {
+function RustSlice(typedef, initialValues) {
   const type = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])(typedef);
 
-  const Slice = extend(new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
     ptr: __WEBPACK_IMPORTED_MODULE_1__types__["e" /* types */].pointer(type),
-    len: 'usize',
+    length: 'usize',
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Slice.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get() {
-      const arrayType = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])([type, this.len]);
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
+
+      const arrayType = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])([type, this.length]);
       const view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
 
     set(values) {
-      const len = values.length;
-
-      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */]([type, len], values);
-      this.len = len;
+      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["b" /* Pointer */]([type, values.length], values);
+      this.length = values.length;
     },
   });
 
-  return Slice;
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* addArrayFns */])(Base);
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["e" /* makeIterable */])(Base);
+
+  class Slice extends Base {
+    constructor(values) {
+      super();
+      if (values) this.values = values;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return (initialValues)
+    ? new Slice(initialValues)
+    : Slice;
 }
 
 
 function RustString() {
-  const RString = extend(new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
     ptr: __WEBPACK_IMPORTED_MODULE_1__types__["e" /* types */].pointer('u8'),
+    length: 'usize',
     cap: 'usize',
-    len: 'usize',
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RString.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get() {
       const memory = this[DATA].view.buffer;
-      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return (new __WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* Decoder */]()).decode(buf);
+      return Object(__WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* decode */])(buf);
     },
 
     set(str) {
-      const buf = (new __WEBPACK_IMPORTED_MODULE_2__encoding__["b" /* Encoder */]()).encode(str);
-      const len = buf.length;
+      const buf = Object(__WEBPACK_IMPORTED_MODULE_2__encoding__["c" /* encode */])(str);
 
-      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */](['u8', len], buf);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["b" /* Pointer */](['u8', buf.length], buf);
+      this.length = buf.length;
+      this.cap    = buf.length;
     },
   });
 
-  RString.prototype.toString = function() {
-    return this.value;
-  };
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* addStringFns */])(Base);
 
-  return RString;
+  class _RustString extends Base {
+    constructor(value) {
+      super();
+      if (value) this.value = value;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return _RustString;
 }
 
 
 function RustStr() {
-  const RStr = extend(new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
     ptr: __WEBPACK_IMPORTED_MODULE_1__types__["e" /* types */].pointer('u8'),
-    len: 'usize',
+    length: 'usize',
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RStr.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get() {
       const memory = this[DATA].view.buffer;
-      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return (new __WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* Decoder */]()).decode(buf);
+      return Object(__WEBPACK_IMPORTED_MODULE_2__encoding__["a" /* decode */])(buf);
     },
 
     set(str) {
-      const buf = (new __WEBPACK_IMPORTED_MODULE_2__encoding__["b" /* Encoder */]()).encode(str);
-      const len = buf.length;
+      const buf = Object(__WEBPACK_IMPORTED_MODULE_2__encoding__["c" /* encode */])(str);
 
-      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["c" /* Pointer */](['u8', len], buf);
-      this.len = len;
+      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["b" /* Pointer */](['u8', buf.length], buf);
+      this.length = buf.length;
     },
   });
 
-  RStr.prototype.toString = function() {
-    return this.value;
-  };
+  Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* addStringFns */])(Base);
 
-  return RStr;
+  class _RustStr extends Base {
+    constructor(value) {
+      super();
+      if (value) this.value = value;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return _RustStr;
 }
 
 
@@ -1786,37 +1944,51 @@ function RustOption(typedef, isNonNullable = false, tagSize) {
     ? { value: type }
     : { discriminant, value: type };
 
-  const Option = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */](fields);
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */](fields);
 
-  Object.assign(Option.prototype, {
+  class OptionType extends Base {
+    constructor(value) {
+      super();
+      this.value = value;
+      this.discriminant = (Object(__WEBPACK_IMPORTED_MODULE_3__misc__["d" /* isNil */])(value)) ? 0 : 1;
+    }
+
+    static some(value) {
+      return new OptionType(value);
+    }
+
+    static none() {
+      return new OptionType();
+    }
+
     isSome() {
       return ('discriminant' in fields) ? !!this.discriminant : !!this.value;
-    },
+    }
 
     isNone() {
       return !this.isSome();
-    },
+    }
 
     expect(msg) {
       if (!this.isSome()) throw new Error(msg);
       return this.value;
-    },
+    }
 
     unwrap() {
       if (!this.isSome()) throw new Error('Error unwrapping none');
       return this.value;
-    },
+    }
 
     unwrapOr(defaultValue) {
       return (this.isSome()) ? this.value : defaultValue;
-    },
+    }
 
     unwrapOrElse(fn) {
       return (this.isSome()) ? this.value : fn();
-    },
-  });
+    }
+  }
 
-  return Option;
+  return OptionType;
 }
 
 
@@ -1837,7 +2009,7 @@ function RustEnum(obj, tagSize = 4) {
     }
 
     _set(variant) {
-      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* assert */])(Object.keys(variant).length === 1, 'Enum value must be a variant');
+      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["c" /* assert */])(Object.keys(variant).length === 1, 'Enum value must be a variant');
 
       const [name, value] = Object.entries(variant)[0];
 
@@ -1847,19 +2019,19 @@ function RustEnum(obj, tagSize = 4) {
 
     tag() {
       const tag = this.discriminant;
-      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["a" /* assert */])(tag <= variants.length, 'Enum discriminant > than # of variants');
+      Object(__WEBPACK_IMPORTED_MODULE_3__misc__["c" /* assert */])(tag <= variants.length, 'Enum discriminant > than # of variants');
       return tag;
     }
 
-    free(recursive = false) {
+    free(internal = false) {
       const type = vtypes[this.tag()];
 
-      if (recursive && type.isPointer || type.isStruct) {
-        this.value.free(recursive);
+      if (internal && type.isPointer || type.isStruct) {
+        this.value.free(internal);
       }
 
-      this[DATA].free(this.ref(), Enum.width);
-      this[DATA].free = null;
+      this[DATA].wrapper.free(this.ref(), Enum.width);
+      this[DATA].wrapper = null;
       this[DATA].view = null;
     }
 
@@ -1884,19 +2056,27 @@ function RustEnum(obj, tagSize = 4) {
       }
     }
 
-    static write(view, struct, free) {
+    static write(view, struct, wrapper) {
+      if (Object(__WEBPACK_IMPORTED_MODULE_3__misc__["d" /* isNil */])(struct) || !struct.constructor.isStruct) {
+        struct = new Enum(struct);
+      }
+
       const tag = struct.tag();
       const type = vtypes[tag];
-      const value = (struct.ref()) ? struct.value : struct[DATA].temp.value;
+      let value = (struct.ref()) ? struct.value : struct[DATA].temp.value;
 
-      const field_1 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* vslice */])(view, 0, discriminant.width);
+      if (type.isStruct && (Object(__WEBPACK_IMPORTED_MODULE_3__misc__["d" /* isNil */])(value) || !value.constructor.isStruct)) {
+        value = new type(value);
+      }
+
+      const field_1 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["g" /* vslice */])(view, 0, discriminant.width);
       discriminant.write(field_1, tag);
 
-      const field_2 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["b" /* vslice */])(view, discriminant.width, type.width);
-      type.write(field_2, value);
+      const field_2 = Object(__WEBPACK_IMPORTED_MODULE_3__misc__["g" /* vslice */])(view, discriminant.width, type.width);
+      type.write(field_2, value, wrapper);
 
       struct[DATA].view = view;
-      if (free) struct[DATA].free = free;
+      struct[DATA].wrapper = wrapper;
     }
   }
 
@@ -1904,13 +2084,14 @@ function RustEnum(obj, tagSize = 4) {
     enumerable: true,
 
     get() {
-      const addr = this.ref() + discriminant.width;
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
 
       const type = vtypes[this.tag()];
+      const addr = this.ref() + discriminant.width;
       const view = new DataView(memory, addr, type.width);
 
-      return type.read(view, this[DATA].free);
+      return type.read(view, wrapper);
     },
 
     set(value) {
@@ -1918,11 +2099,8 @@ function RustEnum(obj, tagSize = 4) {
     },
   });
 
-  Object.assign(Enum, StructType);
-
-  const max = arr => arr.reduce((acc, i) => (i > acc) ? i : acc, 0);
-  const width = discriminant.width + max(vtypes.map(t => t.width));
-  const align = max([...vtypes.map(t => t.alignment), discriminant.alignment]);
+  const width = discriminant.width + Math.max(...vtypes.map(t => t.width));
+  const align = Math.max(...vtypes.map(t => t.alignment), discriminant.alignment);
 
   Enum.width = (width % align)
     ? width + align - (width % align)
@@ -1933,52 +2111,145 @@ function RustEnum(obj, tagSize = 4) {
 
 
 const rust = {
-  tuple: RustTuple,
-  Tuple: function ctor(type, values) {
-    return new (RustTuple(...type))([...values]);
-  },
-
+  tuple:  RustTuple,
   vector: RustVector,
-  Vector: function ctor(type, values) {
-    return new (RustVector(type))({ values });
-  },
-
-  slice: RustSlice,
-  Slice: function ctor(type, values) {
-    return new (RustSlice(type))({ values });
-  },
-
+  slice:  RustSlice,
   string: RustString(),
-  String: function ctor(str) {
-    return new (RustString())({ value: str });
-  },
-
-  str: RustStr(),
-  Str: function ctor(str) {
-    return new (RustStr())({ value: str });
-  },
-
+  str:    RustStr(),
+  enum:   RustEnum,
   option: RustOption,
+
+  some: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))(value);
+  },
+  none: function ctor(type, ...opts) {
+    return new (RustOption(type, ...opts))();
+  },
+
+  // deprecated
+  Tuple: RustTuple,
+  Vector: RustVector,
+  Slice: RustSlice,
+  String: RustString(),
+  Str: RustStr(),
   Option: function ctor(type, value, ...opts) {
-    return new (RustOption(type, ...opts))({
-      value,
-      discriminant: (typeof value === 'undefined') ? 0 : 1,
-    });
+    return new (RustOption(type, ...opts))(value);
   },
-
-  Some: function ctor(...args) {
-    return new rust.Option(...args);
+  Some: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))(value);
   },
-
   None: function ctor(type, ...opts) {
-    return new rust.Option(type, undefined, ...opts);
+    return new (RustOption(type, ...opts))();
   },
-
-  enum: RustEnum,
 };
 
 
 /* harmony default export */ __webpack_exports__["a"] = (rust);
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Struct__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__types__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__misc__ = __webpack_require__(1);
+
+
+
+
+
+// get the symbol for struct-data since we need access here
+const DATA = (typeof Symbol !== 'undefined')
+  ? Symbol.for('struct-data')
+  : '__data';
+
+
+function ASArrayBuffer(typedef, n) {
+  const type = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])(typedef);
+
+  return new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+    byteLength: 'usize',
+    _:          'usize', // allocator alignment?
+    values:     [type, n],
+  });
+}
+
+
+function ASArray(typedef, initialValues) {
+  const type = Object(__WEBPACK_IMPORTED_MODULE_1__types__["d" /* parseType */])(typedef);
+
+  const Base = new __WEBPACK_IMPORTED_MODULE_0__Struct__["a" /* default */]({
+    ptr: __WEBPACK_IMPORTED_MODULE_1__types__["e" /* types */].pointer('void'),
+    length: 'usize',
+    /* buffer */
+    /* values */
+  });
+
+  Object.defineProperty(Base.prototype, 'buffer', {
+    enumerable: true,
+
+    get() {
+      const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
+
+      const AB = new ASArrayBuffer(type, this.length);
+      const view = new DataView(memory, this.ptr.ref(), AB.width);
+
+      return AB.read(view, wrapper);
+    },
+  });
+
+  Object.defineProperty(Base.prototype, 'values', {
+    enumerable: true,
+
+    get() {
+      return this.buffer.values;
+    },
+
+    set(values) {
+      const n = values.length;
+      const byteLength = n * type.width;
+
+      const AB = new ASArrayBuffer(type, n);
+      const buf = new AB({ byteLength, values });
+
+      this.ptr = new __WEBPACK_IMPORTED_MODULE_1__types__["b" /* Pointer */](AB, buf);
+      this.length = n;
+    },
+  });
+
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["a" /* addArrayFns */])(Base);
+  Object(__WEBPACK_IMPORTED_MODULE_2__misc__["e" /* makeIterable */])(Base);
+
+  class _Array extends Base {
+    constructor(values) {
+      super();
+      if (values) this.values = values;
+    }
+
+    free() {
+      super.free(true); // free buffer_ too
+    }
+
+    dataview(field) {
+      if (field === 'buffer') return this.buffer.dataview();
+      if (field === 'values') return this.buffer.dataview('values');
+
+      return super.dataview(field);
+    }
+  }
+
+  return (initialValues)
+    ? new _Array(initialValues)
+    : _Array;
+}
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  array: ASArray,
+});
 
 
 /***/ })

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>wasm-ffi examples | Rust</title>
+    <title>wasm-ffi usage | Rust</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="../hybrid.min.css" rel="stylesheet" />
@@ -20,39 +20,42 @@
         </div>
     </div>
 
-    <div class="header pt-6 pb-6">
+    <div class="header pt-8 pb-8">
         <div class="capped-container-fluid">
             <h1>wasm-ffi examples</h1>
-            <p style="font-size: 16px;">
-                With Rust &amp; --target=wasm32-unknown-unknown
-            </p>
+            <p>with Rust &amp; --target=wasm32-unknown-unknown</p>
         </div>
     </div>
 
-    <div class="capped-container-fluid mb-7">
+    <div class="content capped-container-fluid mb-7">
 
         <nav class="UnderlineNav UnderlineNav--right">
             <div class="UnderlineNav-actions">
-                <a href="https://github.com/demille/wasm-ffi" style="color: #333;">
-                        &larr;
-                        <img height="16" width="16"
-                             style="position: relative; top: 2px; left: 2px;"
-                             src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/github.svg" />
+                <a href="https://github.com/demille/wasm-ffi">
+                    &larr;
+                    <svg style="fill: #444; position: relative; top: 2px; left: 2px;" height="14" width="14" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                        />
+                    </svg>
                 </a>
             </div>
 
             <div class="UnderlineNav-body">
                 <a href="../whatlang/" class="UnderlineNav-item">
-                    <span class="d-none d-sm-block">whatlang-rs</span>
-                    <span class="d-sm-none">whatlang</span>
+                    <span class="d-none d-md-block">Demo</span>
+                    <span class="d-md-none">Demo</span>
                 </a>
                 <a href="../c/" class="UnderlineNav-item">
-                    <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
-                    <span class="d-sm-none">C</span>
+                    <span class="d-none d-md-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-md-none">C</span>
                 </a>
                 <a href="../rust/" class="UnderlineNav-item selected">
-                    <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
-                    <span class="d-sm-none">Rust</span>
+                    <span class="d-none d-md-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-md-none">Rust</span>
+                </a>
+                <a href="../assemblyscript/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">AssemblyScript</span>
+                    <span class="d-md-none">AssemblyScript</span>
                 </a>
             </div>
         </nav>
@@ -82,7 +85,7 @@
                         In order to make a Rust function accessible from a WebAssembly module
                         you need to make it public (<code>pub</code>) and annotate it with
                         <nobr><code>#[no_mangle]</code></nobr>. You also need to set your
-                        crate type to <code>cdylib</code>. You can do this in your Cargo.toml.
+                        crate type to <code>cdylib</code> in your Cargo.toml.
                     </p>
                     <p>
                         A couple tips depending on what version of rust you are using:
@@ -118,16 +121,20 @@
                 </div>
 
                 <div class="src">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>add</span>(<span class='pt10'>a</span>: <span class='pt17'>u32</span>, <span class='pt10'>b</span>: <span class='pt17'>u32</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
-<tr><td>    a <span class='pt17'>+</span> b</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>add</span>(<span class='pt10'>a</span>: <span class='pt17'>u32</span>, <span class='pt10'>b</span>: <span class='pt17'>u32</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    a <span class='pt17'>+</span> b</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="tabnav mt-8">
@@ -137,25 +144,29 @@
                 </div>
 
                 <div class="src">
-                    <span class="tag right">Cargo.toml</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>[lib]</td></tr>
-<tr><td>crate-type = [&quot;cdylib&quot;]</td></tr>
-<tr><td>path = &quot;./main.rs&quot;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>[profile.dev]</td></tr>
-<tr><td>opt-level = 2</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>[lib]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>crate-type = [&quot;cdylib&quot;]</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>path = &quot;./main.rs&quot;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>[profile.dev]</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>opt-level = 2</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">Cargo.toml</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
 
 
         <div class="row mt-8 warning-block">
-            <div class="col d-none d-md-block pt-4">
+            <div class="col d-none d-md-block pt-7">
                 <div class="zap"></div>
             </div>
             <div class="col-md-6">
@@ -168,17 +179,17 @@
                     </div>
                     <div class="Box-body">
                         <p>
-                            The examples below aren't even
-                            <i>trying</i> to be memory safe, so when you actually go to implement something, be careful!
+                            These examples aren't trying to prevent leaks, so when
+                            you actually go do something, remember to free memory.
                         </p>
                         <p>
-                            Read more about how wasm-ffi handles memory in the
+                            More about how wasm-ffi handles memory in the
                             <a href="https://github.com/demille/wasm-ffi#memory-management-recycle">readme</a>.
                         </p>
                     </div>
                 </div>
             </div>
-            <div class="col d-none d-md-block pt-4">
+            <div class="col d-none d-md-block pt-7">
                 <div class="zap" style="transform: scaleX(-1);"></div>
             </div>
         </div>
@@ -209,23 +220,27 @@
                     </nav>
                 </div>
                 <div class="src">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt17'>import</span> { <span class='pt10'>Wrapper</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// WebAssembly function you want to wrap will go here</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt12'>// do_thing: [return_type, [arg_type_1. arg_type_2]]</span></td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>    <span class='pt12'>// library is now loaded and you can call your wrapped WebAssembly functions:</span></td></tr>
-<tr><td>    <span class='pt12'>// library.do_thing()</span></td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>Wrapper</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt12'>// WebAssembly function you want to wrap will go here</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  <span class='pt12'>// do_thing: [return_type, [arg_type_1. arg_type_2]]</span></td></tr>
+<tr><td class='ln' data-ln='6'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>    <span class='pt12'>// library is now loaded and you can call your wrapped WebAssembly functions:</span></td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt12'>// library.do_thing()</span></td></tr>
+<tr><td class='ln' data-ln='11'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div>
         </div>
@@ -244,10 +259,9 @@
                         modify existing struct fields, etc.
                     </p>
                     <p>
-                        If your JavaSript needs to allocate any memory, though, you need to
-                        expose <code>allocate</code> / <code>deallocate</code> functions.
-                        If you want to pass a string to WebAssembly, or create a new struct
-                        you'll need this.
+                        If your JavaScript needs to allocate any memory (passing strings,
+                        making structs) you need to expose <code>allocate</code> &amp;
+                        <code>deallocate</code> functions.
                     </p>
                 </div>
             </div>
@@ -260,27 +274,31 @@
                 </div>
 
                 <div class="src">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// these are crafty way to malloc/free in stable rust:</span></td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>allocate</span>(<span class='pt10'>length</span>: <span class='pt17'>usize</span>) -&gt; <span class='pt17'>*mut</span> <span class='pt17'>c_void</span> {</td></tr>
-<tr><td>    <span class='pt17'>let</span> <span class='pt17'>mut</span> v <span class='pt17'>=</span> <span class='pt17'>Vec::</span><span class='pt13'>with_capacity</span>(length);</td></tr>
-<tr><td>    <span class='pt17'>let</span> ptr <span class='pt17'>=</span> v.<span class='pt13'>as_mut_ptr</span>();</td></tr>
-<tr><td>    std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>forget</span>(v);</td></tr>
-<tr><td>    ptr</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>deallocate</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> c_void, <span class='pt10'>length</span>: <span class='pt17'>usize</span>) {</td></tr>
-<tr><td>    <span class='pt17'>unsafe</span> {</td></tr>
-<tr><td>        std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>drop</span>(<span class='pt17'>Vec::</span><span class='pt13'>from_raw_parts</span>(ptr, <span class='pt7'>0</span>, length));</td></tr>
-<tr><td>    }</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// these are crafty way to malloc/free in stable rust:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>allocate</span>(<span class='pt10'>length</span>: <span class='pt17'>usize</span>) -&gt; <span class='pt17'>*mut</span> <span class='pt17'>c_void</span> {</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt17'>let</span> <span class='pt17'>mut</span> v <span class='pt17'>=</span> <span class='pt17'>Vec::</span><span class='pt13'>with_capacity</span>(length);</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt17'>let</span> ptr <span class='pt17'>=</span> v.<span class='pt13'>as_mut_ptr</span>();</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>forget</span>(v);</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>    ptr</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='11'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>deallocate</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> c_void, <span class='pt10'>length</span>: <span class='pt17'>usize</span>) {</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt17'>unsafe</span> {</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>        std<span class='pt17'>::</span>mem<span class='pt17'>::</span><span class='pt13'>drop</span>(<span class='pt17'>Vec::</span><span class='pt13'>from_raw_parts</span>(ptr, <span class='pt7'>0</span>, length));</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>    }</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -297,8 +315,8 @@
                         <code>functionName: [returnType, [...argTypes]]</code>
                     </p>
                     <p>
-                        <code>say</code> takes a string pointer and returns a string pointer: <br/>
-                        <code>say: ['string', ['string']]</code>
+                        Ex: the <code>say</code> function takes a string pointer and returns a string pointer:
+                        <code>['string', ['string']]</code>
                     </p>
                     <p>
                         <button id="say-hello" class="btn btn-sm mt-2">
@@ -317,41 +335,49 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// wrap our exported C function `say`:</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>say</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>    <span class='pt12'>// call `say` on btn click:</span></td></tr>
-<tr><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#say-hello&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>      <span class='pt13'>alert</span>(<span class='pt10'>library.</span><span class='pt13'>say</span>(<span class='pt8'>&#39;Hello&#39;</span>));</td></tr>
-<tr><td>    });</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// wrap our exported C function `say`:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  <span class='pt8'>say</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt10'>library.</span><span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>)<span class='pt10'>.</span><span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>    <span class='pt12'>// call `say` on btn click:</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#say-hello&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>      <span class='pt13'>alert</span>(<span class='pt10'>library.</span><span class='pt13'>say</span>(<span class='pt8'>&#39;Hello&#39;</span>));</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    });</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>say</span>(<span class='pt10'>ptr</span>: *const c_char) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
-<tr><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>let</span> hello <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(ptr) };</td></tr>
-<tr><td>    <span class='pt17'>let</span> greeting <span class='pt17'>=</span> <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'>, World!&quot;</span>, hello.<span class='pt13'>to_string_lossy</span>());</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(greeting).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>say</span>(<span class='pt10'>ptr</span>: *const c_char) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt17'>let</span> hello <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(ptr) };</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    <span class='pt17'>let</span> greeting <span class='pt17'>=</span> <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'>, World!&quot;</span>, hello.<span class='pt13'>to_string_lossy</span>());</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(greeting).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -392,44 +418,52 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// wrap `get_sum` function: 2 arguments, array pointer &amp; array length</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>get_sum</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;array&#39;</span>, <span class='pt8'>&#39;number&#39;</span>]],</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-sum&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>arr</span> = <span class='pt17'>new</span> <span class='pt7'>Uint32Array</span>([<span class='pt7'>1</span>, <span class='pt7'>1</span>, <span class='pt7'>2</span>, <span class='pt7'>3</span>, <span class='pt7'>5</span>, <span class='pt7'>8</span>, <span class='pt7'>13</span>, <span class='pt7'>21</span>]);</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>sum</span> = <span class='pt10'>library.</span><span class='pt13'>get_sum</span>(<span class='pt10'>arr</span>, <span class='pt10'>arr.length</span>);</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#sum-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Sum of </span><span class='pt17'>${</span><span class='pt10'>arr</span><span class='pt17'>}</span><span class='pt8'> is: </span><span class='pt17'>${</span><span class='pt10'>sum</span><span class='pt17'>}`</span>;</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// wrap `get_sum` function: 2 arguments, array pointer &amp; array length</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  <span class='pt8'>get_sum</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;array&#39;</span>, <span class='pt8'>&#39;number&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-sum&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>  <span class='pt17'>const</span> <span class='pt10'>arr</span> = <span class='pt17'>new</span> <span class='pt7'>Uint32Array</span>([<span class='pt7'>1</span>, <span class='pt7'>1</span>, <span class='pt7'>2</span>, <span class='pt7'>3</span>, <span class='pt7'>5</span>, <span class='pt7'>8</span>, <span class='pt7'>13</span>, <span class='pt7'>21</span>]);</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>  <span class='pt17'>const</span> <span class='pt10'>sum</span> = <span class='pt10'>library.</span><span class='pt13'>get_sum</span>(<span class='pt10'>arr</span>, <span class='pt10'>arr.length</span>);</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#sum-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Sum of </span><span class='pt17'>${</span><span class='pt10'>arr</span><span class='pt17'>}</span><span class='pt8'> is: </span><span class='pt17'>${</span><span class='pt10'>sum</span><span class='pt17'>}`</span>;</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_sum</span>(<span class='pt10'>ptr</span>: *const <span class='pt17'>u32</span>, <span class='pt10'>length</span>: <span class='pt17'>usize</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
-<tr><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>let</span> slice <span class='pt17'>=</span> <span class='pt17'>unsafe</span> {</td></tr>
-<tr><td>        std<span class='pt17'>::</span>slice<span class='pt17'>::</span><span class='pt13'>from_raw_parts</span>(ptr, length)</td></tr>
-<tr><td>    };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    slice.<span class='pt13'>iter</span>().<span class='pt13'>sum</span>()</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_sum</span>(<span class='pt10'>ptr</span>: *const <span class='pt17'>u32</span>, <span class='pt10'>length</span>: <span class='pt17'>usize</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt17'>let</span> slice <span class='pt17'>=</span> <span class='pt17'>unsafe</span> {</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>        std<span class='pt17'>::</span>slice<span class='pt17'>::</span><span class='pt13'>from_raw_parts</span>(ptr, length)</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>    };</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>    slice.<span class='pt13'>iter</span>().<span class='pt13'>sum</span>()</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -438,7 +472,7 @@
         <div class="row mt-8">
             <div class="col mb-4">
                 <div class="Subhead">
-                    <div class="Subhead-heading">Pointers to data types</div>
+                    <div class="Subhead-heading">Pointers</div>
                 </div>
                 <div class="markdown-body">
                     <p>
@@ -477,54 +511,62 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt17'>import</span> { <span class='pt10'>types</span>, <span class='pt10'>Pointer</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>get_pointer</span><span class='pt17'>:</span> [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)],</td></tr>
-<tr><td>  <span class='pt8'>pass_pointer</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)]],</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt10'>library.</span><span class='pt13'>get_pointer</span>();</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Value </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>deref</span>()<span class='pt17'>}</span><span class='pt8'> is located @ </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>ref</span>()<span class='pt17'>}`</span>;</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#pass-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt17'>new</span> ffi.<span class='pt13'>Pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>, <span class='pt7'>365</span>);</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>value</span> = <span class='pt10'>library.</span><span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>);</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Wasm read </span><span class='pt17'>${</span><span class='pt10'>value</span><span class='pt17'>}</span><span class='pt8'> from the pointer you sent</span><span class='pt17'>`</span>;</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>types</span>, <span class='pt10'>Pointer</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>  <span class='pt8'>get_pointer</span><span class='pt17'>:</span> [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)],</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  <span class='pt8'>pass_pointer</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt10'>types.</span><span class='pt13'>pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>)]],</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt10'>library.</span><span class='pt13'>get_pointer</span>();</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Value </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>deref</span>()<span class='pt17'>}</span><span class='pt8'> is located @ </span><span class='pt17'>${</span><span class='pt10'>ptr.</span><span class='pt13'>ref</span>()<span class='pt17'>}`</span>;</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#pass-pointer&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> = <span class='pt17'>new</span> ffi.<span class='pt13'>Pointer</span>(<span class='pt8'>&#39;uint32&#39;</span>, <span class='pt7'>365</span>);</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>  <span class='pt17'>const</span> <span class='pt10'>value</span> = <span class='pt10'>library.</span><span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>);</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Wasm read </span><span class='pt17'>${</span><span class='pt10'>value</span><span class='pt17'>}</span><span class='pt8'> from the pointer you sent</span><span class='pt17'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_pointer</span>() -&gt; <span class='pt17'>*mut</span> <span class='pt17'>u32</span> {</td></tr>
-<tr><td>    <span class='pt17'>Box::</span><span class='pt13'>into_raw</span>(<span class='pt17'>Box::</span><span class='pt13'>new</span>(<span class='pt7'>123</span>))</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> <span class='pt17'>u32</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
-<tr><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
-<tr><td>    <span class='pt17'>let</span> value <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>*</span>value</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_pointer</span>() -&gt; <span class='pt17'>*mut</span> <span class='pt17'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt17'>Box::</span><span class='pt13'>into_raw</span>(<span class='pt17'>Box::</span><span class='pt13'>new</span>(<span class='pt7'>123</span>))</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> <span class='pt17'>u32</span>) -&gt; <span class='pt17'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt17'>let</span> value <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt17'>*</span>value</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -537,21 +579,17 @@
                 </div>
                 <div class="markdown-body">
                     <p>
-                        When you have a function that accepts or returns a struct pointer
-                        <code>wasm-ffi</code> will wrap that pointer into an object that
-                        is easier to use.
+                        <code>wasm-ffi</code> wraps struct pointers into objects that let you access fields.
                     </p>
                     <p>
-                        To use a struct you first have to define a struct type. The order
-                        of the properties should be the same as how you have it defined in C.
+                        To use a struct you first have to define a struct type. The order of the
+                        properties should be the same as your Rust definition.
                         Use this struct definition in your wrapped function signatures.
+                        (Remember to use <nobr><code>#[repr(C)]</code>)</nobr>
                     </p>
                     <p>
                         You can get the memory address of a struct with <code>.ref()</code>
                         and you can free it from memory with <code>.free()</code>
-                    </p>
-                    <p>
-                        (Remember to use <code>#[repr(C)]</code> on your structs in Rust.)
                     </p>
                     <p class="mb-4">
                         <button id="get-person" class="btn btn-sm mt-2">
@@ -577,86 +615,94 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt17'>import</span> { <span class='pt10'>Struct</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// define a new struct type: Person</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
-<tr><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
-<tr><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
-<tr><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>get_person</span><span class='pt17'>:</span> [<span class='pt10'>Person</span>],</td></tr>
-<tr><td>  <span class='pt8'>person_facts</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt10'>Person</span>]],</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>about</span> = <span class='pt17'>`${</span><span class='pt10'>p.name</span><span class='pt17'>}</span><span class='pt8'> is </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt8'>. His favorite number is </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt8'>.</span><span class='pt17'>`</span>;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>about</span>;</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#modify-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt12'>// modify the properties of a struct:</span></td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
-<tr><td>  <span class='pt10'>p.age</span> = <span class='pt7'>255</span>;</td></tr>
-<tr><td>  <span class='pt10'>p.favorite_number</span> = <span class='pt7'>100</span>;</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>New age: </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt17'>`</span><span class='pt8'>New favorite: </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>p</span>);</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>Struct</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt12'>// define a new struct type: Person</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  <span class='pt8'>get_person</span><span class='pt17'>:</span> [<span class='pt10'>Person</span>],</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  <span class='pt8'>person_facts</span><span class='pt17'>:</span> [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt10'>Person</span>]],</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='16'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>  <span class='pt17'>const</span> <span class='pt10'>about</span> = <span class='pt17'>`${</span><span class='pt10'>p.name</span><span class='pt17'>}</span><span class='pt8'> is </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt8'>. His favorite number is </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt8'>.</span><span class='pt17'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>about</span>;</td></tr>
+<tr><td class='ln' data-ln='22'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='23'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='24'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#modify-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='25'></td><td>  <span class='pt12'>// modify the properties of a struct:</span></td></tr>
+<tr><td class='ln' data-ln='26'></td><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> = <span class='pt10'>library.</span><span class='pt13'>get_person</span>();</td></tr>
+<tr><td class='ln' data-ln='27'></td><td>  <span class='pt10'>p.age</span> = <span class='pt7'>255</span>;</td></tr>
+<tr><td class='ln' data-ln='28'></td><td>  <span class='pt10'>p.favorite_number</span> = <span class='pt7'>100</span>;</td></tr>
+<tr><td class='ln' data-ln='29'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='30'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>New age: </span><span class='pt17'>${</span><span class='pt10'>p.age</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='31'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt17'>`</span><span class='pt8'>New favorite: </span><span class='pt17'>${</span><span class='pt10'>p.favorite_number</span><span class='pt17'>}</span><span class='pt7'>\n</span><span class='pt17'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='32'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>)<span class='pt10'>.innerText</span> <span class='pt17'>+=</span> <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>p</span>);</td></tr>
+<tr><td class='ln' data-ln='33'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[<span class='pt13'>repr</span>(C)]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
-<tr><td>    <span class='pt10'>name</span>: *const c_char,</td></tr>
-<tr><td>    <span class='pt10'>age</span>: <span class='pt17'>u8</span>,</td></tr>
-<tr><td>    <span class='pt10'>favorite_number</span>: <span class='pt17'>u32</span>,</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_person</span>() -&gt; <span class='pt17'>*mut</span> Person {</td></tr>
-<tr><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> CString<span class='pt17'>::</span><span class='pt13'>new</span>(<span class='pt8'>&quot;Jean-Luc Picard&quot;</span>).<span class='pt13'>unwrap</span>();</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>Box::</span><span class='pt13'>into_raw</span>(<span class='pt17'>Box::</span><span class='pt13'>new</span>(Person {</td></tr>
-<tr><td>        name: name.<span class='pt13'>into_raw</span>(),</td></tr>
-<tr><td>        age: <span class='pt7'>61</span>,</td></tr>
-<tr><td>        favorite_number: <span class='pt7'>1701</span>,</td></tr>
-<tr><td>    }))</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>person_facts</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> Person) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
-<tr><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
-<tr><td>    <span class='pt17'>let</span> person <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
-<tr><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(person.name).<span class='pt13'>to_string_lossy</span>() };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>let</span> fact <span class='pt17'>=</span> <span class='pt17'>if</span> person.age <span class='pt17'>as</span> <span class='pt17'>u32</span> <span class='pt17'>&gt;</span> person.favorite_number {</td></tr>
-<tr><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is older than his favorite_number&quot;</span>, name)</td></tr>
-<tr><td>    } <span class='pt17'>else</span> {</td></tr>
-<tr><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is younger than his favorite_number&quot;</span>, name)</td></tr>
-<tr><td>    };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(fact).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[<span class='pt13'>repr</span>(C)]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt10'>name</span>: *const c_char,</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt10'>age</span>: <span class='pt17'>u8</span>,</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt10'>favorite_number</span>: <span class='pt17'>u32</span>,</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='9'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>get_person</span>() -&gt; <span class='pt17'>*mut</span> Person {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> CString<span class='pt17'>::</span><span class='pt13'>new</span>(<span class='pt8'>&quot;Jean-Luc Picard&quot;</span>).<span class='pt13'>unwrap</span>();</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt17'>Box::</span><span class='pt13'>into_raw</span>(<span class='pt17'>Box::</span><span class='pt13'>new</span>(Person {</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>        name: name.<span class='pt13'>into_raw</span>(),</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>        age: <span class='pt7'>61</span>,</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>        favorite_number: <span class='pt7'>1701</span>,</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>    }))</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='20'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>person_facts</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> Person) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+<tr><td class='ln' data-ln='22'></td><td>    <span class='pt17'>let</span> person <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
+<tr><td class='ln' data-ln='23'></td><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(person.name).<span class='pt13'>to_string_lossy</span>() };</td></tr>
+<tr><td class='ln' data-ln='24'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='25'></td><td>    <span class='pt17'>let</span> fact <span class='pt17'>=</span> <span class='pt17'>if</span> person.age <span class='pt17'>as</span> <span class='pt17'>u32</span> <span class='pt17'>&gt;</span> person.favorite_number {</td></tr>
+<tr><td class='ln' data-ln='26'></td><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is older than his favorite_number&quot;</span>, name)</td></tr>
+<tr><td class='ln' data-ln='27'></td><td>    } <span class='pt17'>else</span> {</td></tr>
+<tr><td class='ln' data-ln='28'></td><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is younger than his favorite_number&quot;</span>, name)</td></tr>
+<tr><td class='ln' data-ln='29'></td><td>    };</td></tr>
+<tr><td class='ln' data-ln='30'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='31'></td><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(fact).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
+<tr><td class='ln' data-ln='32'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -709,63 +755,71 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
-<tr><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
-<tr><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
-<tr><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#make-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>name</span> = <span class='pt13'>$</span>(<span class='pt8'>&#39;#name&#39;</span>)<span class='pt10'>.value</span>;</td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>age</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#age&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>num</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#num&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt17'>const</span> <span class='pt10'>person</span> = <span class='pt17'>new</span> <span class='pt13'>Person</span>({</td></tr>
-<tr><td>    <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt10'>name</span>,</td></tr>
-<tr><td>    <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt10'>age</span>,</td></tr>
-<tr><td>    <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt10'>num</span>,</td></tr>
-<tr><td>  });</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#make-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>person</span>);</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>const</span> <span class='pt10'>Person</span> = <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>  <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint8&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>  <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt8'>&#39;uint32&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#make-person&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt17'>const</span> <span class='pt10'>name</span> = <span class='pt13'>$</span>(<span class='pt8'>&#39;#name&#39;</span>)<span class='pt10'>.value</span>;</td></tr>
+<tr><td class='ln' data-ln='11'></td><td><span class='pt17'>const</span> <span class='pt10'>age</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#age&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td class='ln' data-ln='12'></td><td><span class='pt17'>const</span> <span class='pt10'>num</span> = <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#num&#39;</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>  <span class='pt17'>const</span> <span class='pt10'>person</span> = <span class='pt17'>new</span> <span class='pt13'>Person</span>({</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>    <span class='pt8'>name</span><span class='pt17'>:</span> <span class='pt10'>name</span>,</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>    <span class='pt8'>age</span><span class='pt17'>:</span> <span class='pt10'>age</span>,</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>    <span class='pt8'>favorite_number</span><span class='pt17'>:</span> <span class='pt10'>num</span>,</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  });</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#make-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt10'>library.</span><span class='pt13'>person_facts</span>(<span class='pt10'>person</span>);</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td>#[<span class='pt13'>repr</span>(C)]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
-<tr><td>    <span class='pt10'>name</span>: *const c_char,</td></tr>
-<tr><td>    <span class='pt10'>age</span>: <span class='pt17'>u8</span>,</td></tr>
-<tr><td>    <span class='pt10'>favorite_number</span>: <span class='pt17'>u32</span>,</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>person_facts</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> Person) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
-<tr><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
-<tr><td>    <span class='pt17'>let</span> person <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
-<tr><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(person.name).<span class='pt13'>to_string_lossy</span>() };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt17'>let</span> fact <span class='pt17'>=</span> <span class='pt17'>if</span> person.age <span class='pt17'>as</span> <span class='pt17'>u32</span> <span class='pt17'>&gt;</span> person.favorite_number {</td></tr>
-<tr><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is older than his favorite_number&quot;</span>, name)</td></tr>
-<tr><td>    } <span class='pt17'>else</span> {</td></tr>
-<tr><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is younger than his favorite_number&quot;</span>, name)</td></tr>
-<tr><td>    };</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(fact).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td>#[<span class='pt13'>repr</span>(C)]</td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>pub</span> <span class='pt17'>struct</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt10'>name</span>: *const c_char,</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt10'>age</span>: <span class='pt17'>u8</span>,</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt10'>favorite_number</span>: <span class='pt17'>u32</span>,</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='9'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>person_facts</span>(<span class='pt10'>ptr</span>: *<span class='pt17'>mut</span> Person) -&gt; <span class='pt17'>*const</span> <span class='pt17'>c_char</span> {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt7'>assert!</span>(<span class='pt17'>!</span>ptr.<span class='pt13'>is_null</span>());</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>    <span class='pt17'>let</span> person <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { <span class='pt17'>&amp;mut</span> <span class='pt17'>*</span>ptr };</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt17'>let</span> name <span class='pt17'>=</span> <span class='pt17'>unsafe</span> { CStr<span class='pt17'>::</span><span class='pt13'>from_ptr</span>(person.name).<span class='pt13'>to_string_lossy</span>() };</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>    <span class='pt17'>let</span> fact <span class='pt17'>=</span> <span class='pt17'>if</span> person.age <span class='pt17'>as</span> <span class='pt17'>u32</span> <span class='pt17'>&gt;</span> person.favorite_number {</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is older than his favorite_number&quot;</span>, name)</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>    } <span class='pt17'>else</span> {</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>        <span class='pt7'>format!</span>(<span class='pt8'>&quot;</span><span class='pt7'>{}</span><span class='pt8'> is younger than his favorite_number&quot;</span>, name)</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>    };</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>    CString<span class='pt17'>::</span><span class='pt13'>new</span>(fact).<span class='pt13'>unwrap</span>().<span class='pt13'>into_raw</span>()</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
             </div> <!-- col -->
@@ -800,47 +854,55 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// `barrel_roll` will call the `rotate` function below</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>barrel_roll</span><span class='pt17'>:</span> [], <span class='pt12'>// no arguments</span></td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// this needs to be done before `library.fetch(&#39;main.wasm&#39;)`</span></td></tr>
-<tr><td><span class='pt10'>library.</span><span class='pt13'>imports</span>({</td></tr>
-<tr><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
-<tr><td>    <span class='pt13'>rotate</span><span class='pt17'>:</span> <span class='pt17'>function</span>() {</td></tr>
-<tr><td>      <span class='pt13'>$</span>(<span class='pt8'>&#39;body&#39;</span>)<span class='pt10'>.classList.</span><span class='pt13'>toggle</span>(<span class='pt8'>&#39;rotate&#39;</span>);</td></tr>
-<tr><td>    },</td></tr>
-<tr><td>  },</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#barrel-roll&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt10'>library.</span><span class='pt13'>barrel_roll</span>();</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// `barrel_roll` will call the `rotate` function below</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  <span class='pt8'>barrel_roll</span><span class='pt17'>:</span> [], <span class='pt12'>// no arguments</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt12'>// this needs to be done before `library.fetch(&#39;main.wasm&#39;)`</span></td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt10'>library.</span><span class='pt13'>imports</span>({</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>    <span class='pt13'>rotate</span><span class='pt17'>:</span> <span class='pt17'>function</span>() {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>      <span class='pt13'>$</span>(<span class='pt8'>&#39;body&#39;</span>)<span class='pt10'>.classList.</span><span class='pt13'>toggle</span>(<span class='pt8'>&#39;rotate&#39;</span>);</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>    },</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  },</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='16'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#barrel-roll&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  <span class='pt10'>library.</span><span class='pt13'>barrel_roll</span>();</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt17'>extern</span> {</td></tr>
-<tr><td>    <span class='pt17'>fn</span> <span class='pt13'>rotate</span>();</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle] <span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>barrel_roll</span>() {</td></tr>
-<tr><td>    <span class='pt17'>unsafe</span> { <span class='pt13'>rotate</span>() };</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>extern</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt17'>fn</span> <span class='pt13'>rotate</span>();</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>#[no_mangle] <span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>barrel_roll</span>() {</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    <span class='pt17'>unsafe</span> { <span class='pt13'>rotate</span>() };</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
@@ -850,7 +912,7 @@
             <div class="col mb-4">
 
                 <div class="Subhead">
-                    <div class="Subhead-heading">Wrapping imports</div>
+                    <div class="Subhead-heading">Import wrapping</div>
                 </div>
                 <div class="markdown-body">
                     <p>
@@ -885,72 +947,70 @@
                 </div>
 
                 <div class="src" data-tab="js">
-                    <span class="tag right">index.js</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// `multiply_input` will call `get_input_value` below:</span></td></tr>
-<tr><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
-<tr><td>  <span class='pt8'>multiply_input</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
-<tr><td>});</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// change imports to a callback to expose the wrap fn</span></td></tr>
-<tr><td><span class='pt12'>// (remember to return an object here with the extra parenthesis: `({ ... })`)</span></td></tr>
-<tr><td><span class='pt10'>library.</span><span class='pt13'>imports</span>(<span class='pt10'>wrap</span> <span class='pt17'>=&gt;</span> ({</td></tr>
-<tr><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
-<tr><td>    <span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>    <span class='pt12'>// `get_input_value` takes a string and returns a number</span></td></tr>
-<tr><td>    <span class='pt8'>get_input_value</span><span class='pt17'>:</span> <span class='pt13'>wrap</span>([<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]], (<span class='pt10'>selector</span>) <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>      <span class='pt17'>return</span> <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt10'>selector</span>)<span class='pt10'>.value</span>);</td></tr>
-<tr><td>    }),</td></tr>
-<tr><td>  },</td></tr>
-<tr><td>}));</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt12'>// ...</span></td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
-<tr><td>  <span class='pt12'>// gets the &lt;input&gt;.value and multiplies it by 2</span></td></tr>
-<tr><td>  <span class='pt17'>var</span> <span class='pt10'>number</span> = <span class='pt10'>library.</span><span class='pt13'>multiply_input</span>(<span class='pt8'>&#39;body #number&#39;</span>);</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Result: </span><span class='pt17'>${</span><span class='pt10'>number</span><span class='pt17'>}`</span>;</td></tr>
-<tr><td>});</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// `multiply_input` will call `get_input_value` below:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> = <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  <span class='pt8'>multiply_input</span><span class='pt17'>:</span> [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt12'>// change imports to a callback to expose the wrap fn</span></td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt12'>// (remember to return an object here with the extra parenthesis: `({ ... })`)</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt10'>library.</span><span class='pt13'>imports</span>(<span class='pt10'>wrap</span> <span class='pt17'>=&gt;</span> ({</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>  <span class='pt8'>env</span><span class='pt17'>:</span> {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='11'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt12'>// `get_input_value` takes a string and returns a number</span></td></tr>
+<tr><td class='ln' data-ln='13'></td><td>    <span class='pt8'>get_input_value</span><span class='pt17'>:</span> <span class='pt13'>wrap</span>([<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]], (<span class='pt10'>selector</span>) <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>      <span class='pt17'>return</span> <span class='pt7'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt10'>selector</span>)<span class='pt10'>.value</span>);</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>    }),</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>  },</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>}));</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='19'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='20'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='21'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply&#39;</span>)<span class='pt10'>.</span><span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='22'></td><td>  <span class='pt12'>// gets the &lt;input&gt;.value and multiplies it by 2</span></td></tr>
+<tr><td class='ln' data-ln='23'></td><td>  <span class='pt17'>var</span> <span class='pt10'>number</span> = <span class='pt10'>library.</span><span class='pt13'>multiply_input</span>(<span class='pt8'>&#39;body #number&#39;</span>);</td></tr>
+<tr><td class='ln' data-ln='24'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='25'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply-log&#39;</span>)<span class='pt10'>.innerText</span> = <span class='pt17'>`</span><span class='pt8'>Result: </span><span class='pt17'>${</span><span class='pt10'>number</span><span class='pt17'>}`</span>;</td></tr>
+<tr><td class='ln' data-ln='26'></td><td>});</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
 
                 <div class="src hidden" data-tab="rs">
-                    <span class="tag right">main.rs</span>
-                    <div class='paint'>
+                    <div class='paint-bordered'><div class='paint'>
 <table>
-<tr><td><span class='pt12'>// does `document.querySelector()` and parses the `.value` of the element:</span></td></tr>
-<tr><td><span class='pt17'>extern</span> {</td></tr>
-<tr><td>    <span class='pt17'>fn</span> <span class='pt13'>get_input_value</span>(<span class='pt10'>selector</span>: *const c_char) -&gt; <span class='pt17'>u32</span>;</td></tr>
-<tr><td>}</td></tr>
-<tr><td>&#10;</td></tr>
-<tr><td>#[no_mangle]</td></tr>
-<tr><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>multiply_input</span>(<span class='pt10'>dom_selector</span>: *const c_char) -&gt; <span class='pt17'>u32</span> {</td></tr>
-<tr><td>    <span class='pt17'>unsafe</span> { <span class='pt13'>get_input_value</span>(dom_selector) <span class='pt17'>*</span> <span class='pt7'>2</span> }</td></tr>
-<tr><td>}</td></tr>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// does `document.querySelector()` and parses the `.value` of the element:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>extern</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt17'>fn</span> <span class='pt13'>get_input_value</span>(<span class='pt10'>selector</span>: *const c_char) -&gt; <span class='pt17'>u32</span>;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>#[no_mangle]</td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt17'>pub</span> <span class='pt17'>fn</span> <span class='pt13'>multiply_input</span>(<span class='pt10'>dom_selector</span>: *const c_char) -&gt; <span class='pt17'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    <span class='pt17'>unsafe</span> { <span class='pt13'>get_input_value</span>(dom_selector) <span class='pt17'>*</span> <span class='pt7'>2</span> }</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>}</td></tr>
 </table>
 </div>
 
+        <div class="info footer">
+            <span class="left">main.rs</span>
+            <span class="right"></span>
+        </div>
+    </div>
                 </div>
             </div> <!-- col -->
         </div> <!-- row -->
 
 
-        <div class="row mt-8">
-            <div class="col gh">
-                <a href="https://github.com/demille/wasm-ffi">
-                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-                        />
-                    </svg>
-                    more docs in the readme
-                </a>
-            </div>
-        </div>
+        <div class="row mt-8 pb-5"></div>
 
     </div> <!-- container -->
 

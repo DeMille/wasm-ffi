@@ -1,7 +1,7 @@
 import Struct from './Struct';
 import { types, parseType, Pointer } from './types';
-import { Encoder, Decoder } from './encoding';
-import { assert, vslice } from './misc';
+import { encode, decode } from './encoding';
+import { assert, vslice, isNil, addStringFns, addArrayFns, makeIterable } from './misc';
 
 
 // get the symbol for struct-data since we need access here
@@ -10,163 +10,202 @@ const DATA = (typeof Symbol !== 'undefined')
   : '__data';
 
 
-// helper fn, overrides free to be free(true) by default
-function extend(StructType) {
-  class RustType extends StructType {
-    free() {
-      super.free(true);
-    }
-  }
-
-  Object.assign(RustType, StructType);
-  return RustType;
-}
-
-
-function RustTuple(...tupleTypes) {
+function RustTuple(tupleTypes, values) {
   const fields = {};
 
   tupleTypes.forEach((type, i) => {
     fields[i] = parseType(type);
   });
 
-  return new Struct(fields);
+  const Tuple = new Struct(fields);
+
+  return (values)
+    ? new Tuple(values)
+    : Tuple;
 }
 
 
-function RustVector(typedef) {
+function RustVector(typedef, initialValues) {
   const type = parseType(typedef);
 
-  const Vector = extend(new Struct({
+  const Base = new Struct({
     ptr: types.pointer(type),
     cap: 'usize',
-    len: 'usize',
+    length: 'usize',
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Vector.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get() {
-      const arrayType = parseType([type, this.len]);
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
+
+      const arrayType = parseType([type, this.length]);
       const view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
 
     set(values) {
-      const len = values.length;
-
-      this.ptr = new Pointer([type, len], values);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new Pointer([type, values.length], values);
+      this.length = values.length;
+      this.cap = values.length;
     },
   });
 
-  return Vector;
+  addArrayFns(Base);
+  makeIterable(Base);
+
+  class Vector extends Base {
+    constructor(values) {
+      super();
+      if (values) this.values = values;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return (initialValues)
+    ? new Vector(initialValues)
+    : Vector;
 }
 
 
-function RustSlice(typedef) {
+function RustSlice(typedef, initialValues) {
   const type = parseType(typedef);
 
-  const Slice = extend(new Struct({
+  const Base = new Struct({
     ptr: types.pointer(type),
-    len: 'usize',
+    length: 'usize',
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Slice.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get() {
-      const arrayType = parseType([type, this.len]);
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
+
+      const arrayType = parseType([type, this.length]);
       const view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
 
     set(values) {
-      const len = values.length;
-
-      this.ptr = new Pointer([type, len], values);
-      this.len = len;
+      this.ptr = new Pointer([type, values.length], values);
+      this.length = values.length;
     },
   });
 
-  return Slice;
+  addArrayFns(Base);
+  makeIterable(Base);
+
+  class Slice extends Base {
+    constructor(values) {
+      super();
+      if (values) this.values = values;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return (initialValues)
+    ? new Slice(initialValues)
+    : Slice;
 }
 
 
 function RustString() {
-  const RString = extend(new Struct({
+  const Base = new Struct({
     ptr: types.pointer('u8'),
+    length: 'usize',
     cap: 'usize',
-    len: 'usize',
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RString.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get() {
       const memory = this[DATA].view.buffer;
-      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return (new Decoder()).decode(buf);
+      return decode(buf);
     },
 
     set(str) {
-      const buf = (new Encoder()).encode(str);
-      const len = buf.length;
+      const buf = encode(str);
 
-      this.ptr = new Pointer(['u8', len], buf);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new Pointer(['u8', buf.length], buf);
+      this.length = buf.length;
+      this.cap    = buf.length;
     },
   });
 
-  RString.prototype.toString = function() {
-    return this.value;
-  };
+  addStringFns(Base);
 
-  return RString;
+  class _RustString extends Base {
+    constructor(value) {
+      super();
+      if (value) this.value = value;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return _RustString;
 }
 
 
 function RustStr() {
-  const RStr = extend(new Struct({
+  const Base = new Struct({
     ptr: types.pointer('u8'),
-    len: 'usize',
+    length: 'usize',
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RStr.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get() {
       const memory = this[DATA].view.buffer;
-      const buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      const buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return (new Decoder()).decode(buf);
+      return decode(buf);
     },
 
     set(str) {
-      const buf = (new Encoder()).encode(str);
-      const len = buf.length;
+      const buf = encode(str);
 
-      this.ptr = new Pointer(['u8', len], buf);
-      this.len = len;
+      this.ptr = new Pointer(['u8', buf.length], buf);
+      this.length = buf.length;
     },
   });
 
-  RStr.prototype.toString = function() {
-    return this.value;
-  };
+  addStringFns(Base);
 
-  return RStr;
+  class _RustStr extends Base {
+    constructor(value) {
+      super();
+      if (value) this.value = value;
+    }
+
+    free() {
+      super.free(true); // free ptr data
+    }
+  }
+
+  return _RustStr;
 }
 
 
@@ -183,37 +222,51 @@ function RustOption(typedef, isNonNullable = false, tagSize) {
     ? { value: type }
     : { discriminant, value: type };
 
-  const Option = new Struct(fields);
+  const Base = new Struct(fields);
 
-  Object.assign(Option.prototype, {
+  class OptionType extends Base {
+    constructor(value) {
+      super();
+      this.value = value;
+      this.discriminant = (isNil(value)) ? 0 : 1;
+    }
+
+    static some(value) {
+      return new OptionType(value);
+    }
+
+    static none() {
+      return new OptionType();
+    }
+
     isSome() {
       return ('discriminant' in fields) ? !!this.discriminant : !!this.value;
-    },
+    }
 
     isNone() {
       return !this.isSome();
-    },
+    }
 
     expect(msg) {
       if (!this.isSome()) throw new Error(msg);
       return this.value;
-    },
+    }
 
     unwrap() {
       if (!this.isSome()) throw new Error('Error unwrapping none');
       return this.value;
-    },
+    }
 
     unwrapOr(defaultValue) {
       return (this.isSome()) ? this.value : defaultValue;
-    },
+    }
 
     unwrapOrElse(fn) {
       return (this.isSome()) ? this.value : fn();
-    },
-  });
+    }
+  }
 
-  return Option;
+  return OptionType;
 }
 
 
@@ -248,15 +301,15 @@ function RustEnum(obj, tagSize = 4) {
       return tag;
     }
 
-    free(recursive = false) {
+    free(internal = false) {
       const type = vtypes[this.tag()];
 
-      if (recursive && type.isPointer || type.isStruct) {
-        this.value.free(recursive);
+      if (internal && type.isPointer || type.isStruct) {
+        this.value.free(internal);
       }
 
-      this[DATA].free(this.ref(), Enum.width);
-      this[DATA].free = null;
+      this[DATA].wrapper.free(this.ref(), Enum.width);
+      this[DATA].wrapper = null;
       this[DATA].view = null;
     }
 
@@ -281,19 +334,27 @@ function RustEnum(obj, tagSize = 4) {
       }
     }
 
-    static write(view, struct, free) {
+    static write(view, struct, wrapper) {
+      if (isNil(struct) || !struct.constructor.isStruct) {
+        struct = new Enum(struct);
+      }
+
       const tag = struct.tag();
       const type = vtypes[tag];
-      const value = (struct.ref()) ? struct.value : struct[DATA].temp.value;
+      let value = (struct.ref()) ? struct.value : struct[DATA].temp.value;
+
+      if (type.isStruct && (isNil(value) || !value.constructor.isStruct)) {
+        value = new type(value);
+      }
 
       const field_1 = vslice(view, 0, discriminant.width);
       discriminant.write(field_1, tag);
 
       const field_2 = vslice(view, discriminant.width, type.width);
-      type.write(field_2, value);
+      type.write(field_2, value, wrapper);
 
       struct[DATA].view = view;
-      if (free) struct[DATA].free = free;
+      struct[DATA].wrapper = wrapper;
     }
   }
 
@@ -301,13 +362,14 @@ function RustEnum(obj, tagSize = 4) {
     enumerable: true,
 
     get() {
-      const addr = this.ref() + discriminant.width;
       const memory = this[DATA].view.buffer;
+      const wrapper = this[DATA].wrapper;
 
       const type = vtypes[this.tag()];
+      const addr = this.ref() + discriminant.width;
       const view = new DataView(memory, addr, type.width);
 
-      return type.read(view, this[DATA].free);
+      return type.read(view, wrapper);
     },
 
     set(value) {
@@ -315,11 +377,8 @@ function RustEnum(obj, tagSize = 4) {
     },
   });
 
-  Object.assign(Enum, StructType);
-
-  const max = arr => arr.reduce((acc, i) => (i > acc) ? i : acc, 0);
-  const width = discriminant.width + max(vtypes.map(t => t.width));
-  const align = max([...vtypes.map(t => t.alignment), discriminant.alignment]);
+  const width = discriminant.width + Math.max(...vtypes.map(t => t.width));
+  const align = Math.max(...vtypes.map(t => t.alignment), discriminant.alignment);
 
   Enum.width = (width % align)
     ? width + align - (width % align)
@@ -330,48 +389,36 @@ function RustEnum(obj, tagSize = 4) {
 
 
 const rust = {
-  tuple: RustTuple,
-  Tuple: function ctor(type, values) {
-    return new (RustTuple(...type))([...values]);
-  },
-
+  tuple:  RustTuple,
   vector: RustVector,
-  Vector: function ctor(type, values) {
-    return new (RustVector(type))({ values });
-  },
-
-  slice: RustSlice,
-  Slice: function ctor(type, values) {
-    return new (RustSlice(type))({ values });
-  },
-
+  slice:  RustSlice,
   string: RustString(),
-  String: function ctor(str) {
-    return new (RustString())({ value: str });
-  },
-
-  str: RustStr(),
-  Str: function ctor(str) {
-    return new (RustStr())({ value: str });
-  },
-
+  str:    RustStr(),
+  enum:   RustEnum,
   option: RustOption,
+
+  some: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))(value);
+  },
+  none: function ctor(type, ...opts) {
+    return new (RustOption(type, ...opts))();
+  },
+
+  // deprecated
+  Tuple: RustTuple,
+  Vector: RustVector,
+  Slice: RustSlice,
+  String: RustString(),
+  Str: RustStr(),
   Option: function ctor(type, value, ...opts) {
-    return new (RustOption(type, ...opts))({
-      value,
-      discriminant: (typeof value === 'undefined') ? 0 : 1,
-    });
+    return new (RustOption(type, ...opts))(value);
   },
-
-  Some: function ctor(...args) {
-    return new rust.Option(...args);
+  Some: function ctor(type, value, ...opts) {
+    return new (RustOption(type, ...opts))(value);
   },
-
   None: function ctor(type, ...opts) {
-    return new rust.Option(type, undefined, ...opts);
+    return new (RustOption(type, ...opts))();
   },
-
-  enum: RustEnum,
 };
 
 

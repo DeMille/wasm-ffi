@@ -1,3 +1,20 @@
+.capped-container-fluid {
+    padding: 0 30px;
+}
+
+.col-md-7 {
+    margin-left: 20px;
+}
+
+@media (max-width: 850px) {
+    .capped-container-fluid {
+        padding: 0 15px;
+    }
+    .col-md-7 {
+        margin-left: 0px;
+    }
+}
+
 .hidden {
     display: none;
 }
@@ -9,48 +26,32 @@
 }
 
 .header {
-    background: #bf6060;
-    border-bottom: 1px solid #9e3e3e;
     color: #fff;
+    background: #bf6060 url('./bg.png') center center no-repeat;
+    background-size: cover;
+}
+
+.header h1 {
+    line-height: 1.1;
+    margin-bottom: 5px;
+    font-size: 40px;
+    font-weight: 500;
+}
+
+.UnderlineNav {
+    border-bottom: 1px solid #f1f1f1;
 }
 
 .UnderlineNav-item {
-    padding: 11px 7px;
+    padding: 14px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #888;
 }
 
 #reliable {
     position: relative;
 }
-
-/* #reliable > span:before {
-    font-size: 18px;
-    position: absolute;
-    top: 10px;
-    left: -30px;
-} */
-
-/* #reliable.yes > span:before {
-    content: "✅";
-    content: url("./verified.svg");
-    content: "";
-    -webkit-mask-image: url("./assets/verified.svg");
-    mask-image: url("./assets/verified.svg");
-    height: 24px;
-    width: 24px;
-    background: rgb(20, 172, 88);
-    background: #03A9F4;
-}
-
-#reliable.no > span:before {
-    content: "💬";
-    content: "";
-    -webkit-mask-image: url("./assets/unverified.svg");
-    mask-image: url("./assets/unverified.svg");
-    height: 24px;
-    width: 24px;
-    background: #ccc;
-} */
-
 
 #reliable.yes .no { display: none; }
 #reliable.no .yes { display: none; }
@@ -95,11 +96,11 @@
     position: relative;
     z-index: 10;
     margin: 0px;
-    padding: 2px 6px;
+    padding: 2px 6px 2px 5px;
     background: #3a4446;
     color: #fff;
     font-size: 9px;
-    letter-spacing: 0.75px;
+    letter-spacing: 0.5px;
     font-weight: bold;
     text-transform: uppercase;
     border: 1px solid #3a4446;
@@ -149,6 +150,22 @@
     box-shadow: none;
 }
 
+.Box {
+    border: 1px solid #efefef;
+}
+
+.flash-warn {
+    padding: 12px 16px;
+    border-color: #ede4d9;
+    background-color: #fff7eb;
+    background-color: #ffefeb;
+    color: #6f5845;
+}
+
+.flash-warn h3 {
+    font-weight: 500;
+}
+
 .warning-block {
     padding-bottom: 24px;
 }
@@ -160,23 +177,25 @@
 }
 
 .zap {
-    height: 100px;
+    height: 70px;
     background: url("./assets/zap.svg") no-repeat center center;
-
 }
 
 .icon-alert {
     display: inline-block;
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
     position: relative;
-    top: 3px;
-    margin-right: 5px;
-    background: url("./assets/alert.svg");
+    top: 2px;
+    margin-right: 8px;
+    background: url(./assets/alert.svg);
+    background-size: contain;
 }
 
 .Subhead {
-    padding-bottom: 6px;
+    /* padding-bottom: 6px; */
+    padding-bottom: 0;
+    border-bottom: 0;
 }
 
 .Subhead-heading,
@@ -185,7 +204,7 @@
 }
 
 .markdown-body p, li {
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .markdown-body .btn {
@@ -223,8 +242,26 @@
     font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 }
 
+.tabnav {
+    border-bottom: 0;
+}
+
+.tabnav-tab {
+    user-select: none;
+    cursor: pointer;
+    border: 0;
+    color: #0366d6;
+    padding: 10px 11px;
+    line-height: 1;
+}
+
 .tabnav-tab.selected {
-    border-radius: 2px 2px 0 0;
+    /* border-radius: 2px 2px 0 0; */
+    border-radius: 3px;
+    color: #3a3e42;
+    background: #f7f7f7;
+    border: 0;
+    cursor: initial;
 }
 
 .tag {
@@ -238,12 +275,19 @@
     padding: 3px 6px 2px;
     box-shadow: none;
     text-transform: uppercase;
+
+    font-size: 8.5px;
+    letter-spacing: 1px;
+    font-weight: bold;
+    color: #58552bcf;
+    background: #ffdd57;
+    padding: 3px 4px 2px 6px;
 }
 
 .tag.right {
     position: absolute;
-    right: -2px;
-    top: -2px;
+    right: 0px;
+    top: 0px;
     z-index: 10;
 }
 
@@ -287,8 +331,8 @@ body {
 }
 
 .src {
-    padding: 15;
-    border: 2px dashed #eee;
+    /* padding: 15; */
+    /* border: 2px dashed #eee; */
     position: relative;
 }
 
@@ -303,8 +347,7 @@ body {
     background: #f9f9f9;
     margin: 0;
     padding: 10px 15px 10px;
-    font-size: 12px;
-    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;;
+    font-size: 11px;
     line-height: 1.2;
 }
 .paint-bordered .info.header {
@@ -351,7 +394,7 @@ body {
 }
 .paint .ln {
     width: 1px;
-    min-width: 25px;
+    min-width: 20px;
     box-sizing: content-box;
     text-align: right;
     -webkit-user-select: none;

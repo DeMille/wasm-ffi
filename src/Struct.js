@@ -1,5 +1,5 @@
-import { parseType, types, CString } from './types';
-import { assert, vslice } from './misc';
+import { parseType } from './types';
+import { assert, vslice, isNil } from './misc';
 
 
 const DATA = (typeof Symbol !== 'undefined')
@@ -15,16 +15,12 @@ class AbstractStructType {
     this[DATA] = {
       temp: {},
       view: null,
-      free: null,
+      wrapper: null,
     };
 
     if (obj) {
       Object.entries(obj).forEach(([key, value]) => {
-        // check for name conflicts
-        assert(key in this, `Struct missing field '${key}'`);
-        assert(key !== 'ref', 'Field `ref` is a reserved method name');
-        assert(key !== 'free', 'Field `free` is a reserved method name');
-        // this should trigger the get/setter behavior
+        assert(key in this, `Can't set value, struct missing field '${key}'`);
         this[key] = value;
       });
     }
@@ -34,8 +30,8 @@ class AbstractStructType {
     return (this[DATA].view) ? this[DATA].view.byteOffset : 0;
   }
 
-  free(recursive = false) {
-    assert(!!this[DATA].free,
+  free(internal = false) {
+    assert(!!this[DATA].wrapper,
       'Cant free struct, either: unallocated / already freed / sub-struct');
 
     // frees any pointers contained in the struct
@@ -46,10 +42,10 @@ class AbstractStructType {
       });
     };
 
-    if (recursive) freePointers(this);
+    if (internal) freePointers(this);
 
-    this[DATA].free(this.ref(), this.constructor.width);
-    this[DATA].free = null;
+    this[DATA].wrapper.free(this.ref(), this.constructor.width);
+    this[DATA].wrapper = null;
     this[DATA].view = null;
   }
 
@@ -57,13 +53,21 @@ class AbstractStructType {
     let out = '{\n';
 
     const stringify = (struct) => {
-      struct.constructor.fields.forEach((field, name) => {
-        out += `  ${name}: `;
+      const fields = struct.constructor.fields;
+      const proto = struct.constructor.prototype;
 
-        if (field.type.isPointer) out += struct[name].deref();
-        else out += struct[name].toString();
+      fields.forEach((field, name) => {
+        out += `  ${name}: ${struct[name]},\n`;
+      });
 
-        out += ',\n';
+      Object.getOwnPropertyNames(proto).forEach((name) => {
+        if (fields.has(name)) return;
+
+        const value = struct[name];
+
+        if (typeof value !== 'function') {
+          out += `  ${name}: ${value},\n`;
+        }
       });
     };
 
@@ -80,30 +84,52 @@ class AbstractStructType {
     return out;
   }
 
-  static read(view, free) {
+  dataview(name) {
+    const view = this[DATA].view;
+    assert(!!view, "Struct hasn't been written yet, can't get dataview");
+
+    if (!name) return view;
+
+    const StructType = this.constructor;
+    const field = StructType.fields.get(name);
+    assert(!!field, `Field '${name}' doesn't exist on struct`);
+
+    return vslice(view, field.offset, field.type.width);
+  }
+
+  static read(view, wrapper) {
     const StructType = this;
 
     const struct = new StructType();
     struct[DATA].view = view;
-    struct[DATA].free = free;
+    struct[DATA].wrapper = wrapper;
 
     return struct;
   }
 
-  static write(view, struct, free) {
+  static write(view, struct, wrapper) {
     const StructType = this;
 
+    if (isNil(struct) || !struct.constructor.isStruct) {
+      struct = new StructType(struct);
+    }
+
     StructType.fields.forEach((field, name) => {
-      const value = struct[name];
+      const type = field.type;
+      let value = struct[name];
 
       if (typeof value !== 'undefined') {
-        const fieldView = vslice(view, field.offset, field.type.width);
-        field.type.write(fieldView, value);
+        if (type.isStruct && (isNil(value) || !value.constructor.isStruct)) {
+          value = new type(value);
+        }
+
+        const fieldView = vslice(view, field.offset, type.width);
+        type.write(fieldView, value, wrapper);
       }
     });
 
     struct[DATA].view = view;
-    if (free) struct[DATA].free = free;
+    struct[DATA].wrapper = wrapper;
   }
 }
 
@@ -112,9 +138,15 @@ class AbstractStructType {
 // (this returns a constructor)
 class Struct {
   constructor(fields = {}, opt = {}) {
-    class StructType extends AbstractStructType {}
+    // preserve field insertion order with [[OwnPropertyKeys]]
+    const names = Object.getOwnPropertyNames(fields);
 
-    // keep metadata on the struct constructor itself
+    // check for field name conflicts
+    ['ref', 'free', 'dataview'].forEach(name =>
+      assert(!(names in names), `Field '${name}' is a reserved method name`));
+
+    // keep metadata on the constructor itself
+    class StructType extends AbstractStructType {}
     StructType.fields = new Map();
     StructType.packed = ('packed' in opt) ? !!opt.packed : false;
     StructType.alignment = opt.alignment || 0;
@@ -122,8 +154,8 @@ class Struct {
 
     let offset = 0;
 
-    // preserve field insertion order with [[OwnPropertyKeys]]
-    Object.getOwnPropertyNames(fields).forEach((name) => {
+    // get type/size/alignment for each field
+    names.forEach((name) => {
       const type = parseType(fields[name]);
 
       if (!opt.alignment && type.alignment > StructType.alignment) {
@@ -154,22 +186,17 @@ class Struct {
           }
 
           const view = vslice(this[DATA].view, field.offset, field.type.width);
-          return field.type.read(view, this[DATA].free);
+          return field.type.read(view, this[DATA].wrapper);
         },
 
         set(value) {
-          // fudging for ease of use:
-          if (typeof value === 'string' && field.type === types.string) {
-            value = new CString(value);
-          }
-
           if (!this[DATA].view) {
             this[DATA].temp[name] = value;
             return;
           }
 
           const view = vslice(this[DATA].view, field.offset, field.type.width);
-          field.type.write(view, value);
+          field.type.write(view, value, this[DATA].wrapper);
         },
       });
     });

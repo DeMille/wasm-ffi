@@ -9,7 +9,7 @@
 `wasm-ffi` helps translate types across the JS ↔ WebAssembly boundary, including:
 - [x] strings
 - [x] arrays
-- [x] C-style structs
+- [x] structs
 - [x] pointers
 - [x] some Rust types (option, vector, string, enum, etc.)
 - [x] combinations of the above
@@ -277,22 +277,19 @@ foo.free();
   + [.deref()](#user-content-pointer-deref)
   + [.set(value)](#user-content-pointer-set)
   + [.free()](#user-content-pointer-free)
-- Class: [CString](#user-content-new-cstring)
-  + [new CString(str)](#user-content-new-cstring)
-  + [.ref()](#user-content-cstring-ref)
-  + [.deref()](#user-content-cstring-deref)
-  + [.free()](#user-content-cstring-free)
+- Class: [StringPointer](#user-content-new-stringpointer)
+  + [new StringPointer(str)](#user-content-new-stringpointer)
+  + [.ref()](#user-content-stringpointer-ref)
+  + [.deref()](#user-content-stringpointer-deref)
+  + [.free()](#user-content-stringpointer-free)
+- [assemblyscript](#user-content-assemblyscript)
+  + [.array](#user-content-assemblyscript-array)
 - [rust](#user-content-rust)
   + [.string](#user-content-rust-string)
-  + [.String(value)](#user-content-rust-string-class)
   + [.str](#user-content-rust-str)
-  + [.Str(value)](#user-content-rust-str-class)
   + [.vector(type)](#user-content-rust-vector)
-  + [.Vector(type, values)](#user-content-rust-vector-class)
   + [.slice(type)](#user-content-rust-slice)
-  + [.Slice(type, values)](#user-content-rust-slice-class)
   + [.tuple(...types)](#user-content-rust-tuple)
-  + [.Tuple(types, values)](#user-content-rust-tuple-class)
   + [.enum(variants [, tagSize])](#user-content-rust-enum)
     - Class: [RustEnum](#user-content-rustenum)
       + [.is(type)](#user-content-rustenum-is)
@@ -309,9 +306,6 @@ foo.free();
       + [.unwrapOrElse(fn)](#user-content-rustoption-unwraporelse)
       + [.ref()](#user-content-rustoption-ref)
       + [.free()](#user-content-rustoption-free)
-  + [.Option(type, value [, isNonNullable[, tagSize]])](#user-content-rust-option-class)
-  + [.Some(type, value [, isNonNullable[, tagSize]])](#user-content-rust-option-class)
-  + [.None(type [, isNonNullable[, tagSize]])](#user-content-rust-option-class)
 <br/>
 
 
@@ -560,7 +554,7 @@ Types have string aliases to make things more concise, so instead of using `type
 
 ### <a name="types-string"></a> types.string
 A pointer to a null-terminated string.  
-`string` fields in structs will hold `CString` objects.
+`string` fields in structs will hold `StringPointer` objects.
 
 :warning: Because strings are pointers you need to remember to free them!
 
@@ -571,7 +565,7 @@ const Foo = new Struct({
 
 const foo = library.getStruct();
 
-foo.str instanceof CString === true;
+foo.str instanceof StringPointer === true;
 foo.str.ref() === 0x45522; // some address in memory
 
 // dereference the pointer to read string
@@ -580,8 +574,8 @@ foo.str.deref() === 'Hello!';
 String(foo.str) === 'Hello!';
 foo.str == 'Hello!';
 
-// to change a struct field string you need to create and allocate a CString:
-const str = new CString('Set to something else');
+// to change a struct field string you need to create and allocate a StringPointer:
+const str = new StringPointer('Set to something else');
 library.utils.allocate(str);
 
 foo.str = str;
@@ -688,19 +682,53 @@ library.utils.allocate(pointer);
 <br/>
 
 
-### <a name="new-cstring"></a> new CString(str)
+### <a name="new-stringpointer"></a> new StringPointer(str)
 
-Used to write null-terminated strings to wasm memory. Like a `Pointer`, but specifically for strings. `CStrings` are automatically allocated and written when they are used in a WebAssembly function. Can also be manually allocated.
+Used to write strings to wasm memory. Like a `Pointer`, but specifically for strings. `StringPointers`s are automatically allocated and written when they are used in a WebAssembly function. Can also be manually allocated.
 
 ```js
-// make a new CString and allocate/write it to wasm memory
-const str = new CString('I have a 0 at the end');
+// make a new StringPointer and allocate/write it to wasm memory
+const str = new StringPointer('woo woo');
 library.utils.allocate(str);
 ```
 
-- <a name="cstring-ref"></a> **.ref()** - returns cstring's wasm address
-- <a name="cstring-deref"></a> **.deref()** - reads the string at pointer address
-- <a name="cstring-free"></a> **.free()** - free string from wasm memory
+- <a name="stringpointer-ref"></a> **.ref()** - returns string pointer's wasm address
+- <a name="stringpointer-deref"></a> **.deref()** - reads the string at pointer address
+- <a name="stringpointer-free"></a> **.free()** - free string from wasm memory
+
+<br/>
+
+
+### <a name="assemblyscript"></a> AssemblyScript Types
+Support types specifically for AssemblyScript modules.
+
+### <a name="assemblyscript-array"></a> assemblyscript.array(type)
+Read the underlying array data by accessing the `.values` field.
+
+  ```js
+  const library = new Wrapper({
+    return_array: [assemblyscript.array('u16')],
+  });
+
+  const arr = library.return_array();
+  arr.values === [1, 2, 3];
+  arr.map(x => 2 * x) === [2, 4, 6];
+  ```
+
+Create a new array of `type` with `values`:
+
+  ```js
+  const library = new Wrapper({
+    give_array: [null, [assemblyscript.array('string')]],
+  });
+
+  const arr = new assemblyscript.array('string', ['a', 'b']);
+  library.give_array(arr);
+
+  // *or*
+
+  library.give_array(['a', 'b']);
+  ```
 
 <br/>
 
@@ -730,17 +758,19 @@ String(str) === 'Hello from Rust';
 str == 'Hello from Rust';
 ```
 
-
-### <a name="rust-string-class"></a> new rust.String(value)
-Like `String::new()`
+Creating a new `string`:
 
 ```js
 const library = new Wrapper({
   give_rust_string: [null, [rust.string]],
 });
 
-const str = new rust.String("Hello from JS");
+const str = new rust.string("Hello from JS");
 library.give_rust_string(str);
+
+// *or*
+
+library.give_rust_string("Hello from JS");
 ```
 
 
@@ -764,9 +794,7 @@ String(foo.str) === 'Hello from Rust';
 foo.str == 'Hello from Rust';
 ```
 
-
-### <a name="rust-str-class"></a> new rust.Str(value)
-Creates a new rust str.
+Creating a new rust `str`.
 
 ```js
 const Foo = new Struct({
@@ -778,7 +806,9 @@ const library = new Wrapper({
 });
 
 const foo = new Foo({
-  str: new rust.Str('Hello from JS')
+  str: new rust.str('Hello from JS')
+  // *or*
+  str: 'Hello from JS'
 });
 
 library.give_foo(foo);
@@ -796,19 +826,22 @@ Read the underlying array data by accessing the `.values` field.
 
   const vec = library.return_rust_vector();
   vec.values === [1, 2, 3];
+  vec.map(x => 2 * x) === [2, 4, 6];
   ```
 
-
-### <a name="rust-vector-class"></a> new rust.Vector(type, values)
-Create a new Vector of `type` with `values`
+Create a new vector of `type` with `values`:
 
   ```js
   const library = new Wrapper({
     give_rust_vector: [null, [rust.vector('u16')]],
   });
 
-  const vec = new rust.Vector('u16', [1, 2, 3]);
+  const vec = new rust.vector('u16', [1, 2, 3]);
   library.give_rust_vector(vec);
+
+  // *or*
+
+  library.give_rust_vector([1, 2, 3]);
   ```
 
 
@@ -827,11 +860,10 @@ const library = new Wrapper({
 
 const foo = library.get_foo();
 foo.slice.values === [1, 2, 3];
+foo.slice.map(x => 2 * x) === [2, 4, 6];
 ```
 
-
-### <a name="rust-slice-class"></a> new rust.Slice(type, values)
-Create a new Slice of `type` with `values`
+Create a new slice of `type` with `values`:
 
 ```js
 const Foo = new Struct({
@@ -842,8 +874,11 @@ const library = new Wrapper({
   give_foo: [Foo],
 });
 
-const foo = new rust.Slice('usize', [1, 2, 3]);
+const foo = new rust.slice('usize', [1, 2, 3]);
 library.give_foo(foo);
+
+// *or*
+library.give_foo([1, 2, 3]);
 ```
 
 
@@ -859,22 +894,19 @@ tup[0] === 2;
 tup[1] === 288;
 ```
 
-
-### <a name="rust-tuple-class"></a> new rust.Tuple(types, values)
-Create a new Tuple of given types with matching values
+Create a new tuple of given types with matching values:
 
 ```js
-const TupleType = rust.tuple('u16', 'usize');
-
 const library = new Wrapper({
-  give_rust_tuple: [null, [TupleType]],
+  give_rust_tuple: [null, [rust.tuple('u16', 'usize')]],
 });
 
 const tup = new rust.Tuple(['u16', 'usize'], [2, 288]);
-// same as doing:
-// tup = new TupleType([2, 288]);
-
 library.give_rust_tuple(tup);
+
+// *or*
+
+library.give_rust_tuple([2, 288]);
 ```
 
 
@@ -906,7 +938,7 @@ const library = new Wrapper({
 
 const version = new VersionID({ One: 123 });
 // *or*
-const version = new VersionID({ Two: new rust.String('123') });
+const version = new VersionID({ Two: '123' });
 
 library.giveVersionID(version);
 ```
@@ -963,8 +995,7 @@ console.log(foo.opt.value);
 - <a name="rustoption-unwraporelse"></a> **.unwrapOrElse(fn)**
 &nbsp;
 
-### <a name="rust-option-class"></a> new rust.Option(type, value, [, isNonNullable[, tagSize]])
-Create a new option of `type` with a `value`. Value can be an actual value or it can be undefined for none. You can use `rust.Some(type, value)` and `rust.None(type)` for this purpose too.
+Create a new option of `type` with a `value`. Value can be an actual value or it can be undefined for none. You can use `rust.some(type, value)` and `rust.none(type)` for this purpose too.
 
 ```js
 const Foo = rust.enum({
@@ -976,11 +1007,11 @@ const library = new Wrapper({
 });
 
 const foo = new Foo({
-  opt: new rust.Option('usize', 123);
+  opt: new rust.option('usize', 123);
 });
 
-// new rust.Option('usize', 123) === new rust.Some('usize', 123)
-// new rust.Option('usize') === new rust.None('usize')
+// new rust.option('usize', 123) === new rust.some('usize', 123)
+// new rust.option('usize') === new rust.none('usize')
 
 library.give_foo(foo);
 ```
@@ -989,7 +1020,7 @@ library.give_foo(foo);
 
 
 ## Tests
-Find them in the `/tests` directory.  
+In the `/tests` directory.  
 [Try em][tests] in your browser of choice, or run through node with:
 
 ```

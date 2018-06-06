@@ -1,5 +1,4 @@
-import { Encoder, Decoder } from './encoding';
-import { assert, vslice } from './misc';
+import { assert, vslice, toUint8Array, addStringFns } from './misc';
 
 
 // Makes a type of a given size.
@@ -23,18 +22,12 @@ class CustomType {
     assert(value instanceof ArrayBuffer || ArrayBuffer.isView(value),
       'Value must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
 
-    const buf = (ArrayBuffer.isView(value))
-      ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength)
-      : new Uint8Array(value);
-
-    const uint8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
-
-    uint8.set(buf);
+    toUint8Array(view).set(toUint8Array(value));
   }
 }
 
 
-class Signed {
+class SignedInteger {
   constructor(width) {
     this.width = width;
     this.alignment = width;
@@ -48,7 +41,7 @@ class Signed {
 }
 
 
-class Unsigned {
+class UnsignedInteger {
   constructor(width) {
     this.width = width;
     this.alignment = width;
@@ -71,12 +64,12 @@ types.void = {
   write: () => {},
 };
 
-types.int8 = new Signed(1);
-types.int16 = new Signed(2);
-types.int32 = new Signed(4);
-types.uint8 = new Unsigned(1);
-types.uint16 = new Unsigned(2);
-types.uint32 = new Unsigned(4);
+types.int8 = new SignedInteger(1);
+types.int16 = new SignedInteger(2);
+types.int32 = new SignedInteger(4);
+types.uint8 = new UnsignedInteger(1);
+types.uint16 = new UnsignedInteger(2);
+types.uint32 = new UnsignedInteger(4);
 
 types.int64 = new CustomType(8);
 types.uint64 = new CustomType(8);
@@ -126,15 +119,19 @@ class Pointer {
   constructor(type, value) {
     this.type = parseType(type);
     this.view = null;
-    this._free = null;
+    this.wrapper = null;
+
     this._temp = value;
   }
 
-  attach(view, free) {
-    this.view = view;
-    this._free = free;
+  size() {
+    return this.type.width;
+  }
 
-    if (this._temp) this.set(this._temp);
+  commit() {
+    if (this._temp) {
+      this.type.write(this.view, this._temp, this.wrapper);
+    }
   }
 
   ref() {
@@ -143,12 +140,12 @@ class Pointer {
 
   deref() {
     assert(this.view, 'Trying to deref an unallocated pointer');
-    return this.type.read(this.view, this._free);
+    return this.type.read(this.view, this.wrapper);
   }
 
   set(value) {
     if (this.view) {
-      this.type.write(this.view, value, this._free);
+      this.type.write(this.view, value, this.wrapper);
     } else {
       this._temp = value;
     }
@@ -157,9 +154,14 @@ class Pointer {
   free() {
     assert(this.view, 'Cant free pointer: unallocated / already freed');
 
-    this._free(this.ref(), this.type.width);
-    this._free = null;
+    this.wrapper.free(this.ref(), this.type.width);
     this.view = null;
+  }
+
+  toString() {
+    return (this.ref())
+      ? `Pointer( ${this.deref()} )`
+      : 'Pointer( null )';
   }
 }
 
@@ -172,57 +174,50 @@ types.pointer = function(typedef) {
     alignment: 4,
     isPointer: true,
 
-    read(view, free) {
+    read(view, wrapper) {
       const addr = view.getUint32(0, true /* little-endian */);
+      const data = new DataView(view.buffer, addr, type.width);
 
       const pointer = new Pointer(type);
-      pointer.view = new DataView(view.buffer, addr, type.width);
-      pointer._free = free;
+      pointer.view = data;
+      pointer.wrapper = wrapper;
 
       return pointer;
     },
 
-    write(view, value) {
+    write(view, value, wrapper) {
       assert(value instanceof Pointer, `Trying to write ${value} as a pointer`);
-      assert(value.ref(), 'Cant write pointer, hasnt been allocated yet');
+
+      if (!value.ref()) wrapper.writePointer(value);
       view.setUint32(0, value.ref(), true /* little-endian */);
     },
   };
 };
 
 
-// A pointer to a null-terminated string
-class CString {
-  constructor(value, free) {
-    this.type = {
-      isPointer: true,
-      width: null,
-    };
+class StringPointer {
+  constructor(value) {
     this.view = null;
-    this._temp = null;
-    this._free = null;
+    this.wrapper = null;
 
-    if (typeof value === 'string') {
-      this._temp = (new Encoder()).encode(value);
-      this.type.width = this._temp.byteLength + 1;
-    }
-
-    if (value instanceof DataView) {
-      this.view = value;
-      this._free = free;
-      this.type.width = value.byteLength;
-    }
+    this._tempStr = value;
+    this._tempBuf = null;
+    this._width = null;
   }
 
-  attach(view, free) {
-    this.view = view;
-    this._free = free;
+  size() {
+    this._tempBuf = this.wrapper.encodeString(this._tempStr);
+    this._width = this._tempBuf.byteLength;
 
-    if (this._temp) {
-      const memory = new Uint8Array(view.buffer);
+    return this._width;
+  }
 
-      memory.set(this._temp, view.byteOffset);
-      memory[view.byteOffset + this.type.width - 1] = 0;
+  commit() {
+    assert(!!this.view, 'Cant commit StringPointer, no view!');
+
+    if (this._tempBuf) {
+      const memory = new Uint8Array(this.view.buffer);
+      memory.set(this._tempBuf, this.view.byteOffset);
     }
   }
 
@@ -231,58 +226,49 @@ class CString {
   }
 
   deref() {
-    assert(this.view, 'Trying to deref an unallocated CString');
-
-    const memory = new Uint8Array(this.view.buffer);
-    const addr = this.view.byteOffset;
-    const end = addr + this.type.width - 1;
-
-    // `subarray` uses the same underlying ArrayBuffer
-    const buf = new Uint8Array(memory.subarray(addr, end));
-    const str = (new Decoder()).decode(buf);
-
-    return str;
+    assert(this.view, 'Trying to deref an unallocated StringPointer');
+    return this.wrapper.decodeString(this.view);
   }
 
   free() {
-    assert(!!this.view, 'Cant free cstring: unallocated / already freed');
-
-    this._free(this.ref(), this.type.width);
-    this._free = null;
+    assert(!!this.view, 'Cant free StringPointer: unallocated / already freed');
+    this.wrapper.free(this.ref(), this._width);
     this.view = null;
   }
-
-  valueOf() {
-    return this.deref();
-  }
-
-  toString() {
-    return this.deref();
-  }
 }
+
+Object.defineProperty(StringPointer.prototype, 'value', {
+  enumerable: true,
+
+  get() {
+    return this.deref();
+  },
+});
+
+addStringFns(StringPointer);
+
 
 types.string = {
   width: 4,
   alignment: 4,
   isPointer: true,
 
-  read(view, free) {
-    const memory = new Uint8Array(view.buffer);
+  read(view, wrapper) {
     const addr = view.getUint32(0, true /* little-endian */);
-    let end = addr;
 
-    // find null byte
-    while (memory[end]) ++end;
+    const pointer =  new StringPointer();
+    pointer.view = wrapper.readStringView(addr);
+    pointer.wrapper = wrapper;
 
-    const length = end - addr + 1;
-    const data = new DataView(view.buffer, addr, length);
-
-    return new CString(data, free);
+    return pointer;
   },
 
-  write(view, value) {
-    assert(value instanceof CString, 'value must be a `CString`');
-    assert(value.ref(), 'Cant write CString, hasnt been allocated yet');
+  write(view, value, wrapper) {
+    if (typeof value === 'string') {
+      value = new StringPointer(value);
+    }
+
+    if (!value.ref()) wrapper.writePointer(value);
     view.setUint32(0, value.ref(), true /* little-endian */);
   },
 };
@@ -298,24 +284,24 @@ class ArrayType {
     this.alignment = type.alignment;
   }
 
-  read(view, free) {
+  read(view, wrapper) {
     const arr = [];
 
     for (let i = 0; i <= this.length - 1; i++) {
       const subview = vslice(view, i * this.type.width, this.type.width);
-      arr.push(this.type.read(subview, free));
+      arr.push(this.type.read(subview, wrapper));
     }
 
     return arr;
   }
 
-  write(view, values) {
+  write(view, values, wrapper) {
     assert(values.length === this.length,
       'Values length does not match struct array length');
 
     values.forEach((value, i) => {
       const subview = vslice(view, i * this.type.width, this.type.width);
-      this.type.write(subview, value);
+      this.type.write(subview, value, wrapper);
     });
   }
 }
@@ -392,4 +378,4 @@ function parseType(typedef) {
 }
 
 
-export { types, CustomType, Pointer, CString, parseType };
+export { types, CustomType, Pointer, StringPointer, parseType };

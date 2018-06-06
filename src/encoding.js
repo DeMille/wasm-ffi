@@ -1,3 +1,22 @@
+function encodeUTF16(str) {
+  const buf = new ArrayBuffer(str.length * 2); // 2 per char
+  const arr = new Uint16Array(buf);
+
+  for (let i = 0; i < str.length; i++) {
+    arr[i] = str.charCodeAt(i);
+  }
+
+  return new Uint8Array(buf);
+}
+
+function decodeUTF16(buf) {
+  const len = buf.byteLength;
+  const num = (len % 2) ? ((len + 1) / 2) : (len / 2);
+  const pts = new Uint16Array(buf.buffer, buf.byteOffset, num);
+
+  return String.fromCharCode(...pts);
+}
+
 // utf8 decode/encode adapted from the buffer module
 // @ github.com/feross/buffer
 //
@@ -182,26 +201,22 @@ function decodeUTF8(buf) {
 }
 
 
-class EncoderPolyfill {
-  encode(str) {
-    return encodeUTF8(str);
-  }
-}
+function encode(str, type) {
+  if (type === 'utf-16') return encodeUTF16(str);
 
-class DecoderPolyfill {
-  decode(view) {
-    return decodeUTF8(view);
-  }
+  return (typeof TextEncoder !== 'undefined')
+    ? (new TextEncoder()).encode(str)
+    : encodeUTF8(str);
 }
 
 
-const Encoder = (typeof TextEncoder !== 'undefined')
-  ? TextEncoder
-  : EncoderPolyfill;
+function decode(str, type) {
+  if (type === 'utf-16') return decodeUTF16(str);
 
-const Decoder = (typeof TextDecoder !== 'undefined')
-  ? TextDecoder
-  : DecoderPolyfill;
+  return (typeof TextDecoder !== 'undefined')
+    ? (new TextDecoder()).decode(str)
+    : decodeUTF8(str);
+}
 
 
-export { Encoder, Decoder, encodeUTF8, decodeUTF8 };
+export { encode, decode, encodeUTF8, decodeUTF8 };

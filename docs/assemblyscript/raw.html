@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>wasm-ffi usage | C</title>
+    <title>wasm-ffi usage | AssemblyScript</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="../hybrid.min.css" rel="stylesheet" />
@@ -23,12 +23,7 @@
     <div class="header pt-8 pb-8">
         <div class="capped-container-fluid">
             <h1>wasm-ffi usage</h1>
-            <p>
-                C examples using
-                <a href="https://github.com/dcodeIO/webassembly" style="color: white; text-decoration: underline; font-style: italic;">
-                    <b>dcodeIO/webassembly</b>
-                </a>
-            </p>
+            <p>with AssemblyScript</p>
         </div>
     </div>
 
@@ -47,20 +42,20 @@
 
             <div class="UnderlineNav-body">
                 <a href="../whatlang/" class="UnderlineNav-item">
-                    <span class="d-none d-sm-block">Demo</span>
-                    <span class="d-sm-none">Demo</span>
+                    <span class="d-none d-md-block">Demo</span>
+                    <span class="d-md-none">Demo</span>
                 </a>
-                <a href="../c/" class="UnderlineNav-item selected">
-                    <span class="d-none d-sm-block">C (dcodeIO/webassembly)</span>
-                    <span class="d-sm-none">C</span>
+                <a href="../c/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-md-none">C</span>
                 </a>
                 <a href="../rust/" class="UnderlineNav-item">
-                    <span class="d-none d-sm-block">Rust (wasm32-unknown-unknown)</span>
-                    <span class="d-sm-none">Rust</span>
+                    <span class="d-none d-md-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-md-none">Rust</span>
                 </a>
-                <a href="../assemblyscript/" class="UnderlineNav-item">
-                    <span class="d-none d-sm-block">AssemblyScript</span>
-                    <span class="d-sm-none">AssemblyScript</span>
+                <a href="../assemblyscript/" class="UnderlineNav-item selected">
+                    <span class="d-none d-md-block">AssemblyScript</span>
+                    <span class="d-md-none">AssemblyScript</span>
                 </a>
             </div>
         </nav>
@@ -70,43 +65,39 @@
             <div class="col">
                 <div class="Subhead">
                     <div class="Subhead-heading" style="font-size: 24px;">
-                        Compiling C to WebAssembly
+                        AssemblyScript
                     </div>
                 </div>
             </div>
         </div>
 
-
         <div class="row">
             <div class="col mb-4">
                 <div class="markdown-body">
                     <p>
-                        There are multiple ways to do this, but @dcodeIO's
-                        <a href="https://github.com/dcodeIO/webassembly">webassembly</a>
-                        package is an easy way to get started. It uses a single header to expose a
-                        minimal standard library based on musl and dlmalloc.
+                        <a href="https://github.com/dcodeIO/webassembly">AssemblyScript</a>
+                        is a project that compiles TypeScript to WebAssembly.
                     </p>
                     <p>
                         The basic build command:
                         <br/>
-                        <code>wa compile -o main.wasm main.c</code>
+                        <code>asc main.ts -o main.wasm</code>
                     </p>
                 </div>
             </div>
 
             <div class="col-md-7">
                 <div class="src">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-#include <webassembly.h>
-
-// macro used to export functions to WebAssembly
-export int add(int a, int b) {
-  return a + b;
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+// basically JS with some types:
+export function add(a: u32, b: u32): u32 {
+    return a + b;
 }
                     </pre>
                 </div>
             </div>
-        </div> <!-- row -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8 warning-block">
@@ -141,21 +132,22 @@ export int add(int a, int b) {
         <div class="row mt-8">
             <div class="col mb-4">
                 <div class="Subhead">
-                    <div class="Subhead-heading">Loading <code>.wasm</code> modules</div>
+                    <div class="Subhead-heading">Loading
+                        <code>.wasm</code> modules</div>
                 </div>
                 <div class="markdown-body">
                     <p>
-                        To load a <code>.wasm</code> module, you need to fetch it from
-                        the server and then load it with
+                        To load a
+                        <code>.wasm</code> module, you need to fetch it from the server and then load it with
                         <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/instantiateStreaming">
                             WebAssembly.instantiateStreaming
-                        </a>.
-                        You can do that yourself or <code>wasm-ffi</code> will do it with
+                        </a>. You can do that yourself or
+                        <code>wasm-ffi</code> will do it with
                         <code>.fetch(url)</code>.
                     </p>
                     <p>
-                        The default configuration of dcodeIO/webassembly requires memory to
-                        be imported at the <code>env.memory</code> namespace.
+                        For AssemblyScript module's you'll need to set the <code>dialect</code>
+                        option so wasm-ffi will know how to handle strings and arrays.
                     </p>
                 </div>
             </div>
@@ -173,15 +165,10 @@ import { Wrapper } from 'wasm-ffi';
 // WebAssembly function you want to wrap will go here
 const library = new Wrapper({
   // do_thing: [return_type, [arg_type_1. arg_type_2]]
-});
-
-// the dcodeIO/webassembly package needs to import WebAssembly memory before
-// instantiating the module. It looks for it at the `env.memory` namespace:
-library.imports({
-  env: {
-    memory: new WebAssembly.Memory({ initial: 10 }),
-  },
-});
+}, {
+  // need to set option for assemblyscript
+  dialect: 'assemblyscript',
+]});
 
 library.fetch('main.wasm').then(() => {
     // library is now loaded and you can call your wrapped WebAssembly functions:
@@ -197,13 +184,13 @@ library.fetch('main.wasm').then(() => {
         <div class="row mt-8">
             <div class="col mb-4">
                 <div class="Subhead">
-                    <div class="Subhead-heading"><code>.wasm</code> Requirements</div>
+                    <div class="Subhead-heading">
+                        <code>.wasm</code> Requirements</div>
                 </div>
                 <div class="markdown-body">
                     <p>
-                        <code>wasm-ffi</code> can read data from WebAssembly memory without
-                        any changes to your module. You can read strings, read struct fields,
-                        modify existing struct fields, etc.
+                        <code>wasm-ffi</code> can read data from WebAssembly memory without any changes to your module. You can
+                        read strings, read struct fields, modify existing struct fields, etc.
                     </p>
                     <p>
                         If your JavaScript needs to allocate any memory (passing strings,
@@ -216,23 +203,27 @@ library.fetch('main.wasm').then(() => {
             <div class="col-md-7">
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
-                        <a class="tabnav-tab selected">C</a>
+                        <a class="tabnav-tab selected">AssemblyScript</a>
                     </nav>
                 </div>
 
                 <div class="src">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-export void *allocate(int size) {
-    return malloc(size);
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+import 'allocator/buddy';
+
+export function allocate(size: usize): usize {
+    return allocate_memory(size);
 }
 
-export void deallocate(void *ptr) {
-    free(ptr);
+export function deallocate(ptr: usize): void {
+    free_memory(ptr);
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
@@ -242,7 +233,8 @@ export void deallocate(void *ptr) {
                 </div>
                 <div class="markdown-body">
                     <p>
-                        The format for wrapping functions is: <br/>
+                        The format for wrapping functions is:
+                        <br/>
                         <code>functionName: [returnType, [...argTypes]]</code>
                     </p>
                     <p>
@@ -261,7 +253,7 @@ export void deallocate(void *ptr) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -281,19 +273,17 @@ library.fetch('main.wasm').then(() => {
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-export char *say(char *hello) {
-  char *phrase = calloc(strlen(hello) + 9, 1);
-  strcat(phrase, hello);
-  strcat(phrase, ", World!");
-
-  return phrase;
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+export function say(hello: string): string {
+    return hello + ', World!';
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
@@ -303,9 +293,9 @@ export char *say(char *hello) {
                 </div>
                 <div class="markdown-body">
                     <p>
-                        <code>wasm-ffi</code> supports ArrayBuffers &amp; TypedArrays
-                        as an argument type. It will write the arrays to memory and
-                        pass the pointer to your <code>.wasm</code> function.
+                        <code>wasm-ffi</code> supports ArrayBuffers &amp; TypedArrays as an argument type. It will write the arrays
+                        to memory and pass the pointer to your
+                        <code>.wasm</code> function.
                     </p>
                     <p>
                         By default the array will be freed after the function returns.
@@ -326,44 +316,44 @@ export char *say(char *hello) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
                 <div class="src" data-tab="js">
                     <pre data-paint="js" data-gist-like data-title="index.js" data-footer>
-// wrap `get_sum` function: 2 arguments, array pointer & array length
 const library = new Wrapper({
-  get_sum: ['number', ['array', 'number']],
+  get_sum: ['number', ['array']],
 });
 
 // ...
 
 $('#get-sum').addEventListener('click', () => {
-  const arr = new Uint32Array([1, 1, 2, 3, 5, 8, 13, 21]);
-  const sum = library.get_sum(arr, arr.length);
+  const arr = new U32Array([1, 1, 2, 3, 5, 8, 13, 21]);
+  const sum = library.get_sum(arr);
 
   $('#sum-log').innerText = `Sum of ${arr} is: ${sum}`;
 });
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-export int get_sum(int arr[], size_t length) {
-  int i;
-  int sum = 0;
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+export function get_sum(arr: u32[]): usize {
+    let result = 0;
 
-  for (i = 0; i < length; ++i) {
-    sum += arr[i];
-  }
+    for (let i = 0; i < arr.length; i++) {
+        result += arr[i];
+    }
 
-  return sum;
+    return result;
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
@@ -373,16 +363,22 @@ export int get_sum(int arr[], size_t length) {
                 </div>
                 <div class="markdown-body">
                     <p>
-                        A <code>Pointer</code> object encapsulates a reference to wasm memory.
+                        A
+                        <code>Pointer</code> object encapsulates a reference to wasm memory.
                     </p>
                     <ul>
-                        <li><code>.ref()</code>: get memory address</li>
-                        <li><code>.deref()</code>: get data</li>
-                        <li><code>.set(value)</code>: set pointers value</li>
-                        <li><code>.free()</code>: free from wasm memory</li>
+                        <li>
+                            <code>.ref()</code>: get memory address</li>
+                        <li>
+                            <code>.deref()</code>: get data</li>
+                        <li>
+                            <code>.set(value)</code>: set pointers value</li>
+                        <li>
+                            <code>.free()</code>: free from wasm memory</li>
                     </ul>
                     <p>
-                        Create a new pointer with <code>new Pointer(type, value)</code>.
+                        Create a new pointer with
+                        <code>new Pointer(type, value)</code>.
                     </p>
                     <p class="mb-4">
                         <button id="get-pointer" class="btn btn-sm mt-2">
@@ -403,7 +399,7 @@ export int get_sum(int arr[], size_t length) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -412,8 +408,8 @@ export int get_sum(int arr[], size_t length) {
 import { types, Pointer } from 'wasm-ffi';
 
 const library = new Wrapper({
-  get_pointer: [types.pointer('uint32')],
-  pass_pointer: ['number', [types.pointer('uint32')]],
+  get_pointer: [types.pointer('u32')],
+  pass_pointer: ['number', [types.pointer('u32')]],
 });
 
 // ...
@@ -424,7 +420,7 @@ $('#get-pointer').addEventListener('click', () => {
 });
 
 $('#pass-pointer').addEventListener('click', () => {
-  const ptr = new ffi.Pointer('uint32', 365);
+  const ptr = new ffi.Pointer('u32', 365);
   const value = library.pass_pointer(ptr);
 
   $('#pointer-log').innerText = `Wasm read ${value} from the pointer you sent`;
@@ -432,22 +428,26 @@ $('#pass-pointer').addEventListener('click', () => {
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-export int *get_pointer() {
-  int *ptr = malloc(sizeof *ptr);
-  *ptr = 123;
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+export function get_pointer(): usize {
+    let value: u32 = 333;
+    let ptr = allocate_memory(4);
 
-  return ptr;
+    store<u32>(ptr, value);
+
+    return ptr;
 }
 
-export int pass_pointer(int *ptr) {
-  return *ptr;
+export function pass_pointer(ptr: usize): u32 {
+    return load<u32>(ptr);
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
@@ -460,13 +460,14 @@ export int pass_pointer(int *ptr) {
                         <code>wasm-ffi</code> wraps struct pointers into objects that let you access fields.
                     </p>
                     <p>
-                        To use a struct you first have to define a struct type. The properties
-                        should be in the same order as your C source.
-                        Use this struct definition in your wrapped function signatures.
+                        To use a struct you first have to define a struct type. The order of the properties should be the same as
+                        your AssemblyScript definition. Use this new <code>Struct</code> type in your wrapped function signatures.
                     </p>
                     <p>
-                        You can get the memory address of a struct with <code>.ref()</code>
-                        and you can free it from memory with <code>.free()</code>
+                        You can get the memory address of a struct with
+                        <code>.ref()</code>
+                        and you can free it from memory with
+                        <code>.free()</code>
                     </p>
                     <p class="mb-4">
                         <button id="get-person" class="btn btn-sm mt-2">
@@ -487,7 +488,7 @@ export int pass_pointer(int *ptr) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -498,8 +499,8 @@ import { Struct } from 'wasm-ffi';
 // define a new struct type: Person
 const Person = new Struct({
   name: 'string',
-  age: 'uint8',
-  favorite_number: 'uint32',
+  age: 'u8',
+  favorite_number: 'u32',
 });
 
 const library = new Wrapper({
@@ -529,39 +530,35 @@ $('#modify-person').addEventListener('click', () => {
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-struct Person {
-  char *name;
-  uint8_t age;
-  uint32_t favorite_number;
-};
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+class Person {
+    name: 'string';
+    age: u8;
+    favorite_number: u32;
 
-export struct Person *get_person() {
-  struct Person *p = malloc(sizeof(struct Person));
-  p->name = "Jean-Luc Picard";
-  p->age = 61;
-  p->favorite_number = 1701;
-
-  return p;
+    constructor(name: string, age: u8, favorite_number: u32) {
+        this.name = name;
+        this.age = age;
+        this.favorite_number = favorite_number;
+    }
 }
 
-export char *person_facts(struct Person *p) {
-  char *about = calloc(strlen(p->name) + 40, 1);
-  strcat(about, p->name);
+export function get_person(): Person {
+    return new Person('Jean-Luc Picard', 61, 1701);
+}
 
-  if (p->age > p->favorite_number) {
-    strcat(about, " is older than his favorite number.");
-  } else {
-    strcat(about, " is younger than his favorite number.");
-  }
-
-  return about;
+export function person_facts(p: Person): string {
+    return (p.age > p.favorite_number)
+        ? p.name + ' is older than his favorite_number'
+        : p.name + ' is younger than his favorite_number';
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
@@ -571,10 +568,8 @@ export char *person_facts(struct Person *p) {
                 </div>
                 <div class="markdown-body">
                     <p>
-                        A struct definition (like above) is also a constructor you
-                        can use to make new structs from JS. Any struct made in JS
-                        will get written to memory the first time it is used in a
-                        WebAssembly function.
+                        A struct definition (like above) is also a constructor you can use to make new structs from JS. Any struct made in JS will
+                        get written to memory the first time it is used in a WebAssembly function.
                     </p>
                     <form class="pt-1" action="javascript:void(0);">
                         <div class="form-group">
@@ -606,7 +601,7 @@ export char *person_facts(struct Person *p) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -614,16 +609,16 @@ export char *person_facts(struct Person *p) {
                     <pre data-paint="js" data-gist-like data-title="index.js" data-footer>
 const Person = new Struct({
   name: 'string',
-  age: 'uint8',
-  favorite_number: 'uint32',
+  age: 'u8',
+  favorite_number: 'u32',
 });
 
 // ...
 
 $('#make-person').addEventListener('click', () => {
-const name = $('#name').value;
-const age = parseInt($('#age').value);
-const num = parseInt($('#num').value);
+  const name = $('#name').value;
+  const age = parseInt($('#age').value);
+  const num = parseInt($('#num').value);
 
   const person = new Person({
     name: name,
@@ -636,51 +631,49 @@ const num = parseInt($('#num').value);
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-struct Person {
-  char *name;
-  uint8_t age;
-  uint32_t favorite_number;
-};
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+class Person {
+    name: 'string';
+    age: u8;
+    favorite_number: u32;
 
-export char *person_facts(struct Person *p) {
-  char *about = calloc(strlen(p->name) + 40, 1);
-  strcat(about, p->name);
+    constructor(name: string, age: u8, favorite_number: u32) {
+        this.name = name;
+        this.age = age;
+        this.favorite_number = favorite_number;
+    }
+}
 
-  if (p->age > p->favorite_number) {
-    strcat(about, " is older than his favorite number.");
-  } else {
-    strcat(about, " is younger than his favorite number.");
-  }
-
-  return about;
+export function person_facts(p: Person): string {
+    return (p.age > p.favorite_number)
+        ? p.name + ' is older than his favorite_number'
+        : p.name + ' is younger than his favorite_number';
 }
 
                     </pre>
                 </div>
 
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
             <div class="col mb-4">
                 <div class="Subhead">
-                    <div class="Subhead-heading">Calling JS functions from C</div>
+                    <div class="Subhead-heading">Calling JS functions from AssemblyScript</div>
                 </div>
                 <div class="markdown-body">
                     <p>
-                        To call a JS function from C you need to import the JS function
-                        into your wasm module.
-                    </p>
-                    <p>
-                        Most wasm targeting compilers expect external functions to be
-                        in the <code>env</code> namespace.
+                        To call a JS function from AssemblyScript you need to
+                        import the JS function into your wasm module. These functions
+                        need to be in the <code>env</code> namespace.
                     </p>
                     <p class="mb-4">
                         <button id="barrel-roll" class="btn btn-sm mt-2">
-                             do a barrel_roll<span>()</span>
+                            do a barrel_roll<span>()</span>
                         </button>
                     </p>
                 </div>
@@ -690,7 +683,7 @@ export char *person_facts(struct Person *p) {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -704,8 +697,6 @@ const library = new Wrapper({
 // this needs to be done before `library.fetch('main.wasm')`
 library.imports({
   env: {
-    memory: new WebAssembly.Memory({ initial: 10 }),
-
     rotate: function() {
       $('body').classList.toggle('rotate');
     },
@@ -720,30 +711,32 @@ $('#barrel-roll').addEventListener('click', () => {
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
-extern void rotate();
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
+declare function rotate(): void;
 
-export void barrel_roll() {
-  rotate();
+export function barrel_roll(): void {
+    rotate();
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
         <div class="row mt-8">
             <div class="col mb-4">
 
                 <div class="Subhead">
-                    <div class="Subhead-heading">Import wrapping</div>
+                    <div class="Subhead-heading">Import wrapper</div>
                 </div>
                 <div class="markdown-body">
                     <p>
-                        You can also wrap imported functions using the same notation as with
-                        a <code>Wrapper</code>. The last argument is the function to wrap. This
-                        will convert the inputs and outputs of the function to the right types.
+                        You can also wrap imported functions using the same notation as with a
+                        <code>Wrapper</code>. The last argument is the function to wrap. This will convert the inputs and outputs
+                        of the function to the right types.
                     </p>
                     <form class="pt-1" action="javascript:void(0);">
                         <div class="form-group">
@@ -767,7 +760,7 @@ export void barrel_roll() {
                 <div class="tabnav">
                     <nav class="tabnav-tabs">
                         <a class="tabnav-tab selected" data-target="js">JavaScript</a>
-                        <a class="tabnav-tab" data-target="c">C</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
                     </nav>
                 </div>
 
@@ -802,24 +795,27 @@ $('#multiply').addEventListener('click', () => {
                     </pre>
                 </div>
 
-                <div class="src hidden" data-tab="c">
-                    <pre data-paint="c" data-gist-like data-title="main.c" data-footer>
+                <div class="src hidden" data-tab="as">
+                    <pre data-paint="ts" data-gist-like data-title="main.ts" data-footer>
 // does `document.querySelector()` and parses the `.value` of the element:
-extern int get_input_value(char *);
+declare function get_input_value(msg: string): u32;
 
 // multiplies the value contained in a given DOM selector:
-export int multiply_input(char *dom_selector) {
-  return get_input_value(dom_selector) * 2;
+export function multiply_input(dom_selector: 'string'): u32 {
+    return get_input_value(dom_selector) * 2;
 }
                     </pre>
                 </div>
-            </div> <!-- col -->
-        </div> <!-- row -->
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
 
 
-        <div class="row mt-8 pb-5"></div>
+        <div class="row pb-5"></div>
 
-    </div> <!-- container -->
+    </div>
+    <!-- container -->
 
 
     <script src="../common.js"></script>

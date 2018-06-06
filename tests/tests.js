@@ -18,16 +18,17 @@ if (!ffi) {
   alert("`ffi` not found, check webpack");
 }
 
-var Wrapper    = ffi.Wrapper;
-var cwrap      = ffi.cwrap;
-var ccall      = ffi.ccall;
-var Struct     = ffi.Struct;
-var types      = ffi.types;
-var Pointer    = ffi.Pointer;
-var CString    = ffi.CString;
-var CustomType = ffi.CustomType;
-var demangle   = ffi.demangle;
-var rust       = ffi.rust;
+var Wrapper        = ffi.Wrapper;
+var cwrap          = ffi.cwrap;
+var ccall          = ffi.ccall;
+var Struct         = ffi.Struct;
+var types          = ffi.types;
+var Pointer        = ffi.Pointer;
+var StringPointer  = ffi.StringPointer;
+var CustomType     = ffi.CustomType;
+var demangle       = ffi.demangle;
+var rust           = ffi.rust;
+var assemblyscript = ffi.assemblyscript;
 
 
 function structPadding(StructType) {
@@ -151,7 +152,8 @@ describe('demangle', function() {
     it('basic length scheme', function() {
       check('test', 'test');
       check('_ZN4test', '_ZN4test');
-      check('_ZN4testE', 'test');
+      check('_ZN4test', '_ZN4test');
+      check('_Z4testE', '_Z4testE');
       check('_ZN4test1a2bcE', 'test::a::bc');
     });
 
@@ -239,6 +241,12 @@ describe('Text Encoding', function() {
 
     it('utf8 don\'t replace the replacement char', function() {
       expect(decode(encode('\uFFFD'))).to.be('\uFFFD');
+    });
+
+    it('prevent stack overflow', function() {
+      var arr = new Array(0x2000);
+      var buf = new Uint8Array(arr);
+      expect(decode(buf)).to.not.throwException;
     });
   });
 
@@ -363,44 +371,44 @@ describe('Wrapper', function() {
   });
 
   describe('basic types', function() {
-    it('-> int', function() {
+    it('🡒 int', function() {
       expect(library.return_int()).to.equal(123);
     });
-    it('-> float', function() {
+    it('🡒 float', function() {
       expect(library.return_float()).to.equal(-123.456);
     });
-    it('-> boolean', function() {
+    it('🡒 boolean', function() {
       expect(library.return_bool()).to.be(false);
     });
     it('void / no arguments', function() {
       expect(library.no_parameters).to.not.throwException();
     });
-    it('int, int -> int', function() {
+    it('int, int 🡒 int', function() {
       expect(library.add(2, 2)).to.equal(4);
     });
-    it('boolean -> boolean', function() {
+    it('boolean 🡒 boolean', function() {
       expect(library.flip_bool(false)).to.be(true);
     });
   });
 
   describe('strings', function() {
-    it('-> string', function() {
+    it('🡒 string', function() {
       expect(library.return_string()).to.be('passed string');
     });
-    it('string, string -> bool', function() {
+    it('string, string 🡒 bool', function() {
       expect(library.strings_match('abc', 'abc')).to.be(true);
       expect(library.strings_match('abc', 'qwerty')).to.be(false);
     });
   });
 
   describe('arraybuffers / typedarrays', function() {
-    it('buffer, length -> number', function() {
+    it('buffer, length 🡒 number', function() {
       var u32s = new Uint32Array([1, 2, 3]);
       var u8s = new Uint8Array([1, 2, 3, 4, 5, 6]);
 
       expect(library.sum_u32_array(u32s, u32s.length)).to.be(6);
-      expect(library.sum_u8_array(u8s, u8s.length)).to.be(21);
       expect(library.sum_u32_array(u32s.buffer, u32s.length)).to.be(6);
+      expect(library.sum_u8_array(u8s, u8s.length)).to.be(21);
       expect(library.sum_u8_array(u8s.buffer, u8s.length)).to.be(21);
     });
   });
@@ -417,7 +425,8 @@ describe('Wrapper', function() {
     });
 
     it("pointer('u32', value)", function() {
-      var ptr = new Pointer('u32', 111);
+      var ptr = new Pointer('u32');
+      ptr.set(111);
 
       library.mutate_u32_pointer(ptr);
       expect(ptr.deref()).to.be(777);
@@ -431,7 +440,7 @@ describe('Wrapper', function() {
       ptr.free();
     });
 
-    it("f64 -> pointer('f64')", function() {
+    it("f64 🡒 pointer('f64')", function() {
       var ptr = library.get_f64_pointer(-111.111);
 
       expect(ptr.deref()).to.be(-222.222);
@@ -440,7 +449,7 @@ describe('Wrapper', function() {
       ptr.free();
     });
 
-    it("-> pointer('u64')", function() {
+    it("🡒 pointer('u64')", function() {
       var ptr = library.get_u64_pointer(200);
       var dataview = ptr.deref();
 
@@ -452,7 +461,7 @@ describe('Wrapper', function() {
   });
 
   describe('structs', function() {
-    it('-> plain struct', function() {
+    it('🡒 plain struct', function() {
       var plain = library.return_plain_struct();
 
       expect(plain.ref()).to.not.be(0);
@@ -463,7 +472,21 @@ describe('Wrapper', function() {
       plain.free();
     });
 
-    it('plain struct -> u32', function() {
+    it('plain.toString()', function() {
+      var plain = library.return_plain_struct();
+      expect(plain.toString()).to.be('{ a: 1, b: 2, c: 3 }');
+
+      plain.free();
+    });
+
+    it('plain.dataview()', function() {
+      var plain = library.return_plain_struct();
+      expect(plain.dataview().byteLength).to.be(12);
+
+      plain.free();
+    });
+
+    it('plain struct 🡒 u32', function() {
       var struct = new PlainStruct({ a: 1, b: 2, c: 3 });
       expect(struct.ref()).to.be(0);
 
@@ -473,7 +496,11 @@ describe('Wrapper', function() {
       struct.free();
     });
 
-    it('-> array struct', function() {
+    it('plain struct (coerced) 🡒 u32', function() {
+      expect(library.give_plain_struct({ a: 1, b: 2, c: 3 })).to.be(2);
+    });
+
+    it('🡒 array struct', function() {
       var struct = library.return_array_struct();
 
       expect(struct.ref()).to.not.be(0);
@@ -482,7 +509,22 @@ describe('Wrapper', function() {
       struct.free();
     });
 
-    it('array struct -> char', function() {
+    it('🡒 array struct, mutate .dataview()', function() {
+      var struct = library.return_array_struct();
+      expect(struct.array).to.eql([1, 2, 3]);
+
+      var data = struct.dataview('array');
+      expect(data.buffer).to.be(library.exports.memory.buffer);
+
+      data.setUint8(0, 4);
+      data.setUint8(1, 5);
+      data.setUint8(2, 6);
+      expect(struct.array).to.eql([4, 5, 6]);
+
+      struct.free();
+    });
+
+    it('array struct 🡒 char', function() {
       var struct = new ArrayStruct({ array: [1, 2, 3] });
       expect(struct.ref()).to.be(0);
 
@@ -492,7 +534,7 @@ describe('Wrapper', function() {
       struct.free();
     });
 
-    it('-> pointer struct', function() {
+    it('🡒 pointer struct', function() {
       var struct = library.return_pointer_struct();
 
       expect(struct.ref()).to.not.be(0);
@@ -501,7 +543,7 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('pointer struct -> char', function() {
+    it('pointer struct 🡒 char', function() {
       var struct = new PointerStruct({
         p: new Pointer('char', 37),
       });
@@ -514,7 +556,19 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('pointer struct -> char, allocate util', function() {
+    it('pointer struct .toString()', function() {
+      var struct = new PointerStruct({
+        p: new Pointer('char', 37),
+      });
+
+      expect(struct.p.toString()).to.be('Pointer( null )');
+      library.give_pointer_struct(struct)
+      expect(struct.p.toString()).to.be('Pointer( 37 )');
+
+      struct.free(true);
+    });
+
+    it('pointer struct 🡒 char, allocate util', function() {
       var struct = new PointerStruct({
         p: new Pointer('char', 37),
       });
@@ -532,23 +586,20 @@ describe('Wrapper', function() {
       struct.free();
     });
 
-    it('-> string struct', function() {
+    it('🡒 string struct', function() {
       var struct = library.return_string_struct();
 
       expect(struct.ref()).to.not.be(0);
       expect(struct.str.deref()).to.be('hello');
-      expect(struct.str instanceof CString).to.be(true);
       expect(String(struct.str) == 'hello').to.be(true);
       expect(struct.str == 'hello').to.be(true); // == coerces!
 
       struct.free(true);
     });
 
-    it('string struct -> string', function() {
-      var str = new CString('hello');
+    it('string struct 🡒 string (StringPointer)', function() {
+      var str = new StringPointer('hello');
       var struct = new StringStruct({ str: str });
-
-      expect(struct.ref()).to.be(0);
 
       expect(library.give_string_struct(struct)).to.be('hello');
       expect(str.deref()).to.be('hello');
@@ -557,7 +608,26 @@ describe('Wrapper', function() {
       struct.free();
     });
 
-    it('-> compound struct', function() {
+    it('string struct 🡒 string (coerced JS string)', function() {
+      var struct = new StringStruct({ str: 'hello' });
+
+      expect(library.give_string_struct(struct)).to.be('hello');
+      expect(struct.str.deref()).to.be('hello');
+
+      struct.str.free();
+      struct.free();
+    });
+
+    it('StringPointer, string-like fns', function() {
+      var struct = new StringStruct({ str: 'a b c' });
+      library.give_string_struct(struct)
+
+      expect(struct.str.split(' ')).to.eql(['a', 'b', 'c']);
+
+      struct.free(true);
+    });
+
+    it('🡒 compound struct', function() {
       var struct = library.return_compound_struct();
 
       expect(struct.ref()).to.not.be(0);
@@ -566,7 +636,7 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('compound struct -> number', function() {
+    it('compound struct 🡒 number', function() {
       var struct = new CompoundStruct({
         x: 10,
         y: new ArrayStruct({ array: [1, 9, 15] }),
@@ -583,7 +653,18 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('-> complex struct', function() {
+    it('compound struct 🡒 number (sub coerce)', function() {
+      var struct = new CompoundStruct({
+        x: 10,
+        y: { array: [11, 22, 33] },
+      });
+
+      expect(library.give_compound_struct(struct)).to.be(66);
+
+      struct.free(true);
+    });
+
+    it('🡒 complex struct', function() {
       var struct = library.return_complex_struct();
 
       expect(struct.ref()).to.not.be(0);
@@ -592,7 +673,7 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('complex struct -> number', function() {
+    it('complex struct 🡒 number', function() {
       var struct = new ComplexStruct({
         one: false,
         two: 222,
@@ -626,7 +707,31 @@ describe('Wrapper', function() {
       struct.free(true);
     });
 
-    it('-> pointer(plain struct)', function() {
+    it('complex struct 🡒 number (coerced)', function() {
+      var struct = new ComplexStruct({
+        one: true,
+        two: 222,
+        three: { a: 11, b: 12, c: 13 },
+        four: [
+          {
+            x: 5,
+            y: { array: [1, 1, 1] },
+          },
+          {
+            x: 10,
+            y: { array: [2, 2, 2] },
+          },
+        ],
+        five: 55,
+      });
+
+      expect(library.give_complex_struct(struct)).to.be(9);
+      expect(struct.toString).to.not.throwException;
+
+      struct.free(true);
+    });
+
+    it('🡒 pointer(plain struct)', function() {
       var ptr = library.return_pointer_plain_struct();
       var struct = ptr.deref();
 
@@ -638,7 +743,7 @@ describe('Wrapper', function() {
       ptr.free();
     });
 
-    it('pointer(plain struct) -> number', function() {
+    it('pointer(plain struct) 🡒 number', function() {
       var struct = new PlainStruct({ a: 1, b: 112, c: 3 });
       var pointer = new Pointer(PlainStruct, struct);
 
@@ -689,11 +794,11 @@ describe('import wrapper', function() {
       });
   });
 
-  it('wasm -> js -> wasm', function() {
+  it('wasm 🡒 js 🡒 wasm', function() {
     expect(library.trigger_callback()).to.be('ok');;
   });
 
-  it('wasm -> js, library struct', function(done) {
+  it('wasm 🡒 js, library struct', function(done) {
     cb = function(struct) {
       expect(struct.a).to.be(1);
       expect(struct.b).to.be(2);
@@ -706,15 +811,15 @@ describe('import wrapper', function() {
     library.trigger_callback_struct();
   });
 
-  it('print -> console.log()', function() {
+  it('print 🡒 console.log()', function() {
     library.console_log();
   });
 
-  it('eprint -> console.error()', function() {
+  it('eprint 🡒 console.error()', function() {
     library.console_error();
   });
 
-  it('trace -> throw new WasmError()', function() {
+  it('trace 🡒 throw new WasmError()', function() {
     expect(library.cause_panic).to.throwException();
 
     try {
@@ -786,7 +891,7 @@ describe('cwrap / ccall', function() {
     ).to.be(3);
   });
 
-  it('cwrap -> struct shim w/ custom type', function() {
+  it('cwrap 🡒 struct shim w/ custom type', function() {
     var EasyComplexStruct = new Struct({
       body: new CustomType(36, {
         alignment: 4,
@@ -811,15 +916,39 @@ describe('cwrap / ccall', function() {
 
     struct.free(true);
   });
+
+  it('wrap name failures', function() {
+    var caught = false;
+
+    try {
+      var unknown_function = cwrap(instance, 'unknown_function', 'string');
+    } catch (err) {
+      caught = true;
+    }
+
+    expect(caught).to.be(true);
+  });
+
+  it('wrap arg type failures', function() {
+    var caught = false;
+
+    try {
+      var give_complex_struct = cwrap(instance, 'give_complex_struct', 'potatoe');
+    } catch (err) {
+      caught = true;
+    }
+
+    expect(caught).to.be(true);
+  });
 });
 
 describe('Rust types', function() {
   var library;
   var cb;
-  var Enum
+  var EnumType
 
   before(function() {
-    Enum = rust.enum({
+    EnumType = rust.enum({
       One: 'u16',
       Two: rust.option(rust.string, true /* non-nullable type */),
       Three: 'void',
@@ -834,20 +963,21 @@ describe('Rust types', function() {
       return_vec_char: [rust.vector('u8')],
       give_vec_shorts: ['u16', [rust.vector('u16')]],
       borrow_vec_shorts: ['u16', [rust.vector('u16')]],
+      // slices
+      give_slice_shorts: ['u16', [rust.slice('u16')]],
+      trigger_slice_callback: [],
       // strings
       return_rust_string: [rust.string],
       borrow_rust_str: ['usize', [rust.str]],
       give_rust_string: ['usize', [rust.string]],
-      // slices
-      trigger_slice_callback: [],
       // enums
-      return_enum: [Enum, ['u8']],
-      borrow_enum: ['u16', [Enum]],
+      return_enum: [EnumType, ['u8']],
+      borrow_enum: ['u16', [EnumType]],
       // tuples
-      return_tuple: [rust.tuple('usize', rust.str)],
-      give_tuple: ['number', [rust.tuple('usize', 'u16')]],
+      return_tuple: [rust.tuple(['usize', rust.str])],
+      give_tuple: ['number', [rust.tuple(['usize', 'u16'])]],
       // everything
-      return_complex_rust: [rust.tuple(rust.option(rust.vector(Enum), true), 'usize')],
+      return_complex_rust: [rust.tuple([rust.option(rust.vector(EnumType), true), 'usize'])],
     });
 
     library.imports(function(wrap) {
@@ -868,48 +998,75 @@ describe('Rust types', function() {
       });
   });
 
-  it('-> option', function() {
+  it('🡒 option', function() {
     var some = library.return_some_option_usize();
     expect(some.isSome()).to.be(true);
     expect(some.unwrap()).to.be(123123123);
-    expect(some.expect('not')).to.be(123123123);
+    expect(some.expect('error msg')).to.be(123123123);
+    expect(some.unwrapOr('tortilla')).to.be(123123123);
+    expect(some.unwrapOrElse(function() { return 'taco' })).to.be(123123123);
 
     var none = library.return_none_option_usize();
     expect(none.isNone()).to.be(true);
-    expect(none.unwrap).to.throwException();
-    expect(none.expect).to.throwException();
     expect(none.unwrapOr('tortilla')).to.be('tortilla');
     expect(none.unwrapOrElse(function() { return 'taco' })).to.be('taco');
+
+    var caught1 = false;
+    var caught2 = false;
+    try { none.unwrap(); } catch (err) { caught1 = true; }
+    try { none.expect('msg'); } catch (err) { caught2 = true; }
+
+    expect(caught1).to.be(true);
+    expect(caught2).to.be(true);
 
     some.free();
     none.free();
   });
 
-  it('option ->', function() {
+  it('option 🡒', function() {
+    var optionType = rust.option('usize');
     var some = rust.Some('usize', 123);
     var none = rust.None('usize');
 
     expect(library.take_option(some)).to.be(true);
+    expect(library.take_option(optionType.some(123))).to.be(true);
     expect(library.take_option(none)).to.be(false);
+    expect(library.take_option(optionType.none())).to.be(false);
   });
 
-  it('-> vector', function() {
+  it('option (coerced) 🡒', function() {
+    expect(library.take_option(123)).to.be(true);
+    expect(library.take_option(null)).to.be(false);
+  });
+
+  it('🡒 vector', function() {
     var vec = library.return_vec_char();
     expect(vec.values).to.eql([1, 2, 3]);
 
     vec.free(true);
   });
 
-  it('borrows vector -> sum', function() {
-    var vec = new rust.Vector('u16', [10, 10, 5]);
+  it('array-like fns (🡒 vector)', function() {
+    var vec = library.return_vec_char();
+    expect(vec.values).to.eql([1, 2, 3]);
+    // iterable
+    expect(new Uint8Array(vec)).to.eql(new Uint8Array([1, 2, 3]));
+    // prototype
+    expect(vec.map(function(x) { return 2 * x; })).to.eql([2, 4, 6]);
 
+    vec.free();
+  });
+
+  it('borrows vector 🡒 sum', function() {
+    var vec = new rust.Vector('u16', [10, 10, 5]);
     var sum = library.borrow_vec_shorts(vec);
+
     expect(sum).to.eql(25);
 
     vec.free(); // JS still owns it
   });
 
-  it('give vector -> sum', function() {
+  it('give vector 🡒 sum', function() {
     var vec = new rust.Vector('u16', [111, 111, 111]);
 
     var sum = library.give_vec_shorts(vec);
@@ -918,33 +1075,17 @@ describe('Rust types', function() {
     expect(vec.free).to.throwException(); // transfers ownership
   });
 
-  it('-> string', function() {
-    var str = library.return_rust_string();
-    expect(str.value).to.be('Rust string!');
-    expect(str + '').to.be('Rust string!');
-
-    str.free(true);
+  it('give vector 🡒 sum (coerce)', function() {
+    expect(library.give_vec_shorts([1, 2, 3])).to.eql(6);
   });
 
-  it('borrows str -> length', function() {
-    var str = new rust.Str('about 19 characters');
-
-    var len = library.borrow_rust_str(str);
-    expect(len).to.eql(19);
-
-    str.free(true); // JS still owns it
+  it('give slice 🡒 sum (coerce)', function() {
+    var slice = new rust.Slice('u16', [111, 222, 333]);
+    expect(library.give_slice_shorts(slice)).to.eql(666);
+    expect(slice.free).to.throwException(); // transfers ownership
   });
 
-  it('give string -> length', function() {
-    var r_str = new rust.String('I have about 26 characters');
-
-    var len = library.give_rust_string(r_str);
-    expect(len).to.eql(26);
-
-    expect(r_str.free).to.throwException(); // transfers ownership
-  });
-
-  it('slice', function(done) {
+  it('slice callback', function(done) {
     cb = function(slice) {
       expect(slice.values).to.eql([1, 2, 3]);
       done();
@@ -953,7 +1094,37 @@ describe('Rust types', function() {
     library.trigger_slice_callback();
   });
 
-  it('enum', function() {
+  it('🡒 string', function() {
+    var str = library.return_rust_string();
+    expect(str.value).to.be('Rust string!');
+    expect(str + '').to.be('Rust string!');
+
+    str.free(true);
+  });
+
+  it('borrows str 🡒 length', function() {
+    var str = new rust.Str('about 19 characters');
+    var len = library.borrow_rust_str(str);
+
+    expect(len).to.eql(19);
+
+    str.free(true); // JS still owns it
+  });
+
+  it('give string 🡒 length', function() {
+    var str = new rust.String('I have about 26 characters');
+    var len = library.give_rust_string(str);
+
+    expect(len).to.eql(26);
+    expect(str.free).to.throwException(); // transfers ownership
+  });
+
+  it('give str 🡒 length (coerce)', function() {
+    var len = library.give_rust_string('I have about 26 characters');
+    expect(len).to.eql(26);
+  });
+
+  it('🡒 enum', function() {
     var arms = {
       Two: function(value) {
         return value.unwrap().value;
@@ -978,14 +1149,34 @@ describe('Rust types', function() {
     three.free();
   });
 
-  it('enum -> tag', function() {
-    var one = new Enum({ One: 111 });
+  it('🡒 num .toString()', function() {
+    var two = library.return_enum(2);
+
+    expect(two.toString())
+      .to.be('{ discriminant: 1, value: { value: from enum! } }');
+
+    two.free(true);
+  });
+
+  it('enum 🡒 tag', function() {
+    var str = new rust.String('string');
+    library.utils.allocate(str);
+
+    var one = new EnumType({ One: 111 });
+    var two = new EnumType({ Two: rust.some(rust.string, str) });
 
     expect(library.borrow_enum(one)).to.be(111);
+    expect(library.borrow_enum(two)).to.be(2);
+
     one.free();
   });
 
-  it('-> tuple', function() {
+  it('enum 🡒 tag (coerce)', function() {
+    expect(library.borrow_enum({ One: 111 })).to.be(111);
+    expect(library.borrow_enum({ Two: 'string' })).to.be(2);
+  });
+
+  it('🡒 tuple', function() {
     var tuple = library.return_tuple();
 
     expect(tuple[0]).to.be(4444);
@@ -994,11 +1185,16 @@ describe('Rust types', function() {
     tuple.free();
   });
 
-  it('tuple -> sum', function() {
-    var tuple = new rust.Tuple(['usize', 'u16'], [1, 2]);
-    var num = library.give_tuple(tuple);
+  it('tuple 🡒 sum', function() {
+    var tuple = new rust.tuple(['usize', 'u16'], [1, 2]);
+    var num = library.give_tuple(tuple);;
 
     expect(num).to.be(3);
+  });
+
+  it('tuple 🡒 sum (coerce)', function() {;
+    var num = library.give_tuple([4, 6]);
+    expect(num).to.be(10);
   });
 
   it('complex nesting', function() {
@@ -1031,13 +1227,13 @@ describe('mod.c.webasm', function() {
     });
 
     library = new Wrapper({
-      return_string: ['string'],
-      strings_match: ['bool', ['string', 'string']],
-      sum_u8_array: ['char', ['array', 'char']],
-      sum_u32_array: ['int', ['array', 'int']],
+      return_string:       ['string'],
+      strings_match:       ['bool', ['string', 'string']],
+      sum_u8_array:        ['char', ['array', 'char']],
+      sum_u32_array:       ['int', ['array', 'int']],
       return_plain_struct: [PlainStruct],
-      give_plain_struct: ['number', [PlainStruct]],
-      trigger_callback: [],
+      give_plain_struct:   ['number', [PlainStruct]],
+      trigger_callback:    [],
     });
 
     library.imports({
@@ -1053,18 +1249,18 @@ describe('mod.c.webasm', function() {
   });
 
   describe('strings', function() {
-    it('-> string', function() {
+    it('🡒 string', function() {
       expect(library.return_string()).to.be('passed string');
     });
 
-    it('string, string -> bool', function() {
+    it('string, string 🡒 bool', function() {
       expect(library.strings_match('abc', 'abc')).to.be(true);
       expect(library.strings_match('abc', 'qwerty')).to.be(false);
     });
   });
 
   describe('arraybuffers / typedarrays', function() {
-    it('buffer, length -> number', function() {
+    it('buffer, length 🡒 number', function() {
       var u32s = new Uint32Array([1, 2, 3]);
       var u8s = new Uint8Array([1, 2, 3, 4, 5, 6]);
 
@@ -1076,7 +1272,7 @@ describe('mod.c.webasm', function() {
   });
 
   describe('structs', function() {
-    it('-> plain struct', function() {
+    it('🡒 plain struct', function() {
       var plain = library.return_plain_struct();
 
       expect(plain.ref()).to.not.be(0);
@@ -1087,7 +1283,7 @@ describe('mod.c.webasm', function() {
       plain.free();
     });
 
-    it('plain struct -> u32', function() {
+    it('plain struct 🡒 u32', function() {
       var struct = new PlainStruct({ a: 1, b: 2, c: 3 });
       expect(struct.ref()).to.be(0);
 
@@ -1107,5 +1303,105 @@ describe('mod.c.webasm', function() {
 
       library.trigger_callback();
     });
+  });
+});
+
+
+describe('mod.assemblyscript.webasm', function() {
+  var lib;
+  var Foo
+
+  before(function() {
+    Foo = new Struct({
+      a: 'u32',
+      b: 'u8',
+      c: 'u16',
+    });
+
+    lib = new Wrapper({
+      return_string:     ['string'],
+      strings_match:     ['bool', ['string', 'string']],
+      make_foo:          [Foo],
+      foo_add:           ['number', [Foo]],
+      sum_array:         ['number', ['array']],
+      sum_f32_array:     ['number', [assemblyscript.array('f32')]],
+      return_array:      [assemblyscript.array('u32'), ['number']],
+      return_foo_array:  [assemblyscript.array(types.pointer(Foo))],
+      give_string_array: ['number', [assemblyscript.array('string')]],
+      throw_error:       [],
+    }, {
+      dialect: 'assemblyscript',
+    });
+
+    return lib.fetch(baseURL + './mod.assemblyscript.webasm');
+  });
+
+
+  it('🡒 string', function() {
+    expect(lib.return_string(5)).to.be('na na na na na batman!');
+  });
+
+  it('string, string 🡒 bool', function() {
+    expect(lib.strings_match('123', '123')).to.be(true);
+    expect(lib.strings_match('asdf', 'qwerty')).to.be(false);
+  });
+
+  it('🡒 Foo', function() {
+    var foo = lib.make_foo();
+
+    expect(foo.a).to.be(1111);
+    expect(foo.b).to.be(222);
+    expect(foo.c).to.be(3333);
+
+    foo.free();
+  });
+
+  it('Foo 🡒 number', function() {
+    var foo = new Foo({ a: 1, b: 2, c: 3 });
+    expect(lib.foo_add(foo)).to.be(6);
+  });
+
+  it('u8[] 🡒 number', function() {
+    var arr = new Uint8Array([1, 2, 3, 4, 5]);
+    expect(lib.sum_array(arr)).to.be(15);
+  });
+
+  it('f32[] 🡒 number', function() {
+    expect(lib.sum_f32_array([1.1, 2.1, 3.1, 4.1, 5.1])).to.be(15.5);
+  });
+
+  it('number 🡒 u32[]', function() {
+    var buf = new Uint32Array([0, 1, 2, 3, 4]);
+    var arr = lib.return_array(5)
+
+    expect(arr.values).to.eql(buf);
+    expect(arr.dataview().byteLength).to.be(8);
+    expect(arr.dataview('values').byteLength).to.be(5 * 4);
+    expect(arr.dataview('buffer').byteLength).to.be(8 + 20);
+
+    // iterable
+    expect(new Uint32Array(arr)).to.eql(new Uint32Array([0, 1, 2, 3, 4]));
+    // prototype fns
+    expect(arr.map(function(x) { return 2 * x; })).to.eql([0, 2, 4, 6, 8]);
+  });
+
+  it('🡒 Foo[]', function() {
+    var arr = lib.return_foo_array();
+    var foos = arr.values.map(function(ptr) { return ptr.deref(); });
+
+    expect(foos[0].toString()).to.be('{ a: 1, b: 2, c: 3 }');
+    expect(foos[1].toString()).to.be('{ a: 4, b: 5, c: 6 }');
+  });
+
+  it('string[] 🡒 number', function() {
+    var arr = ['9 letters', '11 letters!'];
+    expect(lib.give_string_array(arr)).to.be(20);
+  });
+
+  it('throw error', function() {
+    var caught = false;
+    try { lib.throw_error(); } catch (err) { caught = true; }
+
+    expect(caught).to.be(true);
   });
 });

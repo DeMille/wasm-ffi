@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wasm-ffi demo | whatlang-rs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="../hybrid.min.css" rel="stylesheet" />
+    <link href="../main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="warning-header" class="py-2 hidden">
+        <div class="capped-container-fluid">
+            <p class="m-0">
+                <b>Uh-oh: </b> It looks like this browser doesn't support WebAssembly. Sorry :(
+            </p>
+        </div>
+    </div>
+
+    <div class="header pt-8 pb-8">
+        <div class="capped-container-fluid">
+            <h1>wasm-ffi demo</h1>
+            <p>
+                Natural language detection using
+                <a href="https://github.com/greyblake/whatlang-rs" style="color: white; text-decoration: underline; font-style: italic;">
+                    <b>whatlang-rs</b>
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <div class="content capped-container-fluid mb-7">
+
+        <nav class="UnderlineNav UnderlineNav--right">
+            <div class="UnderlineNav-actions">
+                <a href="https://github.com/demille/wasm-ffi">
+                    &larr;
+                    <svg style="fill: #444; position: relative; top: 2px; left: 2px;" height="14" width="14" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                        />
+                    </svg>
+                </a>
+            </div>
+
+            <div class="UnderlineNav-body">
+                <a href="../whatlang/" class="UnderlineNav-item selected">
+                    <span class="d-none d-md-block">Demo</span>
+                    <span class="d-md-none">Demo</span>
+                </a>
+                <a href="../c/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-md-none">C</span>
+                </a>
+                <a href="../rust/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-md-none">Rust</span>
+                </a>
+                <a href="../assemblyscript/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">AssemblyScript</span>
+                    <span class="d-md-none">AssemblyScript</span>
+                </a>
+            </div>
+        </nav>
+
+
+        <div class="row">
+            <div class="col col-lg-6 offset-lg-3 col-md-8 offset-md-2" >
+
+                <h3 class="text-center mt-7" style="font-size: 18px; margin-bottom: -6px;">
+                    Detected Language:
+                </h3>
+
+                <h2 class="text-center mb-4">
+                    <span id="reliable" class="yes">
+                        <span class="yes"></span>
+                        <span class="no"></span>
+                        <span id="language">English</span>
+                    </span>
+                </h2>
+
+                <div class="meter">
+                    <p>
+                        <nobr>Confidence: <span id="confidence">100.0%</span></nobr>
+                    </p>
+                    <div>
+                        <progress id="bar" value="100" max="100"></progress>
+                    </div>
+                </div>
+
+                <div class="form-group mt-0">
+                    <textarea id="textinput" class="form-control">Type something in here and whatlang.rs will tell you what language it is.
+
+It gives you a confidence score for the analysis as well as whether or not it considers the result to be reliable.
+
+
+
+(or try these 👇)</textarea>
+                </div>
+
+                <div id="languages" class="mb-6">
+                        <a class="btn btn-sm">Portuguese</a>
+                        <span class="hidden">Capitu, apesar daqueles olhos que o diabo lhe deu... Você já reparou nos olhos dela? São assim de cigana oblíqua e dissimulada. Pois apesar deles, poderia passar, se não fosse a vaidade e a adulação. Oh! a adulação!</span>
+
+                        <a class="btn btn-sm">Korean</a>
+                        <span class="hidden">내 호버크라프트는 장어로 가득 차 있어요</span>
+
+                        <a class="btn btn-sm">German</a>
+                        <span class="hidden">Ich verstehe nicht.
+Können Sie bitte langsamer sprechen?</span>
+
+                        <a class="btn btn-sm">Russian</a>
+                        <span class="hidden">Козла́ бо́йся спе́реди, коня́ — сза́ди, а лихо́го челове́ка — со всех сторо́н</span>
+
+                        <a class="btn btn-sm">Italian</a>
+                        <span class="hidden">Chi non si lascia consigliare, no si può aiutare.</span>
+
+                        <a class="btn btn-sm">English</a>
+                        <span class="hidden">Do they keep you in a cell? Cells.
+Cells.
+
+When you're not performing your duties do they keep you in a little box?
+Cells.
+
+What's it like to hold the hand of someone you love? Interlinked.
+Interlinked.</span>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row mt-7 mb-6">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading" style="font-size: 26px;">
+                        Under the hood &rarr;
+                    </div>
+                </div>
+                <div class="markdown-body" style="font-size: 15px;">
+                    <p>
+                        The main WebAssembly export here is <code>detect</code>, which takes a
+                        string pointer and gives back a pointer to a <code>DetectResult</code> struct.
+                        This function gets called each time the textarea is updated.
+                    </p>
+                    <p>
+                        <code>wasm-ffi</code> wraps the call to <code>detect</code>.  It writes the
+                        input string to memory before calling the WebAssembly function and it returns
+                        an object that can access the struct fields.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="col-md-8 mb-6">
+                <div class="tabnav" style="margin-top: 9px;">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="rs">Rust</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+<pre data-paint="js" data-gist-like data-title="index.js" data-footer data-highlight="10-12,16">
+const $ = sel => document.querySelector(sel);
+const textarea = $('textarea');
+
+const DetectResult = new ffi.Struct({
+  lang: ffi.rust.string,
+  confidence: 'f64',
+  is_reliable: 'bool',
+});
+
+const whatlang = new ffi.Wrapper({
+  detect: [DetectResult, ['string']],
+});
+
+whatlang.fetch('whatlang.wasm').then(() => {
+  function update(str) {
+    const result = whatlang.detect(str);
+
+    $('#language').innerText = result.lang.value;
+    $('#reliable').className = (result.is_reliable) ? 'yes' : 'no';
+
+    $('#confidence').innerText = (result.confidence * 100).toFixed(1) + '%';
+    $('#bar').value = result.confidence * 100;
+  }
+
+  textarea.addEventListener('input', () => update(textarea.value));
+</pre>
+                </div>
+
+                <div class="src hidden" data-tab="rs">
+<pre data-paint="rs" data-gist-like data-title="main.rs" data-footer data-highlight="12-16,19">
+use std::cell::RefCell;
+use std::ffi::CStr;
+use std::os::raw::{c_char, c_void};
+
+extern crate whatlang;
+
+thread_local!(
+    static RESULT: RefCell<Option<DetectResult>> = RefCell::new(None);
+);
+
+#[repr(C)]
+pub struct DetectResult {
+    lang: String,
+    confidence: f64,
+    is_reliable: bool,
+}
+
+#[no_mangle]
+pub fn detect(ptr: *const c_char) -> *const DetectResult {
+    RESULT.with(|cell| {
+        let mut wrapper = cell.borrow_mut();
+
+        let input = unsafe {
+            assert!(!ptr.is_null());
+            CStr::from_ptr(ptr).to_string_lossy()
+        };
+
+        let info_result = whatlang::detect(&input);
+
+        if let Some(info) = info_result {
+            *wrapper = Some(DetectResult {
+                lang: info.lang().eng_name().to_string(),
+                confidence: info.confidence(),
+                is_reliable: info.is_reliable(),
+            });
+        } else {
+            *wrapper = Some(DetectResult {
+                lang: String::from("-----"),
+                confidence: 0.0,
+                is_reliable: false,
+            });
+        }
+
+        let result = wrapper.as_ref().unwrap();
+        &*result as *const DetectResult
+    })
+}
+
+#[no_mangle]
+pub fn allocate(length: usize) -> *mut c_void {
+    let mut v = Vec::with_capacity(length);
+    let ptr = v.as_mut_ptr();
+    std::mem::forget(v);
+    ptr
+}
+
+#[no_mangle]
+pub fn deallocate(ptr: *mut c_void, length: usize) {
+    unsafe {
+        std::mem::drop(Vec::from_raw_parts(ptr, 0, length));
+    }
+}
+</pre>
+                </div>
+
+            </div> <!-- col -->
+        </div> <!-- row -->
+
+    </div> <!-- container -->
+
+    <script src="../common.js"></script>
+    <script src="../wasm-ffi.browser.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

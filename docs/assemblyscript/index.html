@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wasm-ffi usage | AssemblyScript</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="../hybrid.min.css" rel="stylesheet" />
+    <link href="../main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="warning-header" class="py-2 hidden">
+        <div class="capped-container-fluid">
+            <p class="m-0">
+                <b>Uh-oh: </b> It looks like this browser doesn't support WebAssembly. Sorry :(
+            </p>
+        </div>
+    </div>
+
+    <div class="header pt-8 pb-8">
+        <div class="capped-container-fluid">
+            <h1>wasm-ffi usage</h1>
+            <p>with AssemblyScript</p>
+        </div>
+    </div>
+
+    <div class="content capped-container-fluid mb-7">
+
+        <nav class="UnderlineNav UnderlineNav--right">
+            <div class="UnderlineNav-actions">
+                <a href="https://github.com/demille/wasm-ffi">
+                    &larr;
+                    <svg style="fill: #444; position: relative; top: 2px; left: 2px;" height="14" width="14" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                        />
+                    </svg>
+                </a>
+            </div>
+
+            <div class="UnderlineNav-body">
+                <a href="../whatlang/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">Demo</span>
+                    <span class="d-md-none">Demo</span>
+                </a>
+                <a href="../c/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">C (dcodeIO/webassembly)</span>
+                    <span class="d-md-none">C</span>
+                </a>
+                <a href="../rust/" class="UnderlineNav-item">
+                    <span class="d-none d-md-block">Rust (wasm32-unknown-unknown)</span>
+                    <span class="d-md-none">Rust</span>
+                </a>
+                <a href="../assemblyscript/" class="UnderlineNav-item selected">
+                    <span class="d-none d-md-block">AssemblyScript</span>
+                    <span class="d-md-none">AssemblyScript</span>
+                </a>
+            </div>
+        </nav>
+
+
+        <div class="row mt-8">
+            <div class="col">
+                <div class="Subhead">
+                    <div class="Subhead-heading" style="font-size: 24px;">
+                        AssemblyScript
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col mb-4">
+                <div class="markdown-body">
+                    <p>
+                        <a href="https://github.com/dcodeIO/webassembly">AssemblyScript</a>
+                        is a project that compiles TypeScript to WebAssembly.
+                    </p>
+                    <p>
+                        The basic build command:
+                        <br/>
+                        <code>asc main.ts -o main.wasm</code>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="src">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// basically JS with some types:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>add</span>(<span class='pt13'>a</span><span class='pt17'>:</span> <span class='pt13'>u32</span>, <span class='pt13'>b</span><span class='pt17'>:</span> <span class='pt13'>u32</span>)<span class='pt17'>:</span> <span class='pt13'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt17'>return</span> <span class='pt10'>a</span> <span class='pt17'>+</span> <span class='pt10'>b</span>;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8 warning-block">
+            <div class="col d-none d-md-block pt-7">
+                <div class="zap"></div>
+            </div>
+            <div class="col-md-6">
+                <div class="Box">
+                    <div class="Box-header flash-warn">
+                        <h3 class="Box-title">
+                            Memory Leaks
+                        </h3>
+                    </div>
+                    <div class="Box-body">
+                        <p>
+                            These examples aren't trying to prevent leaks, so when
+                            you actually go do something, remember to free memory.
+                        </p>
+                        <p>
+                            More about how wasm-ffi handles memory in the
+                            <a href="https://github.com/demille/wasm-ffi#memory-management-recycle">readme</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col d-none d-md-block pt-7">
+                <div class="zap" style="transform: scaleX(-1);"></div>
+            </div>
+        </div>
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Loading
+                        <code>.wasm</code> modules</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To load a
+                        <code>.wasm</code> module, you need to fetch it from the server and then load it with
+                        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/instantiateStreaming">
+                            WebAssembly.instantiateStreaming
+                        </a>. You can do that yourself or
+                        <code>wasm-ffi</code> will do it with
+                        <code>.fetch(url)</code>.
+                    </p>
+                    <p>
+                        For AssemblyScript module's you'll need to set the <code>dialect</code>
+                        option so wasm-ffi will know how to handle strings and arrays.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">JavaScript</a>
+                    </nav>
+                </div>
+                <div class="src">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>Wrapper</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt12'>// WebAssembly function you want to wrap will go here</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  <span class='pt12'>// do_thing: [return_type, [arg_type_1. arg_type_2]]</span></td></tr>
+<tr><td class='ln' data-ln='6'></td><td>}, {</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>  <span class='pt12'>// need to set option for assemblyscript</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td>  dialect: <span class='pt8'>&#39;assemblyscript&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>]});</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='11'></td><td><span class='pt10'>library</span>.<span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>).<span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt12'>// library is now loaded and you can call your wrapped WebAssembly functions:</span></td></tr>
+<tr><td class='ln' data-ln='13'></td><td>    <span class='pt12'>// library.do_thing()</span></td></tr>
+<tr><td class='ln' data-ln='14'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">
+                        <code>.wasm</code> Requirements</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> can read data from WebAssembly memory without any changes to your module. You can
+                        read strings, read struct fields, modify existing struct fields, etc.
+                    </p>
+                    <p>
+                        If your JavaScript needs to allocate any memory (passing strings,
+                        making structs) you need to expose <code>allocate</code> &amp;
+                        <code>deallocate</code> functions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> <span class='pt8'>&#39;allocator/buddy&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>allocate</span>(<span class='pt13'>size</span><span class='pt17'>:</span> <span class='pt13'>usize</span>)<span class='pt17'>:</span> <span class='pt13'>usize</span> {</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt17'>return</span> <span class='pt13'>allocate_memory</span>(<span class='pt10'>size</span>);</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>deallocate</span>(<span class='pt13'>ptr</span><span class='pt17'>:</span> <span class='pt13'>usize</span>)<span class='pt17'>:</span> <span class='pt17'>void</span> {</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    <span class='pt13'>free_memory</span>(<span class='pt10'>ptr</span>);</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Strings</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        The format for wrapping functions is:
+                        <br/>
+                        <code>functionName: [returnType, [...argTypes]]</code>
+                    </p>
+                    <p>
+                        Ex: the <code>say</code> function takes a string pointer and returns a string pointer:
+                        <code>['string', ['string']]</code>
+                    </p>
+                    <p>
+                        <button id="say-hello" class="btn btn-sm mt-2">
+                            say_hello<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// wrap our exported C function `say`:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  say: [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt10'>library</span>.<span class='pt13'>fetch</span>(<span class='pt8'>&#39;main.wasm&#39;</span>).<span class='pt13'>then</span>(() <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>    <span class='pt12'>// call `say` on btn click:</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    <span class='pt13'>$</span>(<span class='pt8'>&#39;#say-hello&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>      <span class='pt13'>alert</span>(<span class='pt10'>library</span>.<span class='pt13'>say</span>(<span class='pt8'>&#39;Hello&#39;</span>));</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    });</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>say</span>(<span class='pt13'>hello</span><span class='pt17'>:</span> <span class='pt17'>string</span>)<span class='pt17'>:</span> <span class='pt17'>string</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt17'>return</span> <span class='pt10'>hello</span> <span class='pt17'>+</span> <span class='pt8'>&#39;, World!&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Arrays</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> supports ArrayBuffers &amp; TypedArrays as an argument type. It will write the arrays
+                        to memory and pass the pointer to your
+                        <code>.wasm</code> function.
+                    </p>
+                    <p>
+                        By default the array will be freed after the function returns.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-sum" class="btn btn-sm mt-2">
+                            get_sum<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="sum-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>  get_sum: [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;array&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-sum&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>  <span class='pt17'>const</span> <span class='pt10'>arr</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>U32Array</span>([<span class='pt7'>1</span>, <span class='pt7'>1</span>, <span class='pt7'>2</span>, <span class='pt7'>3</span>, <span class='pt7'>5</span>, <span class='pt7'>8</span>, <span class='pt7'>13</span>, <span class='pt7'>21</span>]);</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>  <span class='pt17'>const</span> <span class='pt10'>sum</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>get_sum</span>(<span class='pt10'>arr</span>);</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#sum-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt8'>`Sum of ${</span><span class='pt10'>arr</span><span class='pt8'>} is: ${</span><span class='pt10'>sum</span><span class='pt8'>}`</span>;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>get_sum</span>(<span class='pt13'>arr</span><span class='pt17'>:</span> <span class='pt13'>u32</span>[])<span class='pt17'>:</span> <span class='pt13'>usize</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt17'>let</span> <span class='pt10'>result</span> <span class='pt17'>=</span> <span class='pt7'>0</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt17'>for</span> (<span class='pt17'>let</span> <span class='pt10'>i</span> <span class='pt17'>=</span> <span class='pt7'>0</span>; <span class='pt10'>i</span> <span class='pt17'>&lt;</span> <span class='pt10'>arr</span>.<span class='pt7'>length</span>; <span class='pt10'>i</span><span class='pt17'>++</span>) {</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>        <span class='pt10'>result</span> <span class='pt17'>+=</span> <span class='pt10'>arr</span>[<span class='pt10'>i</span>];</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    }</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>    <span class='pt17'>return</span> <span class='pt10'>result</span>;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Pointers</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A
+                        <code>Pointer</code> object encapsulates a reference to wasm memory.
+                    </p>
+                    <ul>
+                        <li>
+                            <code>.ref()</code>: get memory address</li>
+                        <li>
+                            <code>.deref()</code>: get data</li>
+                        <li>
+                            <code>.set(value)</code>: set pointers value</li>
+                        <li>
+                            <code>.free()</code>: free from wasm memory</li>
+                    </ul>
+                    <p>
+                        Create a new pointer with
+                        <code>new Pointer(type, value)</code>.
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-pointer" class="btn btn-sm mt-2">
+                            get_pointer<span>()</span>
+                        </button>
+                        <button id="pass-pointer" class="btn btn-sm mt-2">
+                            pass_pointer<span>()</span>
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="pointer-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>types</span>, <span class='pt10'>Pointer</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>  get_pointer: [<span class='pt10'>types</span>.<span class='pt13'>pointer</span>(<span class='pt8'>&#39;u32&#39;</span>)],</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  pass_pointer: [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt10'>types</span>.<span class='pt13'>pointer</span>(<span class='pt8'>&#39;u32&#39;</span>)]],</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-pointer&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>get_pointer</span>();</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt8'>`Value ${</span><span class='pt10'>ptr</span><span class='pt8'>.</span><span class='pt13'>deref</span><span class='pt8'>()} is located @ ${</span><span class='pt10'>ptr</span><span class='pt8'>.</span><span class='pt13'>ref</span><span class='pt8'>()}`</span>;</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#pass-pointer&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>  <span class='pt17'>const</span> <span class='pt10'>ptr</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>ffi</span>.<span class='pt13'>Pointer</span>(<span class='pt8'>&#39;u32&#39;</span>, <span class='pt7'>365</span>);</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>  <span class='pt17'>const</span> <span class='pt10'>value</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>pass_pointer</span>(<span class='pt10'>ptr</span>);</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#pointer-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt8'>`Wasm read ${</span><span class='pt10'>value</span><span class='pt8'>} from the pointer you sent`</span>;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>get_pointer</span>()<span class='pt17'>:</span> <span class='pt13'>usize</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt17'>let</span> <span class='pt10'>value</span><span class='pt17'>:</span> <span class='pt13'>u32</span> <span class='pt17'>=</span> <span class='pt7'>333</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt17'>let</span> <span class='pt10'>ptr</span> <span class='pt17'>=</span> <span class='pt13'>allocate_memory</span>(<span class='pt7'>4</span>);</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>    <span class='pt13'>store</span>&lt;<span class='pt13'>u32</span>&gt;(<span class='pt10'>ptr</span>, <span class='pt10'>value</span>);</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>    <span class='pt17'>return</span> <span class='pt10'>ptr</span>;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>pass_pointer</span>(<span class='pt13'>ptr</span><span class='pt17'>:</span> <span class='pt13'>usize</span>)<span class='pt17'>:</span> <span class='pt13'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>    <span class='pt17'>return</span> <span class='pt13'>load</span>&lt;<span class='pt13'>u32</span>&gt;(<span class='pt10'>ptr</span>);</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        <code>wasm-ffi</code> wraps struct pointers into objects that let you access fields.
+                    </p>
+                    <p>
+                        To use a struct you first have to define a struct type. The order of the properties should be the same as
+                        your AssemblyScript definition. Use this new <code>Struct</code> type in your wrapped function signatures.
+                    </p>
+                    <p>
+                        You can get the memory address of a struct with
+                        <code>.ref()</code>
+                        and you can free it from memory with
+                        <code>.free()</code>
+                    </p>
+                    <p class="mb-4">
+                        <button id="get-person" class="btn btn-sm mt-2">
+                            get_person<span>()</span>
+                        </button>
+                        <button id="modify-person" class="btn btn-sm mt-2">
+                            modify person
+                        </button>
+                    </p>
+
+                    <div class="log">
+                        <pre id="person-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>import</span> { <span class='pt10'>Struct</span> } <span class='pt17'>from</span> <span class='pt8'>&#39;wasm-ffi&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt12'>// define a new struct type: Person</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td><span class='pt17'>const</span> <span class='pt10'>Person</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>  name: <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>  age: <span class='pt8'>&#39;u8&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>  favorite_number: <span class='pt8'>&#39;u32&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  get_person: [<span class='pt10'>Person</span>],</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  person_facts: [<span class='pt8'>&#39;string&#39;</span>, [<span class='pt10'>Person</span>]],</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='16'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#get-person&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>get_person</span>();</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>  <span class='pt17'>const</span> <span class='pt10'>about</span> <span class='pt17'>=</span> <span class='pt8'>`${</span><span class='pt10'>p</span><span class='pt8'>.</span><span class='pt7'>name</span><span class='pt8'>} is ${</span><span class='pt10'>p</span><span class='pt8'>.</span><span class='pt10'>age</span><span class='pt8'>}. His favorite number is ${</span><span class='pt10'>p</span><span class='pt8'>.</span><span class='pt10'>favorite_number</span><span class='pt8'>}.`</span>;</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt10'>about</span>;</td></tr>
+<tr><td class='ln' data-ln='22'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='23'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='24'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#modify-person&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='25'></td><td>  <span class='pt12'>// modify the properties of a struct:</span></td></tr>
+<tr><td class='ln' data-ln='26'></td><td>  <span class='pt17'>const</span> <span class='pt10'>p</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>get_person</span>();</td></tr>
+<tr><td class='ln' data-ln='27'></td><td>  <span class='pt10'>p</span>.<span class='pt10'>age</span> <span class='pt17'>=</span> <span class='pt7'>255</span>;</td></tr>
+<tr><td class='ln' data-ln='28'></td><td>  <span class='pt10'>p</span>.<span class='pt10'>favorite_number</span> <span class='pt17'>=</span> <span class='pt7'>100</span>;</td></tr>
+<tr><td class='ln' data-ln='29'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='30'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt8'>`New age: ${</span><span class='pt10'>p</span><span class='pt8'>.</span><span class='pt10'>age</span><span class='pt8'>}</span><span class='pt7'>\n</span><span class='pt8'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='31'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>+=</span> <span class='pt8'>`New favorite: ${</span><span class='pt10'>p</span><span class='pt8'>.</span><span class='pt10'>favorite_number</span><span class='pt8'>}</span><span class='pt7'>\n</span><span class='pt8'>`</span>;</td></tr>
+<tr><td class='ln' data-ln='32'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#person-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>+=</span> <span class='pt10'>library</span>.<span class='pt13'>person_facts</span>(<span class='pt10'>p</span>);</td></tr>
+<tr><td class='ln' data-ln='33'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>class</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt13'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt13'>age</span><span class='pt17'>:</span> <span class='pt13'>u8</span>;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt13'>favorite_number</span><span class='pt17'>:</span> <span class='pt13'>u32</span>;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    <span class='pt17'>constructor</span>(<span class='pt13'>name</span><span class='pt17'>:</span> <span class='pt17'>string</span>, <span class='pt13'>age</span><span class='pt17'>:</span> <span class='pt13'>u8</span>, <span class='pt13'>favorite_number</span><span class='pt17'>:</span> <span class='pt13'>u32</span>) {</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>        <span class='pt7'>this</span>.<span class='pt7'>name</span> <span class='pt17'>=</span> <span class='pt10'>name</span>;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>        <span class='pt7'>this</span>.<span class='pt10'>age</span> <span class='pt17'>=</span> <span class='pt10'>age</span>;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>        <span class='pt7'>this</span>.<span class='pt10'>favorite_number</span> <span class='pt17'>=</span> <span class='pt10'>favorite_number</span>;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    }</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='13'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>get_person</span>()<span class='pt17'>:</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>    <span class='pt17'>return</span> <span class='pt17'>new</span> <span class='pt13'>Person</span>(<span class='pt8'>&#39;Jean-Luc Picard&#39;</span>, <span class='pt7'>61</span>, <span class='pt7'>1701</span>);</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>person_facts</span>(<span class='pt13'>p</span><span class='pt17'>:</span> <span class='pt13'>Person</span>)<span class='pt17'>:</span> <span class='pt17'>string</span> {</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>    <span class='pt17'>return</span> (<span class='pt10'>p</span>.<span class='pt10'>age</span> <span class='pt17'>&gt;</span> <span class='pt10'>p</span>.<span class='pt10'>favorite_number</span>)</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>        <span class='pt17'>?</span> <span class='pt10'>p</span>.<span class='pt7'>name</span> <span class='pt17'>+</span> <span class='pt8'>&#39; is older than his favorite_number&#39;</span></td></tr>
+<tr><td class='ln' data-ln='20'></td><td>        <span class='pt17'>:</span> <span class='pt10'>p</span>.<span class='pt7'>name</span> <span class='pt17'>+</span> <span class='pt8'>&#39; is younger than his favorite_number&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Structs: creating from JavaScript</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        A struct definition (like above) is also a constructor you can use to make new structs from JS. Any struct made in JS will
+                        get written to memory the first time it is used in a WebAssembly function.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input id="name" type="text" class="form-control input-sm" value="Black Francis">
+                        </div>
+                        <div class="form-group">
+                            <label>Age:</label>
+                            <input id="age" type="text" class="form-control input-sm" value="52">
+                        </div>
+                        <div class="form-group">
+                            <label>Favorite Number:</label>
+                            <input id="num" type="text" class="form-control input-sm" value="13">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="make-person" class="btn btn-sm">
+                                make person
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="make-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>const</span> <span class='pt10'>Person</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Struct</span>({</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>  name: <span class='pt8'>&#39;string&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  age: <span class='pt8'>&#39;u8&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>  favorite_number: <span class='pt8'>&#39;u32&#39;</span>,</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#make-person&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>  <span class='pt17'>const</span> <span class='pt10'>name</span> <span class='pt17'>=</span> <span class='pt13'>$</span>(<span class='pt8'>&#39;#name&#39;</span>).<span class='pt7'>value</span>;</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>  <span class='pt17'>const</span> <span class='pt10'>age</span> <span class='pt17'>=</span> <span class='pt13'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#age&#39;</span>).<span class='pt7'>value</span>);</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  <span class='pt17'>const</span> <span class='pt10'>num</span> <span class='pt17'>=</span> <span class='pt13'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt8'>&#39;#num&#39;</span>).<span class='pt7'>value</span>);</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>  <span class='pt17'>const</span> <span class='pt10'>person</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Person</span>({</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>    name: <span class='pt10'>name</span>,</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>    age: <span class='pt10'>age</span>,</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>    favorite_number: <span class='pt10'>num</span>,</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  });</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='20'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#make-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>person_facts</span>(<span class='pt10'>person</span>);</td></tr>
+<tr><td class='ln' data-ln='21'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>class</span> <span class='pt13'>Person</span> {</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>    <span class='pt13'>name</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>    <span class='pt13'>age</span><span class='pt17'>:</span> <span class='pt13'>u8</span>;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt13'>favorite_number</span><span class='pt17'>:</span> <span class='pt13'>u32</span>;</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    <span class='pt17'>constructor</span>(<span class='pt13'>name</span><span class='pt17'>:</span> <span class='pt17'>string</span>, <span class='pt13'>age</span><span class='pt17'>:</span> <span class='pt13'>u8</span>, <span class='pt13'>favorite_number</span><span class='pt17'>:</span> <span class='pt13'>u32</span>) {</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>        <span class='pt7'>this</span>.<span class='pt7'>name</span> <span class='pt17'>=</span> <span class='pt10'>name</span>;</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>        <span class='pt7'>this</span>.<span class='pt10'>age</span> <span class='pt17'>=</span> <span class='pt10'>age</span>;</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>        <span class='pt7'>this</span>.<span class='pt10'>favorite_number</span> <span class='pt17'>=</span> <span class='pt10'>favorite_number</span>;</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    }</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>}</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='13'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>person_facts</span>(<span class='pt13'>p</span><span class='pt17'>:</span> <span class='pt13'>Person</span>)<span class='pt17'>:</span> <span class='pt17'>string</span> {</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>    <span class='pt17'>return</span> (<span class='pt10'>p</span>.<span class='pt10'>age</span> <span class='pt17'>&gt;</span> <span class='pt10'>p</span>.<span class='pt10'>favorite_number</span>)</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>        <span class='pt17'>?</span> <span class='pt10'>p</span>.<span class='pt7'>name</span> <span class='pt17'>+</span> <span class='pt8'>&#39; is older than his favorite_number&#39;</span></td></tr>
+<tr><td class='ln' data-ln='16'></td><td>        <span class='pt17'>:</span> <span class='pt10'>p</span>.<span class='pt7'>name</span> <span class='pt17'>+</span> <span class='pt8'>&#39; is younger than his favorite_number&#39;</span>;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+                <div class="Subhead">
+                    <div class="Subhead-heading">Calling JS functions from AssemblyScript</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        To call a JS function from AssemblyScript you need to
+                        import the JS function into your wasm module. These functions
+                        need to be in the <code>env</code> namespace.
+                    </p>
+                    <p class="mb-4">
+                        <button id="barrel-roll" class="btn btn-sm mt-2">
+                            do a barrel_roll<span>()</span>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// `barrel_roll` will call the `rotate` function below</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  barrel_roll: [], <span class='pt12'>// no arguments</span></td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt12'>// this needs to be done before `library.fetch(&#39;main.wasm&#39;)`</span></td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt10'>library</span>.<span class='pt13'>imports</span>({</td></tr>
+<tr><td class='ln' data-ln='8'></td><td>  env: {</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>    <span class='pt13'>rotate</span>: <span class='pt17'>function</span>() {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>      <span class='pt13'>$</span>(<span class='pt8'>&#39;body&#39;</span>).<span class='pt10'>classList</span>.<span class='pt13'>toggle</span>(<span class='pt8'>&#39;rotate&#39;</span>);</td></tr>
+<tr><td class='ln' data-ln='11'></td><td>    },</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>  },</td></tr>
+<tr><td class='ln' data-ln='13'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='15'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='16'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='17'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#barrel-roll&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>  <span class='pt10'>library</span>.<span class='pt13'>barrel_roll</span>();</td></tr>
+<tr><td class='ln' data-ln='19'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt17'>declare</span> <span class='pt17'>function</span> <span class='pt13'>rotate</span>()<span class='pt17'>:</span> <span class='pt17'>void</span>;</td></tr>
+<tr><td class='ln' data-ln='2'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>barrel_roll</span>()<span class='pt17'>:</span> <span class='pt17'>void</span> {</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>    <span class='pt13'>rotate</span>();</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row mt-8">
+            <div class="col mb-4">
+
+                <div class="Subhead">
+                    <div class="Subhead-heading">Import wrapper</div>
+                </div>
+                <div class="markdown-body">
+                    <p>
+                        You can also wrap imported functions using the same notation as with a
+                        <code>Wrapper</code>. The last argument is the function to wrap. This will convert the inputs and outputs
+                        of the function to the right types.
+                    </p>
+                    <form class="pt-1" action="javascript:void(0);">
+                        <div class="form-group">
+                            <label>Number:</label>
+                            <input id="number" type="text" class="form-control input-sm" value="777">
+                        </div>
+                        <div class="form-group">
+                            <label></label>
+                            <button id="multiply" class="btn btn-sm">
+                                mulitply_input<span>()</span>
+                            </button>
+                        </div>
+                    </form>
+                    <div class="log">
+                        <pre id="multiply-log">&nbsp;</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="tabnav">
+                    <nav class="tabnav-tabs">
+                        <a class="tabnav-tab selected" data-target="js">JavaScript</a>
+                        <a class="tabnav-tab" data-target="as">AssemblyScript</a>
+                    </nav>
+                </div>
+
+                <div class="src" data-tab="js">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// `multiply_input` will call `get_input_value` below:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>const</span> <span class='pt10'>library</span> <span class='pt17'>=</span> <span class='pt17'>new</span> <span class='pt13'>Wrapper</span>({</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>  multiply_input: [<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]],</td></tr>
+<tr><td class='ln' data-ln='4'></td><td>});</td></tr>
+<tr><td class='ln' data-ln='5'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='6'></td><td><span class='pt12'>// change imports to a callback to expose the wrap fn</span></td></tr>
+<tr><td class='ln' data-ln='7'></td><td><span class='pt12'>// (remember to return an object here with the extra parenthesis: `({ ... })`)</span></td></tr>
+<tr><td class='ln' data-ln='8'></td><td><span class='pt10'>library</span>.<span class='pt13'>imports</span>(<span class='pt13'>wrap</span> <span class='pt17'>=&gt;</span> ({</td></tr>
+<tr><td class='ln' data-ln='9'></td><td>  env: {</td></tr>
+<tr><td class='ln' data-ln='10'></td><td>    <span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='11'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='12'></td><td>    <span class='pt12'>// `get_input_value` takes a string and returns a number</span></td></tr>
+<tr><td class='ln' data-ln='13'></td><td>    get_input_value: <span class='pt13'>wrap</span>([<span class='pt8'>&#39;number&#39;</span>, [<span class='pt8'>&#39;string&#39;</span>]], (<span class='pt13'>selector</span>) <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='14'></td><td>      <span class='pt17'>return</span> <span class='pt13'>parseInt</span>(<span class='pt13'>$</span>(<span class='pt10'>selector</span>).<span class='pt7'>value</span>);</td></tr>
+<tr><td class='ln' data-ln='15'></td><td>    }),</td></tr>
+<tr><td class='ln' data-ln='16'></td><td>  },</td></tr>
+<tr><td class='ln' data-ln='17'></td><td>}));</td></tr>
+<tr><td class='ln' data-ln='18'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='19'></td><td><span class='pt12'>// ...</span></td></tr>
+<tr><td class='ln' data-ln='20'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='21'></td><td><span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply&#39;</span>).<span class='pt13'>addEventListener</span>(<span class='pt8'>&#39;click&#39;</span>, () <span class='pt17'>=&gt;</span> {</td></tr>
+<tr><td class='ln' data-ln='22'></td><td>  <span class='pt12'>// gets the &lt;input&gt;.value and multiplies it by 2</span></td></tr>
+<tr><td class='ln' data-ln='23'></td><td>  <span class='pt17'>const</span> <span class='pt10'>number</span> <span class='pt17'>=</span> <span class='pt10'>library</span>.<span class='pt13'>multiply_input</span>(<span class='pt8'>&#39;body #number&#39;</span>);</td></tr>
+<tr><td class='ln' data-ln='24'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='25'></td><td>  <span class='pt13'>$</span>(<span class='pt8'>&#39;#multiply-log&#39;</span>).<span class='pt10'>innerText</span> <span class='pt17'>=</span> <span class='pt8'>`Result: ${</span><span class='pt10'>number</span><span class='pt8'>}`</span>;</td></tr>
+<tr><td class='ln' data-ln='26'></td><td>});</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">index.js</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+
+                <div class="src hidden" data-tab="as">
+                    <div class='paint-bordered'><div class='paint'>
+<table>
+<tr><td class='ln' data-ln='1'></td><td><span class='pt12'>// does `document.querySelector()` and parses the `.value` of the element:</span></td></tr>
+<tr><td class='ln' data-ln='2'></td><td><span class='pt17'>declare</span> <span class='pt17'>function</span> <span class='pt13'>get_input_value</span>(<span class='pt13'>msg</span><span class='pt17'>:</span> <span class='pt17'>string</span>)<span class='pt17'>:</span> <span class='pt13'>u32</span>;</td></tr>
+<tr><td class='ln' data-ln='3'></td><td>&#10;</td></tr>
+<tr><td class='ln' data-ln='4'></td><td><span class='pt12'>// multiplies the value contained in a given DOM selector:</span></td></tr>
+<tr><td class='ln' data-ln='5'></td><td><span class='pt17'>export</span> <span class='pt17'>function</span> <span class='pt13'>multiply_input</span>(<span class='pt13'>dom_selector</span><span class='pt17'>:</span> <span class='pt8'>&#39;string&#39;</span>)<span class='pt17'>:</span> <span class='pt13'>u32</span> {</td></tr>
+<tr><td class='ln' data-ln='6'></td><td>    <span class='pt17'>return</span> <span class='pt13'>get_input_value</span>(<span class='pt10'>dom_selector</span>) <span class='pt17'>*</span> <span class='pt7'>2</span>;</td></tr>
+<tr><td class='ln' data-ln='7'></td><td>}</td></tr>
+</table>
+</div>
+
+        <div class="info footer">
+            <span class="left">main.ts</span>
+            <span class="right"></span>
+        </div>
+    </div>
+                </div>
+            </div>
+            <!-- col -->
+        </div>
+        <!-- row -->
+
+
+        <div class="row pb-5"></div>
+
+    </div>
+    <!-- container -->
+
+
+    <script src="../common.js"></script>
+    <script src="../wasm-ffi.browser.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>

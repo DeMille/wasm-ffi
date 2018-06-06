@@ -340,6 +340,12 @@ pub fn give_vec_shorts(ptr: *mut Vec<u16>) -> u16 {
 }
 
 #[no_mangle]
+pub fn give_slice_shorts(ptr: *mut &[u16]) -> u16 {
+    let slice = unsafe { Box::from_raw(ptr) };
+    slice.iter().sum()
+}
+
+#[no_mangle]
 pub fn borrow_rust_str(ptr: *mut &str) -> usize {
     let string = unsafe { &*ptr };
     string.len()

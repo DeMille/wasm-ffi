@@ -88,7 +88,7 @@ function demangle(mangled = '') {
   });
 
   // make sure last label is included
-  if (label) labels.push(label);
+  labels.push(label);
 
   // if the last element is a hash, exclude it so the result is more readable
   if (isHash(labels.slice(-1)[0])) labels.pop();

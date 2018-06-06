@@ -74,13 +74,11 @@ var ffi =
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.parseType = exports.CString = exports.Pointer = exports.CustomType = exports.types = undefined;
+exports.parseType = exports.StringPointer = exports.Pointer = exports.CustomType = exports.types = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _encoding = __webpack_require__(1);
-
-var _misc = __webpack_require__(2);
+var _misc = __webpack_require__(1);
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -111,19 +109,15 @@ var CustomType = function () {
     value: function write(view, value) {
       (0, _misc.assert)(value instanceof ArrayBuffer || ArrayBuffer.isView(value), 'Value must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
 
-      var buf = ArrayBuffer.isView(value) ? new Uint8Array(value.buffer, value.byteOffset, value.byteLength) : new Uint8Array(value);
-
-      var uint8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
-
-      uint8.set(buf);
+      (0, _misc.toUint8Array)(view).set((0, _misc.toUint8Array)(value));
     }
   }]);
 
   return CustomType;
 }();
 
-var Signed = function Signed(width) {
-  _classCallCheck(this, Signed);
+var SignedInteger = function SignedInteger(width) {
+  _classCallCheck(this, SignedInteger);
 
   this.width = width;
   this.alignment = width;
@@ -139,8 +133,8 @@ var Signed = function Signed(width) {
   };
 };
 
-var Unsigned = function Unsigned(width) {
-  _classCallCheck(this, Unsigned);
+var UnsignedInteger = function UnsignedInteger(width) {
+  _classCallCheck(this, UnsignedInteger);
 
   this.width = width;
   this.alignment = width;
@@ -167,12 +161,12 @@ types.void = {
   write: function write() {}
 };
 
-types.int8 = new Signed(1);
-types.int16 = new Signed(2);
-types.int32 = new Signed(4);
-types.uint8 = new Unsigned(1);
-types.uint16 = new Unsigned(2);
-types.uint32 = new Unsigned(4);
+types.int8 = new SignedInteger(1);
+types.int16 = new SignedInteger(2);
+types.int32 = new SignedInteger(4);
+types.uint8 = new UnsignedInteger(1);
+types.uint16 = new UnsignedInteger(2);
+types.uint32 = new UnsignedInteger(4);
 
 types.int64 = new CustomType(8);
 types.uint64 = new CustomType(8);
@@ -221,17 +215,22 @@ var Pointer = function () {
 
     this.type = parseType(type);
     this.view = null;
-    this._free = null;
+    this.wrapper = null;
+
     this._temp = value;
   }
 
   _createClass(Pointer, [{
-    key: 'attach',
-    value: function attach(view, free) {
-      this.view = view;
-      this._free = free;
-
-      if (this._temp) this.set(this._temp);
+    key: 'size',
+    value: function size() {
+      return this.type.width;
+    }
+  }, {
+    key: 'commit',
+    value: function commit() {
+      if (this._temp) {
+        this.type.write(this.view, this._temp, this.wrapper);
+      }
     }
   }, {
     key: 'ref',
@@ -242,13 +241,13 @@ var Pointer = function () {
     key: 'deref',
     value: function deref() {
       (0, _misc.assert)(this.view, 'Trying to deref an unallocated pointer');
-      return this.type.read(this.view, this._free);
+      return this.type.read(this.view, this.wrapper);
     }
   }, {
     key: 'set',
     value: function set(value) {
       if (this.view) {
-        this.type.write(this.view, value, this._free);
+        this.type.write(this.view, value, this.wrapper);
       } else {
         this._temp = value;
       }
@@ -258,9 +257,13 @@ var Pointer = function () {
     value: function free() {
       (0, _misc.assert)(this.view, 'Cant free pointer: unallocated / already freed');
 
-      this._free(this.ref(), this.type.width);
-      this._free = null;
+      this.wrapper.free(this.ref(), this.type.width);
       this.view = null;
+    }
+  }, {
+    key: 'toString',
+    value: function toString() {
+      return this.ref() ? 'Pointer( ' + this.deref() + ' )' : 'Pointer( null )';
     }
   }]);
 
@@ -276,60 +279,53 @@ types.pointer = function (typedef) {
     alignment: 4,
     isPointer: true,
 
-    read: function read(view, free) {
+    read: function read(view, wrapper) {
       var addr = view.getUint32(0, true /* little-endian */);
+      var data = new DataView(view.buffer, addr, type.width);
 
       var pointer = new Pointer(type);
-      pointer.view = new DataView(view.buffer, addr, type.width);
-      pointer._free = free;
+      pointer.view = data;
+      pointer.wrapper = wrapper;
 
       return pointer;
     },
-    write: function write(view, value) {
+    write: function write(view, value, wrapper) {
       (0, _misc.assert)(value instanceof Pointer, 'Trying to write ' + value + ' as a pointer');
-      (0, _misc.assert)(value.ref(), 'Cant write pointer, hasnt been allocated yet');
+
+      if (!value.ref()) wrapper.writePointer(value);
       view.setUint32(0, value.ref(), true /* little-endian */);
     }
   };
 };
 
-// A pointer to a null-terminated string
+var StringPointer = function () {
+  function StringPointer(value) {
+    _classCallCheck(this, StringPointer);
 
-var CString = function () {
-  function CString(value, free) {
-    _classCallCheck(this, CString);
-
-    this.type = {
-      isPointer: true,
-      width: null
-    };
     this.view = null;
-    this._temp = null;
-    this._free = null;
+    this.wrapper = null;
 
-    if (typeof value === 'string') {
-      this._temp = new _encoding.Encoder().encode(value);
-      this.type.width = this._temp.byteLength + 1;
-    }
-
-    if (value instanceof DataView) {
-      this.view = value;
-      this._free = free;
-      this.type.width = value.byteLength;
-    }
+    this._tempStr = value;
+    this._tempBuf = null;
+    this._width = null;
   }
 
-  _createClass(CString, [{
-    key: 'attach',
-    value: function attach(view, free) {
-      this.view = view;
-      this._free = free;
+  _createClass(StringPointer, [{
+    key: 'size',
+    value: function size() {
+      this._tempBuf = this.wrapper.encodeString(this._tempStr);
+      this._width = this._tempBuf.byteLength;
 
-      if (this._temp) {
-        var memory = new Uint8Array(view.buffer);
+      return this._width;
+    }
+  }, {
+    key: 'commit',
+    value: function commit() {
+      (0, _misc.assert)(!!this.view, 'Cant commit StringPointer, no view!');
 
-        memory.set(this._temp, view.byteOffset);
-        memory[view.byteOffset + this.type.width - 1] = 0;
+      if (this._tempBuf) {
+        var memory = new Uint8Array(this.view.buffer);
+        memory.set(this._tempBuf, this.view.byteOffset);
       }
     }
   }, {
@@ -340,63 +336,51 @@ var CString = function () {
   }, {
     key: 'deref',
     value: function deref() {
-      (0, _misc.assert)(this.view, 'Trying to deref an unallocated CString');
-
-      var memory = new Uint8Array(this.view.buffer);
-      var addr = this.view.byteOffset;
-      var end = addr + this.type.width - 1;
-
-      // `subarray` uses the same underlying ArrayBuffer
-      var buf = new Uint8Array(memory.subarray(addr, end));
-      var str = new _encoding.Decoder().decode(buf);
-
-      return str;
+      (0, _misc.assert)(this.view, 'Trying to deref an unallocated StringPointer');
+      return this.wrapper.decodeString(this.view);
     }
   }, {
     key: 'free',
     value: function free() {
-      (0, _misc.assert)(!!this.view, 'Cant free cstring: unallocated / already freed');
-
-      this._free(this.ref(), this.type.width);
-      this._free = null;
+      (0, _misc.assert)(!!this.view, 'Cant free StringPointer: unallocated / already freed');
+      this.wrapper.free(this.ref(), this._width);
       this.view = null;
-    }
-  }, {
-    key: 'valueOf',
-    value: function valueOf() {
-      return this.deref();
-    }
-  }, {
-    key: 'toString',
-    value: function toString() {
-      return this.deref();
     }
   }]);
 
-  return CString;
+  return StringPointer;
 }();
+
+Object.defineProperty(StringPointer.prototype, 'value', {
+  enumerable: true,
+
+  get: function get() {
+    return this.deref();
+  }
+});
+
+(0, _misc.addStringFns)(StringPointer);
 
 types.string = {
   width: 4,
   alignment: 4,
   isPointer: true,
 
-  read: function read(view, free) {
-    var memory = new Uint8Array(view.buffer);
+  read: function read(view, wrapper) {
     var addr = view.getUint32(0, true /* little-endian */);
-    var end = addr;
 
-    // find null byte
-    while (memory[end]) {
-      ++end;
-    }var length = end - addr + 1;
-    var data = new DataView(view.buffer, addr, length);
+    var pointer = new StringPointer();
+    pointer.view = wrapper.readStringView(addr);
+    pointer.wrapper = wrapper;
 
-    return new CString(data, free);
+    return pointer;
   },
-  write: function write(view, value) {
-    (0, _misc.assert)(value instanceof CString, 'value must be a `CString`');
-    (0, _misc.assert)(value.ref(), 'Cant write CString, hasnt been allocated yet');
+  write: function write(view, value, wrapper) {
+    if (typeof value === 'string') {
+      value = new StringPointer(value);
+    }
+
+    if (!value.ref()) wrapper.writePointer(value);
     view.setUint32(0, value.ref(), true /* little-endian */);
   }
 };
@@ -416,26 +400,26 @@ var ArrayType = function () {
 
   _createClass(ArrayType, [{
     key: 'read',
-    value: function read(view, free) {
+    value: function read(view, wrapper) {
       var arr = [];
 
       for (var i = 0; i <= this.length - 1; i++) {
         var subview = (0, _misc.vslice)(view, i * this.type.width, this.type.width);
-        arr.push(this.type.read(subview, free));
+        arr.push(this.type.read(subview, wrapper));
       }
 
       return arr;
     }
   }, {
     key: 'write',
-    value: function write(view, values) {
+    value: function write(view, values, wrapper) {
       var _this = this;
 
       (0, _misc.assert)(values.length === this.length, 'Values length does not match struct array length');
 
       values.forEach(function (value, i) {
         var subview = (0, _misc.vslice)(view, i * _this.type.width, _this.type.width);
-        _this.type.write(subview, value);
+        _this.type.write(subview, value, wrapper);
       });
     }
   }]);
@@ -515,7 +499,7 @@ function parseType(typedef) {
 exports.types = types;
 exports.CustomType = CustomType;
 exports.Pointer = Pointer;
-exports.CString = CString;
+exports.StringPointer = StringPointer;
 exports.parseType = parseType;
 
 /***/ }),
@@ -528,12 +512,140 @@ exports.parseType = parseType;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.assert = assert;
+exports.vslice = vslice;
+exports.toUint8Array = toUint8Array;
+exports.isNil = isNil;
+exports.addStringFns = addStringFns;
+exports.addArrayFns = addArrayFns;
+exports.makeIterable = makeIterable;
+// simple assert, throws if assertion fails
+// also matches args to %s formatters
+function assert(condition, errMsg) {
+  for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+    args[_key - 2] = arguments[_key];
+  }
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+  if (condition) return;
+  if (!args || !args.length) throw new Error(errMsg);
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+  var msg = '';
+  var strings = void 0;
+
+  try {
+    strings = args.map(function (arg) {
+      return JSON.stringify(arg, null, 2);
+    });
+  } catch (e) {
+    throw new Error(errMsg);
+  }
+
+  errMsg.split('%s').forEach(function (part) {
+    msg += part;
+    if (strings.length) msg += strings.pop();
+  });
+
+  throw new Error(msg);
+}
+
+// takes a subslice of a DataView
+function vslice(view, start, length) {
+  return new DataView(view.buffer, view.byteOffset + start, length);
+}
+
+function toUint8Array(arr) {
+  return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+}
+
+function isNil(thing) {
+  return thing === null || typeof thing === 'undefined';
+}
+
+var has = function has(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+};
+var isFunction = function isFunction(thing) {
+  return typeof thing === 'function';
+};
+
+function addStringFns(StringLike) {
+  assert(!!has(StringLike.prototype, 'value'), 'Missing `value` property');
+
+  Object.getOwnPropertyNames(String.prototype).forEach(function (prop) {
+    if (has(StringLike.prototype, prop)) return;
+    if (!isFunction(String.prototype[prop])) return;
+
+    StringLike.prototype[prop] = function () {
+      var _value;
+
+      return (_value = this.value)[prop].apply(_value, arguments);
+    };
+  });
+}
+
+function addArrayFns(ArrayLike) {
+  assert(!!has(ArrayLike.prototype, 'values'), 'Missing `values` property');
+
+  Object.getOwnPropertyNames(Array.prototype).forEach(function (prop) {
+    if (has(ArrayLike.prototype, prop)) return;
+    if (!isFunction(Array.prototype[prop])) return;
+
+    ArrayLike.prototype[prop] = function () {
+      var _values;
+
+      return (_values = this.values)[prop].apply(_values, arguments);
+    };
+  });
+}
+
+function makeIterable(ArrayLike) {
+  assert(!!has(ArrayLike.prototype, 'values'), 'Missing `values` property');
+  assert(!!has(ArrayLike.prototype, 'length'), 'Missing `length` property');
+
+  ArrayLike.prototype[Symbol.iterator] = function () {
+    var values = this.values;
+    var length = this.length;
+    var i = 0;
+
+    return {
+      next: function next() {
+        return i < length ? { value: values[i++], done: false } : { done: true };
+      }
+    };
+  };
+}
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function encodeUTF16(str) {
+  var buf = new ArrayBuffer(str.length * 2); // 2 per char
+  var arr = new Uint16Array(buf);
+
+  for (var i = 0; i < str.length; i++) {
+    arr[i] = str.charCodeAt(i);
+  }
+
+  return new Uint8Array(buf);
+}
+
+function decodeUTF16(buf) {
+  var len = buf.byteLength;
+  var num = len % 2 ? (len + 1) / 2 : len / 2;
+  var pts = new Uint16Array(buf.buffer, buf.byteOffset, num);
+
+  return String.fromCharCode.apply(String, _toConsumableArray(pts));
+}
 
 // utf8 decode/encode adapted from the buffer module
 // @ github.com/feross/buffer
@@ -704,47 +816,25 @@ function decodeUTF8(buf) {
   return str;
 }
 
-var EncoderPolyfill = function () {
-  function EncoderPolyfill() {
-    _classCallCheck(this, EncoderPolyfill);
-  }
+function encode(str, type) {
+  if (type === 'utf-16') return encodeUTF16(str);
 
-  _createClass(EncoderPolyfill, [{
-    key: 'encode',
-    value: function encode(str) {
-      return encodeUTF8(str);
-    }
-  }]);
+  return typeof TextEncoder !== 'undefined' ? new TextEncoder().encode(str) : encodeUTF8(str);
+}
 
-  return EncoderPolyfill;
-}();
+function decode(str, type) {
+  if (type === 'utf-16') return decodeUTF16(str);
 
-var DecoderPolyfill = function () {
-  function DecoderPolyfill() {
-    _classCallCheck(this, DecoderPolyfill);
-  }
+  return typeof TextDecoder !== 'undefined' ? new TextDecoder().decode(str) : decodeUTF8(str);
+}
 
-  _createClass(DecoderPolyfill, [{
-    key: 'decode',
-    value: function decode(view) {
-      return decodeUTF8(view);
-    }
-  }]);
-
-  return DecoderPolyfill;
-}();
-
-var Encoder = typeof TextEncoder !== 'undefined' ? TextEncoder : EncoderPolyfill;
-
-var Decoder = typeof TextDecoder !== 'undefined' ? TextDecoder : DecoderPolyfill;
-
-exports.Encoder = Encoder;
-exports.Decoder = Decoder;
+exports.encode = encode;
+exports.decode = decode;
 exports.encodeUTF8 = encodeUTF8;
 exports.decodeUTF8 = decodeUTF8;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -753,44 +843,258 @@ exports.decodeUTF8 = decodeUTF8;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.assert = assert;
-exports.vslice = vslice;
-// simple assert, throws if assertion fails
-// also matches args to %s formatters
-function assert(condition, errMsg) {
-  for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-    args[_key - 2] = arguments[_key];
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _types = __webpack_require__(0);
+
+var _misc = __webpack_require__(1);
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var DATA = typeof Symbol !== 'undefined' ? Symbol.for('struct-data') : '__data';
+
+var AbstractStructType = function () {
+  function AbstractStructType(obj) {
+    var _this = this;
+
+    _classCallCheck(this, AbstractStructType);
+
+    // structs can be made with any object keys
+    // hide internal info behind the data symbol so you can still have
+    // struct fields like `.view`
+    this[DATA] = {
+      temp: {},
+      view: null,
+      wrapper: null
+    };
+
+    if (obj) {
+      Object.entries(obj).forEach(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2),
+            key = _ref2[0],
+            value = _ref2[1];
+
+        (0, _misc.assert)(key in _this, 'Can\'t set value, struct missing field \'' + key + '\'');
+        _this[key] = value;
+      });
+    }
   }
 
-  if (condition) return;
-  if (!args || !args.length) throw new Error(errMsg);
+  _createClass(AbstractStructType, [{
+    key: 'ref',
+    value: function ref() {
+      return this[DATA].view ? this[DATA].view.byteOffset : 0;
+    }
+  }, {
+    key: 'free',
+    value: function free() {
+      var internal = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-  var msg = '';
-  var strings = void 0;
+      (0, _misc.assert)(!!this[DATA].wrapper, 'Cant free struct, either: unallocated / already freed / sub-struct');
 
-  try {
-    strings = args.map(function (arg) {
-      return JSON.stringify(arg, null, 2);
-    });
-  } catch (e) {
-    throw new Error(errMsg);
-  }
+      // frees any pointers contained in the struct
+      var freePointers = function freePointers(struct) {
+        struct.constructor.fields.forEach(function (field, name) {
+          if (field.type.isPointer) struct[name].free();
+          if (field.type.isStruct) freePointers(struct[name]);
+        });
+      };
 
-  errMsg.split('%s').forEach(function (part) {
-    msg += part;
-    if (strings.length) msg += strings.pop();
+      if (internal) freePointers(this);
+
+      this[DATA].wrapper.free(this.ref(), this.constructor.width);
+      this[DATA].wrapper = null;
+      this[DATA].view = null;
+    }
+  }, {
+    key: 'toString',
+    value: function toString() {
+      var out = '{\n';
+
+      var stringify = function stringify(struct) {
+        var fields = struct.constructor.fields;
+        var proto = struct.constructor.prototype;
+
+        fields.forEach(function (field, name) {
+          out += '  ' + name + ': ' + struct[name] + ',\n';
+        });
+
+        Object.getOwnPropertyNames(proto).forEach(function (name) {
+          if (fields.has(name)) return;
+
+          var value = struct[name];
+
+          if (typeof value !== 'function') {
+            out += '  ' + name + ': ' + value + ',\n';
+          }
+        });
+      };
+
+      stringify(this);
+
+      if (out.length <= 80) {
+        out = out.replace(/\n/g, '') // remove line breaks
+        .replace(/ {2}/g, ' ') // collapse whitespace
+        .replace(/,$/g, ' '); // trailing comma
+      }
+
+      out += '}';
+
+      return out;
+    }
+  }, {
+    key: 'dataview',
+    value: function dataview(name) {
+      var view = this[DATA].view;
+      (0, _misc.assert)(!!view, "Struct hasn't been written yet, can't get dataview");
+
+      if (!name) return view;
+
+      var StructType = this.constructor;
+      var field = StructType.fields.get(name);
+      (0, _misc.assert)(!!field, 'Field \'' + name + '\' doesn\'t exist on struct');
+
+      return (0, _misc.vslice)(view, field.offset, field.type.width);
+    }
+  }], [{
+    key: 'read',
+    value: function read(view, wrapper) {
+      var StructType = this;
+
+      var struct = new StructType();
+      struct[DATA].view = view;
+      struct[DATA].wrapper = wrapper;
+
+      return struct;
+    }
+  }, {
+    key: 'write',
+    value: function write(view, struct, wrapper) {
+      var StructType = this;
+
+      if ((0, _misc.isNil)(struct) || !struct.constructor.isStruct) {
+        struct = new StructType(struct);
+      }
+
+      StructType.fields.forEach(function (field, name) {
+        var type = field.type;
+        var value = struct[name];
+
+        if (typeof value !== 'undefined') {
+          if (type.isStruct && ((0, _misc.isNil)(value) || !value.constructor.isStruct)) {
+            value = new type(value);
+          }
+
+          var fieldView = (0, _misc.vslice)(view, field.offset, type.width);
+          type.write(fieldView, value, wrapper);
+        }
+      });
+
+      struct[DATA].view = view;
+      struct[DATA].wrapper = wrapper;
+    }
+  }]);
+
+  return AbstractStructType;
+}();
+
+// Creates a new class that will create new struct instances
+// (this returns a constructor)
+
+
+var Struct = function Struct() {
+  var fields = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var opt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  _classCallCheck(this, Struct);
+
+  // preserve field insertion order with [[OwnPropertyKeys]]
+  var names = Object.getOwnPropertyNames(fields);
+
+  // check for field name conflicts
+  ['ref', 'free', 'dataview'].forEach(function (name) {
+    return (0, _misc.assert)(!(names in names), 'Field \'' + name + '\' is a reserved method name');
   });
 
-  throw new Error(msg);
-}
+  // keep metadata on the constructor itself
 
-// takes a subslice of a DataView
-function vslice(view, start, length) {
-  return new DataView(view.buffer, view.byteOffset + start, length);
-}
+  var StructType = function (_AbstractStructType) {
+    _inherits(StructType, _AbstractStructType);
+
+    function StructType() {
+      _classCallCheck(this, StructType);
+
+      return _possibleConstructorReturn(this, (StructType.__proto__ || Object.getPrototypeOf(StructType)).apply(this, arguments));
+    }
+
+    return StructType;
+  }(AbstractStructType);
+
+  StructType.fields = new Map();
+  StructType.packed = 'packed' in opt ? !!opt.packed : false;
+  StructType.alignment = opt.alignment || 0;
+  StructType.isStruct = true;
+
+  var offset = 0;
+
+  // get type/size/alignment for each field
+  names.forEach(function (name) {
+    var type = (0, _types.parseType)(fields[name]);
+
+    if (!opt.alignment && type.alignment > StructType.alignment) {
+      StructType.alignment = type.alignment;
+    }
+
+    if (!StructType.packed && offset % type.alignment !== 0) {
+      offset += type.alignment - offset % type.alignment;
+    }
+
+    StructType.fields.set(name, { name: name, offset: offset, type: type });
+    offset += type.width;
+  });
+
+  StructType.width = offset % StructType.alignment ? offset + StructType.alignment - offset % StructType.alignment : offset;
+
+  // define getter / setter behavior for each field
+  // these will read / write each field to memory according to its type
+  StructType.fields.forEach(function (field, name) {
+    Object.defineProperty(StructType.prototype, name, {
+      enumerable: true,
+
+      get: function get() {
+        if (!this[DATA].view) {
+          return this[DATA].temp[name];
+        }
+
+        var view = (0, _misc.vslice)(this[DATA].view, field.offset, field.type.width);
+        return field.type.read(view, this[DATA].wrapper);
+      },
+      set: function set(value) {
+        if (!this[DATA].view) {
+          this[DATA].temp[name] = value;
+          return;
+        }
+
+        var view = (0, _misc.vslice)(this[DATA].view, field.offset, field.type.width);
+        field.type.write(view, value, this[DATA].wrapper);
+      }
+    });
+  });
+
+  return StructType;
+};
+
+exports.default = Struct;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -880,7 +1184,7 @@ function demangle() {
   });
 
   // make sure last label is included
-  if (label) labels.push(label);
+  labels.push(label);
 
   // if the last element is a hash, exclude it so the result is more readable
   if (isHash(labels.slice(-1)[0])) labels.pop();
@@ -909,209 +1213,6 @@ function demangleStack(err) {
 }
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _types = __webpack_require__(0);
-
-var _misc = __webpack_require__(2);
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var DATA = typeof Symbol !== 'undefined' ? Symbol.for('struct-data') : '__data';
-
-var AbstractStructType = function () {
-  function AbstractStructType(obj) {
-    var _this = this;
-
-    _classCallCheck(this, AbstractStructType);
-
-    // structs can be made with any object keys
-    // hide internal info behind the data symbol so you can still have
-    // struct fields like `.view`
-    this[DATA] = {
-      temp: {},
-      view: null,
-      free: null
-    };
-
-    if (obj) {
-      Object.entries(obj).forEach(function (_ref) {
-        var _ref2 = _slicedToArray(_ref, 2),
-            key = _ref2[0],
-            value = _ref2[1];
-
-        // check for name conflicts
-        (0, _misc.assert)(key in _this, 'Struct missing field \'' + key + '\'');
-        (0, _misc.assert)(key !== 'ref', 'Field `ref` is a reserved method name');
-        (0, _misc.assert)(key !== 'free', 'Field `free` is a reserved method name');
-        // this should trigger the get/setter behavior
-        _this[key] = value;
-      });
-    }
-  }
-
-  _createClass(AbstractStructType, [{
-    key: 'ref',
-    value: function ref() {
-      return this[DATA].view ? this[DATA].view.byteOffset : 0;
-    }
-  }, {
-    key: 'free',
-    value: function free() {
-      var recursive = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-      (0, _misc.assert)(!!this[DATA].free, 'Cant free struct, either: unallocated / already freed / sub-struct');
-
-      // frees any pointers contained in the struct
-      var freePointers = function freePointers(struct) {
-        struct.constructor.fields.forEach(function (field, name) {
-          if (field.type.isPointer) struct[name].free();
-          if (field.type.isStruct) freePointers(struct[name]);
-        });
-      };
-
-      if (recursive) freePointers(this);
-
-      this[DATA].free(this.ref(), this.constructor.width);
-      this[DATA].free = null;
-      this[DATA].view = null;
-    }
-  }], [{
-    key: 'read',
-    value: function read(view, free) {
-      var StructType = this;
-
-      var struct = new StructType();
-      struct[DATA].view = view;
-      struct[DATA].free = free;
-
-      return struct;
-    }
-  }, {
-    key: 'write',
-    value: function write(view, struct, free) {
-      var StructType = this;
-
-      StructType.fields.forEach(function (field, name) {
-        var value = struct[name];
-
-        if (typeof value !== 'undefined') {
-          var fieldView = (0, _misc.vslice)(view, field.offset, field.type.width);
-          field.type.write(fieldView, value);
-        }
-      });
-
-      struct[DATA].view = view;
-      if (free) struct[DATA].free = free;
-    }
-  }]);
-
-  return AbstractStructType;
-}();
-
-// Creates a new class that will create new struct instances
-// (this returns a constructor)
-
-
-var Struct = function Struct() {
-  var fields = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-  var opt = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-  _classCallCheck(this, Struct);
-
-  var StructType = function (_AbstractStructType) {
-    _inherits(StructType, _AbstractStructType);
-
-    function StructType() {
-      _classCallCheck(this, StructType);
-
-      return _possibleConstructorReturn(this, (StructType.__proto__ || Object.getPrototypeOf(StructType)).apply(this, arguments));
-    }
-
-    return StructType;
-  }(AbstractStructType);
-
-  // keep metadata on the struct constructor itself
-
-
-  StructType.fields = new Map();
-  StructType.packed = 'packed' in opt ? !!opt.packed : false;
-  StructType.alignment = opt.alignment || 0;
-  StructType.isStruct = true;
-
-  var offset = 0;
-
-  // preserve field insertion order with [[OwnPropertyKeys]]
-  Object.getOwnPropertyNames(fields).forEach(function (name) {
-    var type = (0, _types.parseType)(fields[name]);
-
-    if (!opt.alignment && type.alignment > StructType.alignment) {
-      StructType.alignment = type.alignment;
-    }
-
-    if (!StructType.packed && offset % type.alignment !== 0) {
-      offset += type.alignment - offset % type.alignment;
-    }
-
-    StructType.fields.set(name, { name: name, offset: offset, type: type });
-    offset += type.width;
-  });
-
-  StructType.width = offset % StructType.alignment ? offset + StructType.alignment - offset % StructType.alignment : offset;
-
-  // define getter / setter behavior for each field
-  // these will read / write each field to memory according to its type
-  StructType.fields.forEach(function (field, name) {
-    Object.defineProperty(StructType.prototype, name, {
-      enumerable: true,
-
-      get: function get() {
-        if (!this[DATA].view) {
-          return this[DATA].temp[name];
-        }
-
-        var view = (0, _misc.vslice)(this[DATA].view, field.offset, field.type.width);
-        return field.type.read(view, this[DATA].free);
-      },
-      set: function set(value) {
-        // fudging for ease of use:
-        if (typeof value === 'string' && field.type === _types.types.string) {
-          value = new _types.CString(value);
-        }
-
-        if (!this[DATA].view) {
-          this[DATA].temp[name] = value;
-          return;
-        }
-
-        var view = (0, _misc.vslice)(this[DATA].view, field.offset, field.type.width);
-        field.type.write(view, value);
-      }
-    });
-  });
-
-  return StructType;
-};
-
-exports.default = Struct;
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1121,30 +1222,36 @@ exports.default = Struct;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports._decodeUTF8 = exports._encodeUTF8 = exports.rust = exports.demangle = exports.CString = exports.CustomType = exports.Pointer = exports.types = exports.Struct = exports.ccall = exports.cwrap = exports.Wrapper = undefined;
+exports._decodeUTF8 = exports._encodeUTF8 = exports.assemblyscript = exports.rust = exports.demangle = exports.CString = exports.StringPointer = exports.Pointer = exports.CustomType = exports.types = exports.Struct = exports.ccall = exports.cwrap = exports.Wrapper = undefined;
 
 var _Wrapper = __webpack_require__(6);
 
-var _Struct = __webpack_require__(4);
+var _Struct = __webpack_require__(3);
 
 var _Struct2 = _interopRequireDefault(_Struct);
 
-var _demangle = __webpack_require__(3);
+var _demangle = __webpack_require__(4);
 
 var _demangle2 = _interopRequireDefault(_demangle);
-
-var _types = __webpack_require__(0);
 
 var _rust = __webpack_require__(7);
 
 var _rust2 = _interopRequireDefault(_rust);
 
-var _encoding = __webpack_require__(1);
+var _assemblyscript = __webpack_require__(8);
+
+var _assemblyscript2 = _interopRequireDefault(_assemblyscript);
+
+var _types = __webpack_require__(0);
+
+var _encoding = __webpack_require__(2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _encodeUTF8 = _encoding.encodeUTF8;
 var _decodeUTF8 = _encoding.decodeUTF8;
+
+var CString = _types.StringPointer;
 
 exports.default = {
   Wrapper: _Wrapper.Wrapper,
@@ -1152,11 +1259,13 @@ exports.default = {
   ccall: _Wrapper.ccall,
   Struct: _Struct2.default,
   types: _types.types,
-  Pointer: _types.Pointer,
   CustomType: _types.CustomType,
-  CString: _types.CString,
+  Pointer: _types.Pointer,
+  StringPointer: _types.StringPointer,
+  CString: CString, // deprecated
   demangle: _demangle2.default,
   rust: _rust2.default,
+  assemblyscript: _assemblyscript2.default,
   _encodeUTF8: _encodeUTF8,
   _decodeUTF8: _decodeUTF8
 };
@@ -1165,11 +1274,13 @@ exports.cwrap = _Wrapper.cwrap;
 exports.ccall = _Wrapper.ccall;
 exports.Struct = _Struct2.default;
 exports.types = _types.types;
-exports.Pointer = _types.Pointer;
 exports.CustomType = _types.CustomType;
-exports.CString = _types.CString;
+exports.Pointer = _types.Pointer;
+exports.StringPointer = _types.StringPointer;
+exports.CString = CString;
 exports.demangle = _demangle2.default;
 exports.rust = _rust2.default;
+exports.assemblyscript = _assemblyscript2.default;
 exports._encodeUTF8 = _encodeUTF8;
 exports._decodeUTF8 = _decodeUTF8;
 
@@ -1189,13 +1300,13 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _types2 = __webpack_require__(0);
+var _types = __webpack_require__(0);
 
-var _encoding = __webpack_require__(1);
+var _encoding = __webpack_require__(2);
 
-var _misc = __webpack_require__(2);
+var _misc = __webpack_require__(1);
 
-var _demangle = __webpack_require__(3);
+var _demangle = __webpack_require__(4);
 
 var _demangle2 = _interopRequireDefault(_demangle);
 
@@ -1209,8 +1320,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var numbers = new Set(['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64', 'float', 'double', 'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32', 'i64', 'f32', 'f64', 'schar', 'short', 'int', 'long', 'char', 'uchar', 'ushort', 'uint', 'ulong', 'size_t', 'usize']);
 
-function areValid(types) {
-  return types.every(function (type) {
+function areValid(argTypes) {
+  return argTypes.every(function (type) {
     return type === null || type === undefined || type === 'void' || type === 'number' || type === 'boolean' || type === 'bool' || type === 'string' || type === 'array' || numbers.has(type) || type.isStruct || type.isPointer;
   });
 }
@@ -1263,17 +1374,18 @@ var Wrapper = function () {
 
     _classCallCheck(this, Wrapper);
 
-    // Keep internal info behind the DATA symbol, try to minimize footprint so
-    // wrapped function names don't conflict with whats already here.(Like if
-    // someone had a method called "memory()", it would've been a problem)
-    // Same strategy with the "__" prefixed object methods.
+    var dialect = opts.dialect && opts.dialect.toLowerCase();
+
+    // Keep internal info behind the DATA symbol so wrapped function names
+    // won't cause conflicts
     this[DATA] = {
       instance: null,
       imports: null,
       signatures: new Set(),
       allocations: new Map(),
       memory: opts.memory,
-      debug: !!opts.debug
+      debug: !!opts.debug,
+      isAssemblyScript: dialect === 'assemblyscript'
     };
 
     Object.entries(signatures).forEach(function (_ref) {
@@ -1285,45 +1397,45 @@ var Wrapper = function () {
           argTypes = _ref2$$ === undefined ? [] : _ref2$$;
 
       // check for name collisions:
-      (0, _misc.assert)(fn !== 'exports', '`exports` is a reserved wrapper name');
-      (0, _misc.assert)(fn !== 'utils', '`utils` is a reserved wrapper name');
-      (0, _misc.assert)(fn !== 'imports', '`imports` is a reserved wrapper method name');
-      (0, _misc.assert)(fn !== 'fetch', '`fetch` is a reserved wrapper method name');
-      (0, _misc.assert)(fn !== 'use', '`use` is a reserved wrapper method name');
+      ['exports', 'imports', 'utils', 'fetch', 'use'].forEach(function (name) {
+        return (0, _misc.assert)(fn !== name, '`%s` is a reserved wrapper name', name);
+      });
 
       // validate arg types
       (0, _misc.assert)(argTypes.every(function (arg) {
         return !!arg;
-      }), '\'' + fn + '\' has undefined types');
-      (0, _misc.assert)(areValid([returnType]), '\'' + fn + '\' has invalid types');
-      (0, _misc.assert)(areValid(argTypes), '\'' + fn + '\' has invalid types');
+      }), '`%s` has undefined types', fn);
+      (0, _misc.assert)(areValid([returnType]), '`%s` has invalid types', fn);
+      (0, _misc.assert)(areValid(argTypes), '`%s` has invalid types', fn);
 
       _this[DATA].signatures.add({ fnName: fn, returnType: returnType, argTypes: argTypes });
     });
 
     // exposing some methods via `.utils`
     this.utils = {
+      encodeString: this.__encodeString.bind(this),
+      decodeString: this.__decodeString.bind(this),
+      readStringView: this.__readStringView.bind(this),
       readString: this.__readString.bind(this),
       writeString: this.__writeString.bind(this),
       writeArray: this.__writeArray.bind(this),
       readStruct: this.__readStruct.bind(this),
-      writeStruct: this.__readStruct.bind(this),
+      writeStruct: this.__writeStruct.bind(this),
       readPointer: this.__readPointer.bind(this),
-      writePointer: this.__readPointer.bind(this),
+      writePointer: this.__writePointer.bind(this),
 
       allocate: function (value) {
-        (0, _misc.assert)('ref' in value, 'This method is for Pointer / Structs / CStrings');
+        (0, _misc.assert)(typeof value.ref === 'function', "Can't allocate '%s' This method is for Pointer & Structs", value);
 
-        value instanceof _types2.Pointer || value instanceof _types2.CString ? this.__writePointer(value) : this.__writeStruct(value);
+        value instanceof _types.Pointer || value instanceof _types.StringPointer ? this.__writePointer(value) : this.__writeStruct(value);
       }.bind(this),
 
       free: function (value) {
-        'ref' in value ? this.__free(value.ref()) : this.__free(value);
+        typeof value.ref === 'function' ? this.__free(value.ref()) : this.__free(value);
       }.bind(this)
     };
 
     this.exports = null;
-    this.__free = this.__free.bind(this); // convenience bind
   }
 
   // takes an import object or a function what will produce a import object
@@ -1331,41 +1443,48 @@ var Wrapper = function () {
 
   _createClass(Wrapper, [{
     key: 'imports',
-    value: function imports(arg) {
+    value: function imports(importArg) {
       var _this2 = this;
 
-      var defaults = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+      var applyDefaults = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
       var wrap = function wrap() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
+        for (var _len = arguments.length, fnConfig = Array(_len), _key = 0; _key < _len; _key++) {
+          fnConfig[_key] = arguments[_key];
         }
 
         // function to wrap is always the last argument
-        var fn = args.pop();
+        var fn = fnConfig.pop();
         // two argument formats (this might be a bad idea):
-        //   * with return type: wrap([returnType, [...argTypes]], fn)
-        //   * no return type: wrap(arg1, arg2, ..., fn)
+        //   1) with return type: wrap([returnType, [...argTypes]], fn)
+        //   2) no return type: wrap(arg1, arg2, ..., fn)
         //
-        var types = Array.isArray(args[0]) ? args[0] : [null, args];
         // detructure into appropriate vars
 
-        var _types = _slicedToArray(types, 2),
-            returnType = _types[0],
-            _types$ = _types[1],
-            argTypes = _types$ === undefined ? [] : _types$;
+        var _ref3 = Array.isArray(fnConfig[0]) ? fnConfig[0] // 1st format
+        : [null, fnConfig],
+            _ref4 = _slicedToArray(_ref3, 2),
+            returnType = _ref4[0],
+            _ref4$ = _ref4[1],
+            argTypes = _ref4$ === undefined ? [] : _ref4$; // 2nd format
 
         (0, _misc.assert)(areValid(argTypes), 'Import has invalid types: ' + argTypes);
         (0, _misc.assert)(areValid([returnType]), 'Import has invalid types: ' + returnType);
 
         return function () {
-          for (var _len2 = arguments.length, raw = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-            raw[_key2] = arguments[_key2];
+          for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+            args[_key2] = arguments[_key2];
           }
 
-          var value = fn.apply(undefined, _toConsumableArray(raw.map(function (r, i) {
-            return _this2.__out(r, argTypes[i]);
-          })));
+          var ffi_args = argTypes.map(function (type, i) {
+            return _this2.__out(args[i], type);
+          });
+
+          if (args.length > argTypes.length) {
+            ffi_args.push.apply(ffi_args, _toConsumableArray(args.slice(argTypes.length - args.length)));
+          }
+
+          var value = fn.apply(undefined, _toConsumableArray(ffi_args));
 
           if (returnType && returnType !== 'void') {
             return _this2.__in(value, returnType);
@@ -1374,29 +1493,47 @@ var Wrapper = function () {
       };
 
       var env = {
+        // wasm-glue
         print: wrap('string', function (str) {
-          return console.log(str);
+          var _console;
+
+          for (var _len3 = arguments.length, args = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+            args[_key3 - 1] = arguments[_key3];
+          }
+
+          return (_console = console).log.apply(_console, [str].concat(args));
         }),
         eprint: wrap('string', function (str) {
-          return console.error(str);
-        }),
+          var _console2;
 
+          for (var _len4 = arguments.length, args = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+            args[_key4 - 1] = arguments[_key4];
+          }
+
+          return (_console2 = console).error.apply(_console2, [str].concat(args));
+        }),
         trace: wrap('string', function (str) {
           throw new Error(str);
         }),
 
+        // assemblyscript
+        abort: wrap('string', 'string', 'number', 'number', function (msg, file, line, col) {
+          throw new Error(msg + ' @ ' + file + ':' + line + ':' + col);
+        }),
+
+        // <webassembly.h>
         _abort: function _abort(errCode) {
-          throw new Error('wasm aborting: ' + errCode);
+          throw new Error('Aborting, error code: ' + errCode);
         },
         _exit: function _exit(exitCode) {
-          if (exitCode) throw new Error('wasm exit error: ' + exitCode);
+          if (exitCode) throw new Error('Exit error code: ' + exitCode);
         },
         _grow: function _grow() {}
       };
 
-      var obj = typeof arg === 'function' ? arg(wrap) : arg;
+      var obj = typeof importArg === 'function' ? importArg(wrap) : importArg;
 
-      if (defaults) obj.env = Object.assign(env, obj.env);
+      if (applyDefaults) obj.env = Object.assign(env, obj.env);
       this[DATA].imports = obj;
 
       return obj;
@@ -1434,10 +1571,10 @@ var Wrapper = function () {
       this[DATA].instance = instance;
       this[DATA].memory = memory;
 
-      this[DATA].signatures.forEach(function (_ref3) {
-        var fnName = _ref3.fnName,
-            returnType = _ref3.returnType,
-            argTypes = _ref3.argTypes;
+      this[DATA].signatures.forEach(function (_ref5) {
+        var fnName = _ref5.fnName,
+            returnType = _ref5.returnType,
+            argTypes = _ref5.argTypes;
 
         var fn = _this4.exports[fnName];
         (0, _misc.assert)(!!fn, 'Fn \'' + fnName + '\' missing from wasm exports');
@@ -1451,17 +1588,19 @@ var Wrapper = function () {
       return function () {
         var _this5 = this;
 
-        var stack = [];
-
-        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-          args[_key3] = arguments[_key3];
+        for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+          args[_key5] = arguments[_key5];
         }
 
-        var ffi_args = args.map(function (arg, i) {
-          return _this5.__in(arg, argTypes[i], stack);
+        var stack = [];
+        var ffi_args = argTypes.map(function (type, i) {
+          return _this5.__in(args[i], type, stack);
         });
-
         var value = void 0;
+
+        if (args.length > argTypes.length) {
+          ffi_args.push.apply(ffi_args, _toConsumableArray(args.slice(argTypes.length - args.length)));
+        }
 
         try {
           value = fn.apply(undefined, _toConsumableArray(ffi_args));
@@ -1484,13 +1623,13 @@ var Wrapper = function () {
   }, {
     key: '__in',
     value: function __in(value, type, stack) {
-      (0, _misc.assert)(!!type, 'No arg type was specified for function');
+      (0, _misc.assert)(!!type, 'No arg type was specified for this function');
 
       if (type === 'number' || numbers.has(type)) return value;
       if (type === 'boolean' || type === 'bool') return !!value;
       if (type === 'string') return this.__writeString(value, stack);
       if (type === 'array') return this.__writeArray(value, stack);
-      if (type.isStruct) return this.__writeStruct(value);
+      if (type.isStruct) return this.__writeStruct(value, type);
       if (type.isPointer) return this.__writePointer(value);
 
       throw new Error('Unknown type: \n' + JSON.stringify(type));
@@ -1501,7 +1640,7 @@ var Wrapper = function () {
   }, {
     key: '__out',
     value: function __out(value, type) {
-      (0, _misc.assert)(!!type, 'No arg type was specified for function');
+      (0, _misc.assert)(!!type, 'No arg type was specified for this function');
 
       if (type === 'number' || numbers.has(type)) return value;
       if (type === 'boolean' || type === 'bool') return !!value;
@@ -1539,47 +1678,94 @@ var Wrapper = function () {
       return new DataView(this[DATA].memory.buffer, start, length);
     }
   }, {
+    key: '__encodeString',
+    value: function __encodeString(str) {
+      var encoded = this[DATA].isAssemblyScript ? (0, _encoding.encode)(str, 'utf-16') : (0, _encoding.encode)(str);
+
+      var len = this[DATA].isAssemblyScript ? encoded.byteLength + 4 // assemblyscript header
+      : encoded.byteLength + 1; // null terminating byte
+
+      var buf = new Uint8Array(new ArrayBuffer(len));
+
+      if (this[DATA].isAssemblyScript) {
+        var header = encoded.byteLength / 2;
+        new DataView(buf.buffer).setUint32(0, header, true);
+        buf.set(encoded, 4);
+      } else {
+        buf.set(encoded, 0);
+        buf[len - 1] = 0;
+      }
+
+      return buf;
+    }
+  }, {
+    key: '__decodeString',
+    value: function __decodeString(view) {
+      var buf = (0, _misc.toUint8Array)(view);
+
+      return this[DATA].isAssemblyScript ? (0, _encoding.decode)(buf.subarray(4), 'utf-16') : (0, _encoding.decode)(buf.subarray(0, -1));
+    }
+  }, {
+    key: '__readStringView',
+    value: function __readStringView(ptr) {
+      // length prefixed
+      if (this[DATA].isAssemblyScript) {
+        var strlen = this.__view().getUint32(ptr, true); // header
+        var len = 4 + strlen * 2;
+
+        return this.__view(ptr, len);
+      }
+
+      // null terminated
+      var memory = new Uint8Array(this[DATA].memory.buffer);
+
+      var end = ptr;
+      while (memory[end]) {
+        ++end;
+      }return this.__view(ptr, end - ptr + 1);
+    }
+  }, {
     key: '__readString',
     value: function __readString(ptr) {
-      var view = new Uint8Array(this[DATA].memory.buffer);
-
-      // find end of string (null byte)
-      var end = ptr;
-      while (view[end]) {
-        ++end;
-      } // subarray uses same underlying ArrayBuffer
-      var buf = new Uint8Array(view.subarray(ptr, end));
-      var str = new _encoding.Decoder().decode(buf);
-
-      return str;
+      return this.__decodeString(this.__readStringView(ptr));
     }
   }, {
     key: '__writeString',
     value: function __writeString(str, stack) {
-      var buf = new _encoding.Encoder().encode(str);
-      var len = buf.byteLength + 1;
+      var buf = this.__encodeString(str);
 
-      var ptr = this.__allocate(len);
+      var ptr = this.__allocate(buf.byteLength);
       if (stack) stack.push(ptr);
 
-      var view = new Uint8Array(this[DATA].memory.buffer);
-      view.set(buf, ptr);
-      view[ptr + len - 1] = 0;
+      var memory = new Uint8Array(this[DATA].memory.buffer);
+      memory.set(buf, ptr);
 
       return ptr;
     }
   }, {
     key: '__writeArray',
-    value: function __writeArray(arr, stack) {
-      (0, _misc.assert)(arr instanceof ArrayBuffer || ArrayBuffer.isView(arr), 'Argument must be an `ArrayBuffer` or a `DataView` (like `Uint8Array`)');
+    value: function __writeArray(arg, stack) {
+      (0, _misc.assert)(arg instanceof ArrayBuffer || ArrayBuffer.isView(arg), 'Argument must be an ArrayBuffer or a TypedArray (like Uint8Array)');
 
-      var buf = ArrayBuffer.isView(arr) ? new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength) : new Uint8Array(arr);
+      var arr = !ArrayBuffer.isView(arg) ? new Uint8Array(arg) : arg;
 
-      var ptr = this.__allocate(buf.byteLength);
+      var len = this[DATA].isAssemblyScript ? arr.byteLength + 16 /* Array/ArrayBuffer header */
+      : arr.byteLength;
+
+      var ptr = this.__allocate(len);
       if (stack) stack.push(ptr);
 
-      var view = new Uint8Array(this[DATA].memory.buffer);
-      view.set(buf, ptr);
+      var memory = new Uint8Array(this[DATA].memory.buffer);
+      var data = (0, _misc.toUint8Array)(arr);
+
+      if (this[DATA].isAssemblyScript) {
+        this.__view().setUint32(ptr + 0, ptr + 8, true); // arraybuffer ptr
+        this.__view().setUint32(ptr + 4, arr.length, true); // array length
+        this.__view().setUint32(ptr + 8, arr.byteLength, true); // byteLength
+        memory.set(data, ptr + 16); // contents
+      } else {
+        memory.set(data, ptr);
+      }
 
       return ptr;
     }
@@ -1589,36 +1775,21 @@ var Wrapper = function () {
       (0, _misc.assert)(!!StructType, 'No struct StructType given');
 
       var view = this.__view(ptr, StructType.width);
-      var struct = StructType.read(view, this.__free);
+      var struct = StructType.read(view, this.utils);
 
       return struct;
     }
   }, {
     key: '__writeStruct',
-    value: function __writeStruct(struct) {
-      var _this6 = this;
-
+    value: function __writeStruct(value, Type) {
       // if struct has already been allocated:
-      if (struct.ref()) return struct.ref();
+      if (!(0, _misc.isNil)(value) && value.ref && value.ref()) return value.ref();
 
-      var StructType = struct.constructor;
+      var StructType = Type || value.constructor;
       var ptr = this.__allocate(StructType.width);
       var view = this.__view(ptr, StructType.width);
 
-      var allocPointers = function allocPointers(sub) {
-        sub.constructor.fields.forEach(function (field, name) {
-          if (field.type.isStruct && sub[name]) {
-            allocPointers(sub[name]);
-          }
-
-          if (field.type.isPointer && sub[name]) {
-            _this6.__writePointer(sub[name]);
-          }
-        });
-      };
-
-      allocPointers(struct);
-      StructType.write(view, struct, this.__free);
+      StructType.write(view, value, this.utils);
 
       return ptr;
     }
@@ -1632,11 +1803,12 @@ var Wrapper = function () {
 
       // handle pointer of a pointer cases (structs are pointers too here)
       if (ptrType.type.isStruct || ptrType.type.isPointer) {
-        return ptrType.read(view, this.__free);
+        return ptrType.read(view, this.utils);
       }
 
-      var pointer = new _types2.Pointer(ptrType.type);
-      pointer.attach(view, this.__free);
+      var pointer = new _types.Pointer(ptrType.type);
+      pointer.view = view;
+      pointer.wrapper = this.utils;
 
       return pointer;
     }
@@ -1645,12 +1817,15 @@ var Wrapper = function () {
     value: function __writePointer(pointer) {
       if (pointer.ref()) return pointer.ref();
 
-      // allocate space for what the pointer points to
-      var addr = this.__allocate(pointer.type.width);
-      var view = this.__view(addr, pointer.type.width);
+      pointer.wrapper = this.utils;
 
-      // attach wasm memory to pointer and write the pointed-to data
-      pointer.attach(view, this.__free);
+      // allocate space for what the pointer points to
+      var size = pointer.size();
+      var addr = this.__allocate(size);
+      var view = this.__view(addr, size);
+
+      pointer.view = view;
+      pointer.commit();
 
       return addr;
     }
@@ -1682,8 +1857,8 @@ function ccall(instance, fnName) {
   var wrapper = new Wrapper(_defineProperty({}, fnName, [returnType, argTypes]));
   wrapper.use(instance);
 
-  for (var _len4 = arguments.length, args = Array(_len4 > 4 ? _len4 - 4 : 0), _key4 = 4; _key4 < _len4; _key4++) {
-    args[_key4 - 4] = arguments[_key4];
+  for (var _len6 = arguments.length, args = Array(_len6 > 4 ? _len6 - 4 : 0), _key6 = 4; _key6 < _len6; _key6++) {
+    args[_key6 - 4] = arguments[_key6];
   }
 
   return (_wrapper$fnName = wrapper[fnName]).call.apply(_wrapper$fnName, [wrapper].concat(args));
@@ -1710,15 +1885,15 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _Struct = __webpack_require__(4);
+var _Struct = __webpack_require__(3);
 
 var _Struct2 = _interopRequireDefault(_Struct);
 
 var _types = __webpack_require__(0);
 
-var _encoding = __webpack_require__(1);
+var _encoding = __webpack_require__(2);
 
-var _misc = __webpack_require__(2);
+var _misc = __webpack_require__(1);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1733,171 +1908,232 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 // get the symbol for struct-data since we need access here
 var DATA = typeof Symbol !== 'undefined' ? Symbol.for('struct-data') : '__data';
 
-// helper fn, overrides free to be free(true) by default
-function extend(StructType) {
-  var RustType = function (_StructType) {
-    _inherits(RustType, _StructType);
-
-    function RustType() {
-      _classCallCheck(this, RustType);
-
-      return _possibleConstructorReturn(this, (RustType.__proto__ || Object.getPrototypeOf(RustType)).apply(this, arguments));
-    }
-
-    _createClass(RustType, [{
-      key: 'free',
-      value: function free() {
-        _get(RustType.prototype.__proto__ || Object.getPrototypeOf(RustType.prototype), 'free', this).call(this, true);
-      }
-    }]);
-
-    return RustType;
-  }(StructType);
-
-  Object.assign(RustType, StructType);
-  return RustType;
-}
-
-function RustTuple() {
+function RustTuple(tupleTypes, values) {
   var fields = {};
-
-  for (var _len = arguments.length, tupleTypes = Array(_len), _key = 0; _key < _len; _key++) {
-    tupleTypes[_key] = arguments[_key];
-  }
 
   tupleTypes.forEach(function (type, i) {
     fields[i] = (0, _types.parseType)(type);
   });
 
-  return new _Struct2.default(fields);
+  var Tuple = new _Struct2.default(fields);
+
+  return values ? new Tuple(values) : Tuple;
 }
 
-function RustVector(typedef) {
+function RustVector(typedef, initialValues) {
   var type = (0, _types.parseType)(typedef);
 
-  var Vector = extend(new _Struct2.default({
+  var Base = new _Struct2.default({
     ptr: _types.types.pointer(type),
     cap: 'usize',
-    len: 'usize'
+    length: 'usize'
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Vector.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get: function get() {
-      var arrayType = (0, _types.parseType)([type, this.len]);
       var memory = this[DATA].view.buffer;
+      var wrapper = this[DATA].wrapper;
+
+      var arrayType = (0, _types.parseType)([type, this.length]);
       var view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
     set: function set(values) {
-      var len = values.length;
-
-      this.ptr = new _types.Pointer([type, len], values);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new _types.Pointer([type, values.length], values);
+      this.length = values.length;
+      this.cap = values.length;
     }
   });
 
-  return Vector;
+  (0, _misc.addArrayFns)(Base);
+  (0, _misc.makeIterable)(Base);
+
+  var Vector = function (_Base) {
+    _inherits(Vector, _Base);
+
+    function Vector(values) {
+      _classCallCheck(this, Vector);
+
+      var _this = _possibleConstructorReturn(this, (Vector.__proto__ || Object.getPrototypeOf(Vector)).call(this));
+
+      if (values) _this.values = values;
+      return _this;
+    }
+
+    _createClass(Vector, [{
+      key: 'free',
+      value: function free() {
+        _get(Vector.prototype.__proto__ || Object.getPrototypeOf(Vector.prototype), 'free', this).call(this, true); // free ptr data
+      }
+    }]);
+
+    return Vector;
+  }(Base);
+
+  return initialValues ? new Vector(initialValues) : Vector;
 }
 
-function RustSlice(typedef) {
+function RustSlice(typedef, initialValues) {
   var type = (0, _types.parseType)(typedef);
 
-  var Slice = extend(new _Struct2.default({
+  var Base = new _Struct2.default({
     ptr: _types.types.pointer(type),
-    len: 'usize'
+    length: 'usize'
     /* values */
-  }));
+  });
 
-  Object.defineProperty(Slice.prototype, 'values', {
+  Object.defineProperty(Base.prototype, 'values', {
     enumerable: true,
 
     get: function get() {
-      var arrayType = (0, _types.parseType)([type, this.len]);
       var memory = this[DATA].view.buffer;
+      var wrapper = this[DATA].wrapper;
+
+      var arrayType = (0, _types.parseType)([type, this.length]);
       var view = new DataView(memory, this.ptr.ref(), arrayType.width);
 
-      return arrayType.read(view, this[DATA].free);
+      return arrayType.read(view, wrapper);
     },
     set: function set(values) {
-      var len = values.length;
-
-      this.ptr = new _types.Pointer([type, len], values);
-      this.len = len;
+      this.ptr = new _types.Pointer([type, values.length], values);
+      this.length = values.length;
     }
   });
 
-  return Slice;
+  (0, _misc.addArrayFns)(Base);
+  (0, _misc.makeIterable)(Base);
+
+  var Slice = function (_Base2) {
+    _inherits(Slice, _Base2);
+
+    function Slice(values) {
+      _classCallCheck(this, Slice);
+
+      var _this2 = _possibleConstructorReturn(this, (Slice.__proto__ || Object.getPrototypeOf(Slice)).call(this));
+
+      if (values) _this2.values = values;
+      return _this2;
+    }
+
+    _createClass(Slice, [{
+      key: 'free',
+      value: function free() {
+        _get(Slice.prototype.__proto__ || Object.getPrototypeOf(Slice.prototype), 'free', this).call(this, true); // free ptr data
+      }
+    }]);
+
+    return Slice;
+  }(Base);
+
+  return initialValues ? new Slice(initialValues) : Slice;
 }
 
 function RustString() {
-  var RString = extend(new _Struct2.default({
+  var Base = new _Struct2.default({
     ptr: _types.types.pointer('u8'),
-    cap: 'usize',
-    len: 'usize'
+    length: 'usize',
+    cap: 'usize'
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RString.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get: function get() {
       var memory = this[DATA].view.buffer;
-      var buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      var buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return new _encoding.Decoder().decode(buf);
+      return (0, _encoding.decode)(buf);
     },
     set: function set(str) {
-      var buf = new _encoding.Encoder().encode(str);
-      var len = buf.length;
+      var buf = (0, _encoding.encode)(str);
 
-      this.ptr = new _types.Pointer(['u8', len], buf);
-      this.len = len;
-      this.cap = len;
+      this.ptr = new _types.Pointer(['u8', buf.length], buf);
+      this.length = buf.length;
+      this.cap = buf.length;
     }
   });
 
-  RString.prototype.toString = function () {
-    return this.value;
-  };
+  (0, _misc.addStringFns)(Base);
 
-  return RString;
+  var _RustString = function (_Base3) {
+    _inherits(_RustString, _Base3);
+
+    function _RustString(value) {
+      _classCallCheck(this, _RustString);
+
+      var _this3 = _possibleConstructorReturn(this, (_RustString.__proto__ || Object.getPrototypeOf(_RustString)).call(this));
+
+      if (value) _this3.value = value;
+      return _this3;
+    }
+
+    _createClass(_RustString, [{
+      key: 'free',
+      value: function free() {
+        _get(_RustString.prototype.__proto__ || Object.getPrototypeOf(_RustString.prototype), 'free', this).call(this, true); // free ptr data
+      }
+    }]);
+
+    return _RustString;
+  }(Base);
+
+  return _RustString;
 }
 
 function RustStr() {
-  var RStr = extend(new _Struct2.default({
+  var Base = new _Struct2.default({
     ptr: _types.types.pointer('u8'),
-    len: 'usize'
+    length: 'usize'
     /* value */
-  }));
+  });
 
-  Object.defineProperty(RStr.prototype, 'value', {
+  Object.defineProperty(Base.prototype, 'value', {
     enumerable: true,
 
     get: function get() {
       var memory = this[DATA].view.buffer;
-      var buf = new Uint8Array(memory, this.ptr.ref(), this.len);
+      var buf = new Uint8Array(memory, this.ptr.ref(), this.length);
 
-      return new _encoding.Decoder().decode(buf);
+      return (0, _encoding.decode)(buf);
     },
     set: function set(str) {
-      var buf = new _encoding.Encoder().encode(str);
-      var len = buf.length;
+      var buf = (0, _encoding.encode)(str);
 
-      this.ptr = new _types.Pointer(['u8', len], buf);
-      this.len = len;
+      this.ptr = new _types.Pointer(['u8', buf.length], buf);
+      this.length = buf.length;
     }
   });
 
-  RStr.prototype.toString = function () {
-    return this.value;
-  };
+  (0, _misc.addStringFns)(Base);
 
-  return RStr;
+  var _RustStr = function (_Base4) {
+    _inherits(_RustStr, _Base4);
+
+    function _RustStr(value) {
+      _classCallCheck(this, _RustStr);
+
+      var _this4 = _possibleConstructorReturn(this, (_RustStr.__proto__ || Object.getPrototypeOf(_RustStr)).call(this));
+
+      if (value) _this4.value = value;
+      return _this4;
+    }
+
+    _createClass(_RustStr, [{
+      key: 'free',
+      value: function free() {
+        _get(_RustStr.prototype.__proto__ || Object.getPrototypeOf(_RustStr.prototype), 'free', this).call(this, true); // free ptr data
+      }
+    }]);
+
+    return _RustStr;
+  }(Base);
+
+  return _RustStr;
 }
 
 function RustOption(typedef) {
@@ -1911,32 +2147,69 @@ function RustOption(typedef) {
 
   var fields = isNonNullable ? { value: type } : { discriminant: discriminant, value: type };
 
-  var Option = new _Struct2.default(fields);
+  var Base = new _Struct2.default(fields);
 
-  Object.assign(Option.prototype, {
-    isSome: function isSome() {
-      return 'discriminant' in fields ? !!this.discriminant : !!this.value;
-    },
-    isNone: function isNone() {
-      return !this.isSome();
-    },
-    expect: function expect(msg) {
-      if (!this.isSome()) throw new Error(msg);
-      return this.value;
-    },
-    unwrap: function unwrap() {
-      if (!this.isSome()) throw new Error('Error unwrapping none');
-      return this.value;
-    },
-    unwrapOr: function unwrapOr(defaultValue) {
-      return this.isSome() ? this.value : defaultValue;
-    },
-    unwrapOrElse: function unwrapOrElse(fn) {
-      return this.isSome() ? this.value : fn();
+  var OptionType = function (_Base5) {
+    _inherits(OptionType, _Base5);
+
+    function OptionType(value) {
+      _classCallCheck(this, OptionType);
+
+      var _this5 = _possibleConstructorReturn(this, (OptionType.__proto__ || Object.getPrototypeOf(OptionType)).call(this));
+
+      _this5.value = value;
+      _this5.discriminant = (0, _misc.isNil)(value) ? 0 : 1;
+      return _this5;
     }
-  });
 
-  return Option;
+    _createClass(OptionType, [{
+      key: 'isSome',
+      value: function isSome() {
+        return 'discriminant' in fields ? !!this.discriminant : !!this.value;
+      }
+    }, {
+      key: 'isNone',
+      value: function isNone() {
+        return !this.isSome();
+      }
+    }, {
+      key: 'expect',
+      value: function expect(msg) {
+        if (!this.isSome()) throw new Error(msg);
+        return this.value;
+      }
+    }, {
+      key: 'unwrap',
+      value: function unwrap() {
+        if (!this.isSome()) throw new Error('Error unwrapping none');
+        return this.value;
+      }
+    }, {
+      key: 'unwrapOr',
+      value: function unwrapOr(defaultValue) {
+        return this.isSome() ? this.value : defaultValue;
+      }
+    }, {
+      key: 'unwrapOrElse',
+      value: function unwrapOrElse(fn) {
+        return this.isSome() ? this.value : fn();
+      }
+    }], [{
+      key: 'some',
+      value: function some(value) {
+        return new OptionType(value);
+      }
+    }, {
+      key: 'none',
+      value: function none() {
+        return new OptionType();
+      }
+    }]);
+
+    return OptionType;
+  }(Base);
+
+  return OptionType;
 }
 
 function RustEnum(obj) {
@@ -1953,16 +2226,16 @@ function RustEnum(obj) {
     /* value */
   });
 
-  var Enum = function (_StructType2) {
-    _inherits(Enum, _StructType2);
+  var Enum = function (_StructType) {
+    _inherits(Enum, _StructType);
 
     function Enum(variant) {
       _classCallCheck(this, Enum);
 
-      var _this2 = _possibleConstructorReturn(this, (Enum.__proto__ || Object.getPrototypeOf(Enum)).call(this));
+      var _this6 = _possibleConstructorReturn(this, (Enum.__proto__ || Object.getPrototypeOf(Enum)).call(this));
 
-      if (variant) _this2._set(variant);
-      return _this2;
+      if (variant) _this6._set(variant);
+      return _this6;
     }
 
     _createClass(Enum, [{
@@ -1987,16 +2260,16 @@ function RustEnum(obj) {
     }, {
       key: 'free',
       value: function free() {
-        var recursive = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+        var internal = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
         var type = vtypes[this.tag()];
 
-        if (recursive && type.isPointer || type.isStruct) {
-          this.value.free(recursive);
+        if (internal && type.isPointer || type.isStruct) {
+          this.value.free(internal);
         }
 
-        this[DATA].free(this.ref(), Enum.width);
-        this[DATA].free = null;
+        this[DATA].wrapper.free(this.ref(), Enum.width);
+        this[DATA].wrapper = null;
         this[DATA].view = null;
       }
     }, {
@@ -2025,19 +2298,27 @@ function RustEnum(obj) {
       }
     }], [{
       key: 'write',
-      value: function write(view, struct, free) {
+      value: function write(view, struct, wrapper) {
+        if ((0, _misc.isNil)(struct) || !struct.constructor.isStruct) {
+          struct = new Enum(struct);
+        }
+
         var tag = struct.tag();
         var type = vtypes[tag];
         var value = struct.ref() ? struct.value : struct[DATA].temp.value;
+
+        if (type.isStruct && ((0, _misc.isNil)(value) || !value.constructor.isStruct)) {
+          value = new type(value);
+        }
 
         var field_1 = (0, _misc.vslice)(view, 0, discriminant.width);
         discriminant.write(field_1, tag);
 
         var field_2 = (0, _misc.vslice)(view, discriminant.width, type.width);
-        type.write(field_2, value);
+        type.write(field_2, value, wrapper);
 
         struct[DATA].view = view;
-        if (free) struct[DATA].free = free;
+        struct[DATA].wrapper = wrapper;
       }
     }]);
 
@@ -2048,32 +2329,26 @@ function RustEnum(obj) {
     enumerable: true,
 
     get: function get() {
-      var addr = this.ref() + discriminant.width;
       var memory = this[DATA].view.buffer;
+      var wrapper = this[DATA].wrapper;
 
       var type = vtypes[this.tag()];
+      var addr = this.ref() + discriminant.width;
       var view = new DataView(memory, addr, type.width);
 
-      return type.read(view, this[DATA].free);
+      return type.read(view, wrapper);
     },
     set: function set(value) {
       this[DATA].temp.value = value;
     }
   });
 
-  Object.assign(Enum, StructType);
-
-  var max = function max(arr) {
-    return arr.reduce(function (acc, i) {
-      return i > acc ? i : acc;
-    }, 0);
-  };
-  var width = discriminant.width + max(vtypes.map(function (t) {
+  var width = discriminant.width + Math.max.apply(Math, _toConsumableArray(vtypes.map(function (t) {
     return t.width;
-  }));
-  var align = max([].concat(_toConsumableArray(vtypes.map(function (t) {
+  })));
+  var align = Math.max.apply(Math, _toConsumableArray(vtypes.map(function (t) {
     return t.alignment;
-  })), [discriminant.alignment]));
+  })).concat([discriminant.alignment]));
 
   Enum.width = width % align ? width + align - width % align : width;
 
@@ -2082,62 +2357,184 @@ function RustEnum(obj) {
 
 var rust = {
   tuple: RustTuple,
-  Tuple: function ctor(type, values) {
-    return new (RustTuple.apply(undefined, _toConsumableArray(type)))([].concat(_toConsumableArray(values)));
-  },
-
   vector: RustVector,
-  Vector: function ctor(type, values) {
-    return new (RustVector(type))({ values: values });
-  },
-
   slice: RustSlice,
-  Slice: function ctor(type, values) {
-    return new (RustSlice(type))({ values: values });
-  },
-
   string: RustString(),
-  String: function ctor(str) {
-    return new (RustString())({ value: str });
-  },
-
   str: RustStr(),
-  Str: function ctor(str) {
-    return new (RustStr())({ value: str });
-  },
-
+  enum: RustEnum,
   option: RustOption,
+
+  some: function ctor(type, value) {
+    for (var _len = arguments.length, opts = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      opts[_key - 2] = arguments[_key];
+    }
+
+    return new (RustOption.apply(undefined, [type].concat(opts)))(value);
+  },
+  none: function ctor(type) {
+    for (var _len2 = arguments.length, opts = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      opts[_key2 - 1] = arguments[_key2];
+    }
+
+    return new (RustOption.apply(undefined, [type].concat(opts)))();
+  },
+
+  // deprecated
+  Tuple: RustTuple,
+  Vector: RustVector,
+  Slice: RustSlice,
+  String: RustString(),
+  Str: RustStr(),
   Option: function ctor(type, value) {
-    for (var _len2 = arguments.length, opts = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-      opts[_key2 - 2] = arguments[_key2];
+    for (var _len3 = arguments.length, opts = Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+      opts[_key3 - 2] = arguments[_key3];
     }
 
-    return new (RustOption.apply(undefined, [type].concat(opts)))({
-      value: value,
-      discriminant: typeof value === 'undefined' ? 0 : 1
-    });
+    return new (RustOption.apply(undefined, [type].concat(opts)))(value);
   },
-
-  Some: function ctor() {
-    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-      args[_key3] = arguments[_key3];
+  Some: function ctor(type, value) {
+    for (var _len4 = arguments.length, opts = Array(_len4 > 2 ? _len4 - 2 : 0), _key4 = 2; _key4 < _len4; _key4++) {
+      opts[_key4 - 2] = arguments[_key4];
     }
 
-    return new (Function.prototype.bind.apply(rust.Option, [null].concat(args)))();
+    return new (RustOption.apply(undefined, [type].concat(opts)))(value);
   },
-
   None: function ctor(type) {
-    for (var _len4 = arguments.length, opts = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-      opts[_key4 - 1] = arguments[_key4];
+    for (var _len5 = arguments.length, opts = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+      opts[_key5 - 1] = arguments[_key5];
     }
 
-    return new (Function.prototype.bind.apply(rust.Option, [null].concat([type, undefined], opts)))();
-  },
-
-  enum: RustEnum
+    return new (RustOption.apply(undefined, [type].concat(opts)))();
+  }
 };
 
 exports.default = rust;
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _Struct = __webpack_require__(3);
+
+var _Struct2 = _interopRequireDefault(_Struct);
+
+var _types = __webpack_require__(0);
+
+var _misc = __webpack_require__(1);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+// get the symbol for struct-data since we need access here
+var DATA = typeof Symbol !== 'undefined' ? Symbol.for('struct-data') : '__data';
+
+function ASArrayBuffer(typedef, n) {
+  var type = (0, _types.parseType)(typedef);
+
+  return new _Struct2.default({
+    byteLength: 'usize',
+    _: 'usize', // allocator alignment?
+    values: [type, n]
+  });
+}
+
+function ASArray(typedef, initialValues) {
+  var type = (0, _types.parseType)(typedef);
+
+  var Base = new _Struct2.default({
+    ptr: _types.types.pointer('void'),
+    length: 'usize'
+    /* buffer */
+    /* values */
+  });
+
+  Object.defineProperty(Base.prototype, 'buffer', {
+    enumerable: true,
+
+    get: function get() {
+      var memory = this[DATA].view.buffer;
+      var wrapper = this[DATA].wrapper;
+
+      var AB = new ASArrayBuffer(type, this.length);
+      var view = new DataView(memory, this.ptr.ref(), AB.width);
+
+      return AB.read(view, wrapper);
+    }
+  });
+
+  Object.defineProperty(Base.prototype, 'values', {
+    enumerable: true,
+
+    get: function get() {
+      return this.buffer.values;
+    },
+    set: function set(values) {
+      var n = values.length;
+      var byteLength = n * type.width;
+
+      var AB = new ASArrayBuffer(type, n);
+      var buf = new AB({ byteLength: byteLength, values: values });
+
+      this.ptr = new _types.Pointer(AB, buf);
+      this.length = n;
+    }
+  });
+
+  (0, _misc.addArrayFns)(Base);
+  (0, _misc.makeIterable)(Base);
+
+  var _Array = function (_Base) {
+    _inherits(_Array, _Base);
+
+    function _Array(values) {
+      _classCallCheck(this, _Array);
+
+      var _this = _possibleConstructorReturn(this, (_Array.__proto__ || Object.getPrototypeOf(_Array)).call(this));
+
+      if (values) _this.values = values;
+      return _this;
+    }
+
+    _createClass(_Array, [{
+      key: 'free',
+      value: function free() {
+        _get(_Array.prototype.__proto__ || Object.getPrototypeOf(_Array.prototype), 'free', this).call(this, true); // free buffer_ too
+      }
+    }, {
+      key: 'dataview',
+      value: function dataview(field) {
+        if (field === 'buffer') return this.buffer.dataview();
+        if (field === 'values') return this.buffer.dataview('values');
+
+        return _get(_Array.prototype.__proto__ || Object.getPrototypeOf(_Array.prototype), 'dataview', this).call(this, field);
+      }
+    }]);
+
+    return _Array;
+  }(Base);
+
+  return initialValues ? new _Array(initialValues) : _Array;
+}
+
+exports.default = {
+  array: ASArray
+};
 
 /***/ })
 /******/ ]);
