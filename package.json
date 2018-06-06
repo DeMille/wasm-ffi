@@ -1,12 +1,13 @@
 {
   "name": "wasm-ffi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A lightweight FFI library for JS/WebAssembly",
   "keywords": [
     "WebAssembly",
     "wasm",
     "ffi",
-    "rust"
+    "rust",
+    "AssemblyScript"
   ],
   "author": "Sterling DeMille <sterlingdemille+npm@gmail.com>",
   "license": "MIT",
